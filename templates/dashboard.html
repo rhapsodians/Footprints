@@ -4,7 +4,7 @@
 {% block head %}
 <style>
 /* ── Summary chips bar ── */
-.sum-bar{display:flex;gap:3px;padding:9px 28px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;align-items:center}
+.sum-bar{display:flex;gap:3px;padding:9px 0;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;align-items:center}
 .chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:3px;cursor:pointer;border:1px solid transparent;transition:background .15s;font-family:var(--mono)}
 .chip:hover,.chip.on{border-color:var(--border2);background:var(--surface2)}
 .chip .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
@@ -19,7 +19,7 @@
 .sdiv{flex:1}
 
 /* ── Pension fund bar ── */
-.fund-bar{display:flex;gap:4px;padding:6px 28px;border-bottom:1px solid var(--border);background:var(--bg);flex-wrap:wrap;align-items:center}
+.fund-bar{display:flex;gap:4px;padding:6px 0;border-bottom:1px solid var(--border);background:var(--bg);flex-wrap:wrap;align-items:center}
 .fund-lbl{font-family:var(--mono);font-size:.58rem;color:var(--text3);margin-right:4px;white-space:nowrap}
 .fchip{font-family:var(--mono);font-size:.6rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:3px 9px;cursor:pointer;transition:all .15s;white-space:nowrap}
 .fchip:hover,.fchip.on{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
@@ -30,14 +30,14 @@
 .nm-sec{margin-top:4px}
 
 /* ── Sort bar ── */
-.sbar{display:flex;align-items:center;gap:6px;padding:7px 28px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.sbar{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .sbar span{font-family:var(--mono);font-size:.60rem;color:var(--text3)}
 .sb2{font-family:var(--mono);font-size:.60rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:3px 8px;cursor:pointer;transition:all .15s}
 .sb2:hover,.sb2.active{border-color:var(--accent);color:var(--accent)}
 .asof{font-family:var(--mono);font-size:.60rem;color:var(--text3);margin-left:auto}
 
 /* ── Card grid ── */
-.gc{padding:12px 28px 120px}
+.gc{padding:12px 0 120px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:9px}
 .etf-card{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:12px 14px 10px;cursor:pointer;transition:border-color .15s,background .15s}
 .etf-card:hover{border-color:var(--border2);background:var(--surface2)}
@@ -178,7 +178,7 @@
 
 {% block content %}
 
-<div class="page-header" style="padding:12px 28px;margin-bottom:0;border-bottom:1px solid var(--border)">
+<div class="page-header" style="padding:12px 0;margin-bottom:0;border-bottom:1px solid var(--border)">
   <div>
     <div class="page-title">Signal <strong>Dashboard</strong></div>
     <div class="page-subtitle">Tape-derived signals &middot; L&amp;G Pension Fund Universe &middot; as of {{ as_of_date or '—' }}</div>
