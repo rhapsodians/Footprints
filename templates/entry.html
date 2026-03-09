@@ -5,39 +5,39 @@
 <style>
 /* ── Import bar ─────────────────────────────────────────────────────────── */
 .import-bar{padding:8px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:14px}
-.import-label{font-family:var(--mono);font-size:.62rem;color:var(--text3);white-space:nowrap}
-.lseg-sel{font-family:var(--mono);font-size:.68rem;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:4px 8px;color:var(--text);min-width:160px}
-.import-file-lbl{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-family:var(--mono);font-size:.65rem;color:var(--text2);border:1px dashed var(--border2);border-radius:3px;padding:3px 10px;transition:border-color .12s;white-space:nowrap}
+.import-label{font-family:var(--mono);font-size:.73rem;color:var(--text3);white-space:nowrap}
+.lseg-sel{font-family:var(--mono);font-size:.73rem;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:4px 8px;color:var(--text);min-width:160px}
+.import-file-lbl{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-family:var(--mono);font-size:.73rem;color:var(--text2);border:1px dashed var(--border2);border-radius:3px;padding:3px 10px;transition:border-color .12s;white-space:nowrap}
 .import-file-lbl:hover{border-color:var(--accent)}
 .import-file-native{display:none}
-.btn-import{font-family:var(--mono);font-size:.68rem;background:none;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:4px 14px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-import{font-family:var(--mono);font-size:.73rem;background:none;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:4px 14px;cursor:pointer;transition:all .15s;white-space:nowrap}
 .btn-import:hover{background:var(--blue-dim)}
 .btn-import:disabled{opacity:.4;cursor:not-allowed}
 .btn-import-green{background:var(--green);color:#000;border-color:var(--green)}
 .btn-import-green:hover{opacity:.85}
-.import-sep{font-family:var(--mono);font-size:.58rem;color:var(--text3);white-space:nowrap;padding:0 4px}
-.btn-export{font-family:var(--mono);font-size:.68rem;background:none;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:4px 14px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:all .15s}
+.import-sep{font-family:var(--mono);font-size:.73rem;color:var(--text3);white-space:nowrap;padding:0 4px}
+.btn-export{font-family:var(--mono);font-size:.73rem;background:none;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:4px 14px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:all .15s}
 .btn-export:hover{background:var(--blue-dim)}
 /* ── Progress ────────────────────────────────────────────────────────────── */
 .prog-wrap{display:flex;flex-direction:column;gap:3px;min-width:160px}
-.prog-label{font-family:var(--mono);font-size:.60rem;color:var(--text2)}
+.prog-label{font-family:var(--mono);font-size:.73rem;color:var(--text2)}
 .prog-bar{height:3px;background:var(--border2);border-radius:2px;overflow:hidden}
 .prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .25s}
 /* ── Table ───────────────────────────────────────────────────────────────── */
 .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:3px}
-table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.72rem}
-.entry-tbl th{font-size:.58rem;letter-spacing:.10em;text-transform:uppercase;color:var(--text3);
+table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.80rem}
+.entry-tbl th{font-size:.73rem;letter-spacing:.10em;text-transform:uppercase;color:var(--text3);
   padding:8px 9px;border-bottom:2px solid var(--border2);background:var(--surface2);
   text-align:right;white-space:nowrap;position:sticky;top:0;z-index:2}
 .entry-tbl th.tl{text-align:left}
 .entry-tbl td{padding:0;border-bottom:1px solid var(--border);vertical-align:middle}
 .entry-tbl tr:hover td{background:var(--surface2)}
 .tc-ticker{padding:6px 9px 4px}
-.tc-name{font-size:.74rem;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
-.tc-date{font-size:.68rem;color:var(--text3);margin-top:1px}
-.tc-prev{padding:6px 9px;text-align:right;color:var(--text2);font-size:.70rem;white-space:nowrap}
+.tc-name{font-size:.80rem;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.tc-date{font-size:.73rem;color:var(--text3);margin-top:1px}
+.tc-prev{padding:6px 9px;text-align:right;color:var(--text2);font-size:.80rem;white-space:nowrap}
 .tc-input{padding:3px 6px;min-width:82px}
-.price-input{font-family:var(--mono);font-size:.72rem;color:var(--text);
+.price-input{font-family:var(--mono);font-size:.80rem;color:var(--text);
   background:transparent;border:none;border-bottom:1px solid var(--border2);
   border-radius:0;padding:3px 4px;width:100%;outline:none;
   text-align:right;transition:border-color .15s,background .12s}
@@ -50,7 +50,7 @@ table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font
 .submit-bar{position:sticky;bottom:0;background:var(--surface);
   border-top:1px solid var(--border);padding:10px 0;display:flex;align-items:center;gap:14px;
   z-index:50;margin-top:1px}
-.btn-submit{font-family:var(--mono);font-size:.75rem;font-weight:500;background:var(--green);
+.btn-submit{font-family:var(--mono);font-size:.80rem;font-weight:500;background:var(--green);
   color:#000;border:none;border-radius:4px;padding:8px 24px;cursor:pointer;letter-spacing:.03em}
 .btn-submit:hover{opacity:.85}
 .btn-submit:disabled{opacity:.4;cursor:not-allowed}
@@ -100,10 +100,10 @@ table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font
 <input type="hidden" name="source" value="LSEG">
 
 <div style="margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-  <label style="font-size:.62rem;letter-spacing:.10em;text-transform:uppercase;color:var(--text2)">Week ending</label>
+  <label style="font-size:.73rem;letter-spacing:.10em;text-transform:uppercase;color:var(--text2)">Week ending</label>
   <input style="font-family:var(--mono);font-size:.80rem;color:var(--text);background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:6px 10px;outline:none"
          type="date" id="entry-date" name="date" value="{{ default_date }}" required>
-  <span style="font-family:var(--mono);font-size:.60rem;color:var(--text3)">
+  <span style="font-family:var(--mono);font-size:.73rem;color:var(--text3)">
     <kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:1px 5px">Tab</kbd> advance &middot;
     <kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:1px 5px">Shift+Tab</kbd> back &middot;
     <kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:1px 5px">Enter</kbd> save
@@ -132,7 +132,7 @@ table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font
   <tr>
     <td>
       <div class="tc-ticker">
-        <span style="font-weight:600;font-size:.75rem;letter-spacing:.04em">{{ t.ticker }}</span>
+        <span style="font-weight:600;font-size:.80rem;letter-spacing:.04em">{{ t.ticker }}</span>
         <div class="tc-name">{{ t.name or '' }}</div>
         <div class="tc-date">last: {{ t.last_price_date or 'none' }}</div>
       </div>
@@ -169,8 +169,8 @@ table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font
     </td>
     <td class="tc-sig">
       {% if sig_label %}
-      <span class="sig sig-{{ sig_css_cls }}" style="font-size:.57rem;padding:2px 6px">{{ sig_label }}</span>
-      {% else %}<span style="color:var(--text3);font-size:.65rem">&mdash;</span>{% endif %}
+      <span class="sig sig-{{ sig_css_cls }}" style="font-size:.73rem;padding:2px 6px">{{ sig_label }}</span>
+      {% else %}<span style="color:var(--text3);font-size:.73rem">&mdash;</span>{% endif %}
     </td>
   </tr>
   {% endfor %}
@@ -184,7 +184,7 @@ table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font
     <div class="prog-label" id="prog-label">0/{{ tickers|length }} ETFs entered</div>
     <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
   </div>
-  <span style="font-family:var(--mono);font-size:.60rem;color:var(--text3);margin-left:auto">
+  <span style="font-family:var(--mono);font-size:.73rem;color:var(--text3);margin-left:auto">
     Only rows with a Close value will be saved
   </span>
 </div>

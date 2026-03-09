@@ -76,7 +76,7 @@
 
     /* ── Reset ─────────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-size: 13px; -webkit-font-smoothing: antialiased; }
+    html { font-size: 15px; -webkit-font-smoothing: antialiased; }
 
     body {
       font-family: var(--mono);
@@ -105,7 +105,7 @@
 
     .nav-brand {
       font-family: var(--mono);
-      font-size: .72rem;
+      font-size: .80rem;
       font-weight: 600;
       letter-spacing: .12em;
       color: var(--text);
@@ -121,7 +121,7 @@
 
     .nav-link {
       font-family: var(--mono);
-      font-size: .68rem;
+      font-size: .80rem;
       color: var(--text2);
       text-decoration: none;
       letter-spacing: .06em;
@@ -138,7 +138,7 @@
     .nav-spacer { flex: 1; }
 
     .nav-meta {
-      font-size: .62rem;
+      font-size: .73rem;
       color: var(--text3);
       letter-spacing: .04em;
       padding-right: 12px;
@@ -149,7 +149,7 @@
     /* Theme toggle */
     .theme-btn {
       font-family: var(--mono);
-      font-size: .62rem;
+      font-size: .73rem;
       color: var(--text2);
       background: none;
       border: 1px solid var(--border);
@@ -175,7 +175,7 @@
 
     .page-title {
       font-family: var(--sans);
-      font-size: 1.30rem;
+      font-size: 1.47rem;
       font-weight: 300;
       letter-spacing: -.01em;
       color: var(--text);
@@ -185,7 +185,7 @@
 
     .page-subtitle {
       font-family: var(--sans);
-      font-size: .75rem;
+      font-size: .87rem;
       font-weight: 400;
       color: var(--text2);
       margin-top: 3px;
@@ -197,7 +197,7 @@
     /* ── Buttons ────────────────────────────────────────────────────────── */
     .btn {
       font-family: var(--mono);
-      font-size: .68rem;
+      font-size: .73rem;
       letter-spacing: .08em;
       text-transform: uppercase;
       padding: 7px 16px;
@@ -223,7 +223,7 @@
     .btn-danger { border-color: var(--red); color: var(--red); }
     .btn-danger:hover { background: var(--red-dim); }
 
-    .btn-sm { font-size: .62rem; padding: 4px 10px; }
+    .btn-sm { font-size: .80rem; padding: 4px 10px; }
 
     /* ── Cards / surfaces ───────────────────────────────────────────────── */
     .card {
@@ -235,7 +235,7 @@
     .card-header {
       padding: 10px 16px;
       border-bottom: 1px solid var(--border);
-      font-size: .68rem;
+      font-size: .73rem;
       font-weight: 500;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -247,12 +247,12 @@
     .data-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: .72rem;
+      font-size: .80rem;
     }
 
     .data-table th {
       font-family: var(--mono);
-      font-size: .60rem;
+      font-size: .73rem;
       font-weight: 500;
       letter-spacing: .10em;
       text-transform: uppercase;
@@ -284,7 +284,7 @@
     /* ── Signal badges ──────────────────────────────────────────────────── */
     .sig {
       display: inline-block;
-      font-size: .60rem;
+      font-size: .73rem;
       font-weight: 600;
       letter-spacing: .10em;
       text-transform: uppercase;
@@ -301,7 +301,7 @@
     /* ── Confidence badges ──────────────────────────────────────────────── */
     .conf {
       display: inline-block;
-      font-size: .58rem;
+      font-size: .73rem;
       letter-spacing: .08em;
       text-transform: uppercase;
       padding: 2px 7px;
@@ -325,7 +325,7 @@
       border-radius: 2px;
       transition: width .3s ease;
     }
-    .score-val { font-size: .70rem; min-width: 32px; text-align: right; }
+    .score-val { font-size: .80rem; min-width: 32px; text-align: right; }
 
     /* ── Numeric colorization helpers ───────────────────────────────────── */
     .pos { color: var(--green); }
@@ -334,7 +334,7 @@
 
     /* ── Sector label ───────────────────────────────────────────────────── */
     .sector-tag {
-      font-size: .60rem;
+      font-size: .73rem;
       letter-spacing: .06em;
       text-transform: uppercase;
       color: var(--text2);
@@ -349,7 +349,7 @@
       padding: 10px 16px;
       border-radius: 2px;
       margin-bottom: 16px;
-      font-size: .72rem;
+      font-size: .80rem;
       border-left: 3px solid;
     }
     .flash-ok    { background: var(--green-dim);  border-color: var(--green); color: var(--green); }
@@ -361,7 +361,7 @@
 
     .form-label {
       display: block;
-      font-size: .62rem;
+      font-size: .73rem;
       letter-spacing: .10em;
       text-transform: uppercase;
       color: var(--text2);
@@ -370,7 +370,7 @@
 
     .form-input, .form-select {
       font-family: var(--mono);
-      font-size: .72rem;
+      font-size: .87rem;
       color: var(--text);
       background: var(--surface2);
       border: 1px solid var(--border2);
@@ -400,7 +400,7 @@
     }
 
     .stat-label {
-      font-size: .58rem;
+      font-size: .73rem;
       letter-spacing: .10em;
       text-transform: uppercase;
       color: var(--text3);
@@ -414,14 +414,14 @@
     }
 
     .stat-sub {
-      font-size: .62rem;
+      font-size: .73rem;
       color: var(--text2);
       margin-top: 2px;
     }
 
     /* ── Section divider ─────────────────────────────────────────────────── */
     .section-head {
-      font-size: .62rem;
+      font-size: .73rem;
       font-weight: 500;
       letter-spacing: .12em;
       text-transform: uppercase;
@@ -433,7 +433,7 @@
 
     /* ── Reason text ────────────────────────────────────────────────────── */
     .reason-text {
-      font-size: .65rem;
+      font-size: .73rem;
       color: var(--text2);
       font-style: italic;
       max-width: 320px;

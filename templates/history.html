@@ -41,7 +41,7 @@
 
         <td>
           {% if row.old_signal %}
-          <span class="sig sig-{{ sig_css.get(row.old_signal, 'neutral') }}" style="font-size:.58rem;">
+          <span class="sig sig-{{ sig_css.get(row.old_signal, 'neutral') }}" style="font-size:.73rem;">
             {{ row.old_signal }}
           </span>
           {% else %}<span class="dim">—</span>{% endif %}
@@ -51,7 +51,7 @@
 
         <td>
           {% if row.new_signal %}
-          <span class="sig sig-{{ sig_css.get(row.new_signal, 'neutral') }}" style="font-size:.58rem;">
+          <span class="sig sig-{{ sig_css.get(row.new_signal, 'neutral') }}" style="font-size:.73rem;">
             {{ row.new_signal }}
           </span>
           {% else %}<span class="dim">—</span>{% endif %}
@@ -69,7 +69,7 @@
           {% else %}—{% endif %}
         </td>
 
-        <td class="dim" style="font-size:.62rem;">
+        <td class="dim" style="font-size:.73rem;">
           {% set la = row.logged_at %}
           {% if la and la == la and la is string %}{{ la[:16] }}{% else %}—{% endif %}
         </td>

@@ -17,7 +17,7 @@
     margin-bottom: 14px;
     border-bottom: 1px solid var(--border);
   }
-  .admin-section-hd .page-title { font-size: 1.05rem; }
+  .admin-section-hd .page-title { font-size: 1.00rem; }
 
   /* Two-column: [add form] [tile grid] */
   .admin-body {
@@ -31,7 +31,7 @@
   .sort-bar { display: flex; align-items: center; gap: 6px; }
   .sort-bar-label {
     font-family: var(--sans);
-    font-size: .63rem;
+    font-size: .73rem;
     color: var(--text3);
     letter-spacing: .04em;
     text-transform: uppercase;
@@ -70,7 +70,7 @@
   .tile-hd-left { min-width: 0; flex: 1; }
   .tile-primary {
     font-family: var(--mono);
-    font-size: .75rem;
+    font-size: .80rem;
     font-weight: 600;
     color: var(--text);
     white-space: nowrap;
@@ -79,7 +79,7 @@
   }
   .tile-secondary {
     font-family: var(--sans);
-    font-size: .65rem;
+    font-size: .73rem;
     color: var(--text2);
     margin-top: 2px;
     white-space: nowrap;
@@ -94,7 +94,7 @@
   }
   .tile-tag {
     font-family: var(--mono);
-    font-size: .60rem;
+    font-size: .73rem;
     color: var(--text2);
     background: var(--surface2);
     border: 1px solid var(--border2);
@@ -127,7 +127,7 @@
   .chip-row { display: flex; flex-wrap: wrap; gap: 4px; min-height: 20px; }
   .proxy-chip {
     font-family: var(--mono);
-    font-size: .62rem;
+    font-size: .73rem;
     font-weight: 500;
     color: var(--text2);
     background: var(--surface2);
@@ -152,7 +152,7 @@
   }
   .tile-select {
     font-family: var(--mono);
-    font-size: .62rem;
+    font-size: .73rem;
     background: var(--input-bg);
     border: 1px solid var(--border2);
     border-radius: 3px;
@@ -173,7 +173,7 @@
   }
   .add-form-bar-label {
     font-family: var(--sans);
-    font-size: .63rem;
+    font-size: .73rem;
     font-weight: 500;
     letter-spacing: .06em;
     text-transform: uppercase;
@@ -182,7 +182,7 @@
   }
   .add-form-bar form { display: flex; flex-direction: column; gap: 9px; }
   .add-form-field { display: flex; flex-direction: column; gap: 4px; }
-  .add-form-field label { font-family: var(--sans); font-size: .62rem; color: var(--text3); }
+  .add-form-field label { font-family: var(--sans); font-size: .73rem; color: var(--text3); }
 
   /* DB stats card */
   .db-stats { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
@@ -190,12 +190,12 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-size: .70rem;
+    font-size: .80rem;
   }
 
   /* Misc legacy */
   .btn-green { background: var(--green); border-color: var(--green); color: #002a1c;
-    font-family: var(--mono); font-size: .65rem; padding: 5px 14px;
+    font-family: var(--mono); font-size: .73rem; padding: 5px 14px;
     border-radius: 3px; cursor: pointer; border: 1px solid transparent; }
   .btn-green:hover { opacity: .85; }
 </style>
@@ -255,10 +255,10 @@
       <div class="add-form-bar" style="position:static">
         <div class="add-form-bar-label">Database</div>
         <div style="display:flex;flex-direction:column;gap:9px">
-          <div style="display:flex;justify-content:space-between;font-size:.70rem"><span class="dim">Price rows</span><span>{{ db_stats.price_rows }}</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:.70rem"><span class="dim">Date range</span><span style="font-size:.64rem">{{ db_stats.date_min }} → {{ db_stats.date_max }}</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:.70rem"><span class="dim">Signal rows</span><span>{{ db_stats.signal_rows }}</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:.70rem"><span class="dim">Model version</span><span style="color:var(--accent)">{{ db_stats.model_version }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.80rem"><span class="dim">Price rows</span><span>{{ db_stats.price_rows }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.80rem"><span class="dim">Date range</span><span style="font-size:.73rem">{{ db_stats.date_min }} → {{ db_stats.date_max }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.80rem"><span class="dim">Signal rows</span><span>{{ db_stats.signal_rows }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.80rem"><span class="dim">Model version</span><span style="color:var(--accent)">{{ db_stats.model_version }}</span></div>
         </div>
       </div>
 
@@ -268,7 +268,7 @@
     <div>
       <div class="admin-section-hd" style="margin-bottom:10px">
         <div>
-          <div class="page-title" style="font-size:1.05rem">ETF <strong>Universe</strong></div>
+          <div class="page-title" style="font-size:1.00rem">ETF <strong>Universe</strong></div>
           <div class="page-subtitle">{{ etfs|length }} tickers registered</div>
         </div>
         <div class="sort-bar">
@@ -379,7 +379,7 @@
     <div>
       <div class="admin-section-hd" style="margin-bottom:10px">
         <div>
-          <div class="page-title" style="font-size:1.05rem">Pension Funds <strong>&amp; Proxy Mappings</strong></div>
+          <div class="page-title" style="font-size:1.00rem">Pension Funds <strong>&amp; Proxy Mappings</strong></div>
           <div class="page-subtitle">{{ pension_funds|length }} fund{{ 's' if pension_funds|length != 1 }} defined</div>
         </div>
         <div class="sort-bar">
@@ -391,7 +391,7 @@
       </div>
       <div id="pf-grid" class="tile-grid">
     {% if not pension_funds %}
-    <p style="font-family:var(--sans);font-size:.72rem;color:var(--text3);grid-column:1/-1;padding:8px 0">
+    <p style="font-family:var(--sans);font-size:.80rem;color:var(--text3);grid-column:1/-1;padding:8px 0">
       No pension funds defined yet.
     </p>
     {% else %}
@@ -408,7 +408,7 @@
         </div>
         <form method="POST" action="/admin/remove-fund" style="margin:0;flex-shrink:0">
           <input type="hidden" name="fund_id" value="{{ f.id }}">
-          <button type="submit" class="btn btn-sm btn-danger" style="padding:2px 7px;font-size:.58rem"
+          <button type="submit" class="btn btn-sm btn-danger" style="padding:2px 7px;font-size:.73rem"
                   onclick="return confirm('Delete {{ f.code }} and all its proxy mappings?')">✕</button>
         </form>
       </div>
@@ -423,7 +423,7 @@
           </form>
           {% endfor %}
         {% else %}
-          <span style="font-family:var(--sans);font-size:.62rem;color:var(--text3);font-style:italic">No proxies mapped</span>
+          <span style="font-family:var(--sans);font-size:.73rem;color:var(--text3);font-style:italic">No proxies mapped</span>
         {% endif %}
       </div>
 
