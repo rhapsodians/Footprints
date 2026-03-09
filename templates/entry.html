@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Data Entry{% endblock %}
+
+{% block head %}
+<style>
+/* ── Import bar ─────────────────────────────────────────────────────────── */
+.import-bar{padding:8px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:14px}
+.import-label{font-family:var(--mono);font-size:.62rem;color:var(--text3);white-space:nowrap}
+.lseg-sel{font-family:var(--mono);font-size:.68rem;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:4px 8px;color:var(--text);min-width:160px}
+.import-file-lbl{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-family:var(--mono);font-size:.65rem;color:var(--text2);border:1px dashed var(--border2);border-radius:3px;padding:3px 10px;transition:border-color .12s;white-space:nowrap}
+.import-file-lbl:hover{border-color:var(--accent)}
+.import-file-native{display:none}
+.btn-import{font-family:var(--mono);font-size:.68rem;background:none;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:4px 14px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-import:hover{background:var(--blue-dim)}
+.btn-import:disabled{opacity:.4;cursor:not-allowed}
+.btn-import-green{background:var(--green);color:#000;border-color:var(--green)}
+.btn-import-green:hover{opacity:.85}
+.import-sep{font-family:var(--mono);font-size:.58rem;color:var(--text3);white-space:nowrap;padding:0 4px}
+.btn-export{font-family:var(--mono);font-size:.68rem;background:none;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:4px 14px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:all .15s}
+.btn-export:hover{background:var(--blue-dim)}
+/* ── Progress ────────────────────────────────────────────────────────────── */
+.prog-wrap{display:flex;flex-direction:column;gap:3px;min-width:160px}
+.prog-label{font-family:var(--mono);font-size:.60rem;color:var(--text2)}
+.prog-bar{height:3px;background:var(--border2);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .25s}
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:3px}
+table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.72rem}
+.entry-tbl th{font-size:.58rem;letter-spacing:.10em;text-transform:uppercase;color:var(--text3);
+  padding:8px 9px;border-bottom:2px solid var(--border2);background:var(--surface2);
+  text-align:right;white-space:nowrap;position:sticky;top:0;z-index:2}
+.entry-tbl th.tl{text-align:left}
+.entry-tbl td{padding:0;border-bottom:1px solid var(--border);vertical-align:middle}
+.entry-tbl tr:hover td{background:var(--surface2)}
+.tc-ticker{padding:6px 9px 4px}
+.tc-name{font-size:.60rem;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.tc-date{font-size:.55rem;color:var(--text3);margin-top:1px}
+.tc-prev{padding:6px 9px;text-align:right;color:var(--text2);font-size:.70rem;white-space:nowrap}
+.tc-input{padding:3px 6px;min-width:82px}
+.price-input{font-family:var(--mono);font-size:.72rem;color:var(--text);
+  background:transparent;border:none;border-bottom:1px solid var(--border2);
+  border-radius:0;padding:3px 4px;width:100%;outline:none;
+  text-align:right;transition:border-color .15s,background .12s}
+.price-input:focus{border-color:var(--accent);background:var(--blue-dim)}
+.price-input::placeholder{color:var(--text3)}
+.price-input.ok{border-bottom-color:var(--green)}
+.price-input.err{border-bottom-color:var(--red);background:var(--red-dim)}
+.tc-sig{padding:6px 9px;white-space:nowrap;min-width:90px}
+/* Submit bar */
+.submit-bar{position:sticky;bottom:0;background:var(--surface);
+  border-top:1px solid var(--border);padding:10px 0;display:flex;align-items:center;gap:14px;
+  z-index:50;margin-top:1px}
+.btn-submit{font-family:var(--mono);font-size:.75rem;font-weight:500;background:var(--green);
+  color:#000;border:none;border-radius:4px;padding:8px 24px;cursor:pointer;letter-spacing:.03em}
+.btn-submit:hover{opacity:.85}
+.btn-submit:disabled{opacity:.4;cursor:not-allowed}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Weekly <strong>Data Entry</strong></div>
+    <div class="page-subtitle">Enter Friday close OHLCV &middot; prices in GBP</div>
+  </div>
+</div>
+
+{# LSEG per-ETF import bar #}
+<div class="import-bar">
+  <form id="lseg-form-w" method="POST" action="/entry/import-lseg" enctype="multipart/form-data"
+        style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span class="import-label">&#8593; LSEG IMPORT:</span>
+    <select class="lseg-sel" name="ticker" required>
+      {% for t in tickers %}
+      <option value="{{ t.ticker }}">{{ t.ticker }} &mdash; {{ (t.name or '')[:32] }}</option>
+      {% endfor %}
+    </select>
+    <label class="import-file-lbl" id="lseg-lbl-w">
+      <input type="file" name="lseg_file" accept=".xlsx,.xls" class="import-file-native" id="lseg-file-w" required>
+      <span id="lseg-txt-w">&#128194; Choose file&hellip;</span>
+    </label>
+    <button type="submit" class="btn-import btn-import-green" id="lseg-sub-w" disabled>IMPORT</button>
+  </form>
+  <span class="import-sep">&mdash; or &mdash;</span>
+  <form id="tmpl-form" method="POST" action="/entry/import-template" enctype="multipart/form-data"
+        style="display:flex;align-items:center;gap:8px">
+    <span class="import-label">&#8593; TEMPLATE:</span>
+    <label class="import-file-lbl">
+      <input type="file" name="template_file" accept=".xlsx" class="import-file-native" id="tmpl-file">
+      <span id="tmpl-txt">&#128194; Choose file&hellip;</span>
+    </label>
+    <button type="submit" class="btn-import">LOAD</button>
+  </form>
+  <span class="import-sep">&mdash; or &mdash;</span>
+  <a href="/entry/export-template" class="btn-export">&#8595; EXCEL TEMPLATE</a>
+</div>
+
+{# Main entry form #}
+<form id="entry-form" method="post" action="/entry">
+<input type="hidden" name="source" value="LSEG">
+
+<div style="margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <label style="font-size:.62rem;letter-spacing:.10em;text-transform:uppercase;color:var(--text2)">Week ending</label>
+  <input style="font-family:var(--mono);font-size:.80rem;color:var(--text);background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:6px 10px;outline:none"
+         type="date" id="entry-date" name="date" value="{{ default_date }}" required>
+  <span style="font-family:var(--mono);font-size:.60rem;color:var(--text3)">
+    <kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:1px 5px">Tab</kbd> advance &middot;
+    <kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:1px 5px">Shift+Tab</kbd> back &middot;
+    <kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:1px 5px">Enter</kbd> save
+  </span>
+</div>
+
+<div class="table-wrap">
+<table class="entry-tbl">
+  <colgroup>
+    <col style="min-width:155px"><col style="width:86px">
+    <col style="width:88px"><col style="width:88px"><col style="width:88px">
+    <col style="width:88px"><col style="width:100px"><col style="width:130px">
+  </colgroup>
+  <thead><tr>
+    <th class="tl">TICKER / NAME</th>
+    <th>PREV CLOSE</th>
+    <th>OPEN</th><th>HIGH</th><th>LOW</th><th>CLOSE &#9733;</th><th>VOLUME</th>
+    <th class="tl">SIGNAL</th>
+  </tr></thead>
+  <tbody>
+  {% for t in tickers %}
+  {% set sig = signals.get(t.ticker, {}) %}
+  {% set sig_label = sig.get('signal', '') %}
+  {% set sig_css_cls = sig_css.get(sig_label, 'neutral') %}
+  {% set prev = latest_prices.get(t.ticker) %}
+  <tr>
+    <td>
+      <div class="tc-ticker">
+        <span style="font-weight:600;font-size:.75rem;letter-spacing:.04em">{{ t.ticker }}</span>
+        <div class="tc-name">{{ t.name or '' }}</div>
+        <div class="tc-date">last: {{ t.last_price_date or 'none' }}</div>
+      </div>
+    </td>
+    <td class="tc-prev">
+      {% if prev %}{{ '%.4f'|format(prev.close) }}{% else %}&mdash;{% endif %}
+    </td>
+    <td class="tc-input">
+      <input class="price-input" type="number" step="0.0001" min="0"
+             name="{{ t.ticker }}__open" placeholder="open" tabindex="1"
+             {% if prefill.get(t.ticker + '__open') %}value="{{ prefill[t.ticker + '__open'] }}"{% endif %}>
+    </td>
+    <td class="tc-input">
+      <input class="price-input" type="number" step="0.0001" min="0"
+             name="{{ t.ticker }}__high" placeholder="high" tabindex="1"
+             {% if prefill.get(t.ticker + '__high') %}value="{{ prefill[t.ticker + '__high'] }}"{% endif %}>
+    </td>
+    <td class="tc-input">
+      <input class="price-input" type="number" step="0.0001" min="0"
+             name="{{ t.ticker }}__low" placeholder="low" tabindex="1"
+             {% if prefill.get(t.ticker + '__low') %}value="{{ prefill[t.ticker + '__low'] }}"{% endif %}>
+    </td>
+    <td class="tc-input">
+      <input class="price-input" type="number" step="0.0001" min="0"
+             name="{{ t.ticker }}__close" placeholder="close &#9733;" tabindex="1"
+             onchange="validateRow('{{ t.ticker }}')"
+             {% if prefill.get(t.ticker + '__close') %}value="{{ prefill[t.ticker + '__close'] }}"{% endif %}>
+    </td>
+    <td class="tc-input">
+      <input class="price-input" type="number" step="1" min="0"
+             name="{{ t.ticker }}__volume" placeholder="volume" tabindex="1"
+             onchange="validateRow('{{ t.ticker }}')"
+             {% if prefill.get(t.ticker + '__volume') %}value="{{ prefill[t.ticker + '__volume'] }}"{% endif %}>
+    </td>
+    <td class="tc-sig">
+      {% if sig_label %}
+      <span class="sig sig-{{ sig_css_cls }}" style="font-size:.57rem;padding:2px 6px">{{ sig_label }}</span>
+      {% else %}<span style="color:var(--text3);font-size:.65rem">&mdash;</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="submit-bar">
+  <button type="submit" class="btn-submit" id="submit-btn">SUBMIT &amp; RECOMPUTE</button>
+  <div class="prog-wrap">
+    <div class="prog-label" id="prog-label">0/{{ tickers|length }} ETFs entered</div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+  <span style="font-family:var(--mono);font-size:.60rem;color:var(--text3);margin-left:auto">
+    Only rows with a Close value will be saved
+  </span>
+</div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TICKERS={{ tickers|map(attribute='ticker')|list|tojson }};
+const TOTAL=TICKERS.length;
+
+(function(){
+  const fi=document.getElementById('lseg-file-w');
+  if(fi){fi.addEventListener('change',function(){
+    const nm=this.files[0]?this.files[0].name:'';
+    document.getElementById('lseg-txt-w').textContent=nm?'📄 '+nm:'📂 Choose file\u2026';
+    document.getElementById('lseg-sub-w').disabled=!nm;
+  });}
+  const tf=document.getElementById('tmpl-file');
+  if(tf){tf.addEventListener('change',function(){
+    const nm=this.files[0]?this.files[0].name:'';
+    document.getElementById('tmpl-txt').textContent=nm?'📄 '+nm:'📂 Choose file\u2026';
+  });}
+})();
+
+function updateProgress(){
+  let n=0;
+  TICKERS.forEach(t=>{
+    const c=document.querySelector(`[name="${t}__close"]`);
+    const v=document.querySelector(`[name="${t}__volume"]`);
+    if(c?.value&&v?.value)n++;
+  });
+  document.getElementById('prog-label').textContent=`${n}/${TOTAL} ETFs entered`;
+  document.getElementById('prog-fill').style.width=`${(n/TOTAL)*100}%`;
+}
+
+function validateRow(t){
+  const hi=parseFloat(document.querySelector(`[name="${t}__high"]`)?.value);
+  const lo=parseFloat(document.querySelector(`[name="${t}__low"]`)?.value);
+  const cl=parseFloat(document.querySelector(`[name="${t}__close"]`)?.value);
+  const vol=parseFloat(document.querySelector(`[name="${t}__volume"]`)?.value);
+  const ci=document.querySelector(`[name="${t}__close"]`);
+  const vi=document.querySelector(`[name="${t}__volume"]`);
+  ci.classList.remove('err','ok'); vi.classList.remove('err','ok');
+  if(!isNaN(hi)&&!isNaN(lo)&&!isNaN(cl))
+    ci.classList.add(cl>=lo&&cl<=hi&&lo>=0?'ok':'err');
+  if(!isNaN(vol)&&vol>0)vi.classList.add('ok');
+  else if(!isNaN(vol))vi.classList.add('err');
+  updateProgress();
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey&&e.target.tagName!=='BUTTON'&&e.target.tagName!=='SELECT'){
+    e.preventDefault();document.getElementById('entry-form').submit();
+  }
+});
+document.getElementById('entry-form').addEventListener('submit',function(){
+  const b=document.getElementById('submit-btn');b.disabled=true;b.textContent='COMPUTING\u2026';
+});
+document.querySelectorAll('.price-input').forEach(inp=>{
+  inp.addEventListener('focus',function(){this.select();});
+});
+</script>
+{% endblock %}

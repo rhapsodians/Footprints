@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Signal History{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <div class="page-title">Signal <strong>History</strong></div>
+    <div class="page-subtitle">Signal transition log · most recent first</div>
+  </div>
+</div>
+
+<div class="card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Ticker</th>
+        <th>Name</th>
+        <th>Sector</th>
+        <th>From</th>
+        <th>&nbsp;</th>
+        <th>To</th>
+        <th class="r">Rotation</th>
+        <th class="r">Confidence</th>
+        <th>Logged</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in history %}
+      <tr>
+        <td style="color:var(--text2);">{{ row.date }}</td>
+
+        <td style="font-weight:500;">{{ row.ticker }}</td>
+
+        <td class="dim" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;">
+          {{ row.name or '—' }}
+        </td>
+
+        <td><span class="sector-tag">{{ sector_labels.get(row.sector, row.sector or '—') }}</span></td>
+
+        <td>
+          {% if row.old_signal %}
+          <span class="sig sig-{{ sig_css.get(row.old_signal, 'neutral') }}" style="font-size:.58rem;">
+            {{ row.old_signal }}
+          </span>
+          {% else %}<span class="dim">—</span>{% endif %}
+        </td>
+
+        <td style="color:var(--text3);padding:0 4px;">→</td>
+
+        <td>
+          {% if row.new_signal %}
+          <span class="sig sig-{{ sig_css.get(row.new_signal, 'neutral') }}" style="font-size:.58rem;">
+            {{ row.new_signal }}
+          </span>
+          {% else %}<span class="dim">—</span>{% endif %}
+        </td>
+
+        <td class="r">
+          {% if row.rotation_score is not none %}
+          {{ '%.1f'|format(row.rotation_score) }}
+          {% else %}—{% endif %}
+        </td>
+
+        <td class="r">
+          {% if row.confidence_score is not none %}
+          {{ '%.0f'|format(row.confidence_score) }}
+          {% else %}—{% endif %}
+        </td>
+
+        <td class="dim" style="font-size:.62rem;">
+          {% set la = row.logged_at %}
+          {% if la and la == la and la is string %}{{ la[:16] }}{% else %}—{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="10" style="text-align:center;padding:32px;color:var(--text3);">
+          No signal transitions recorded yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Shared tile grid ── */
+  .admin-section { padding: 0 28px 56px; }
+  .admin-section + .admin-section {
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .admin-section-hd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .admin-section-hd .page-title { font-size: 1.05rem; }
+
+  /* Two-column: [add form] [tile grid] */
+  .admin-body {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media(max-width:900px) { .admin-body { grid-template-columns: 1fr; } }
+
+  .sort-bar { display: flex; align-items: center; gap: 6px; }
+  .sort-bar-label {
+    font-family: var(--sans);
+    font-size: .63rem;
+    color: var(--text3);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-right: 2px;
+  }
+  .sort-btn { color: var(--text3); border-color: var(--border2); }
+  .sort-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .sort-btn.active { color: var(--accent); border-color: var(--accent); }
+
+  .tile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 10px;
+  }
+  .admin-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border2);
+    border-radius: 4px;
+    padding: 12px 13px 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .admin-tile.tile-active   { border-left-color: var(--sig-sb); }
+  .admin-tile.tile-suspended{ border-left-color: var(--sig-ea); }
+  .admin-tile.tile-inactive { border-left-color: var(--border2); opacity: .6; }
+
+  .tile-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+  }
+  .tile-hd-left { min-width: 0; flex: 1; }
+  .tile-primary {
+    font-family: var(--mono);
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tile-secondary {
+    font-family: var(--sans);
+    font-size: .65rem;
+    color: var(--text2);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+  }
+  .tile-tag {
+    font-family: var(--mono);
+    font-size: .60rem;
+    color: var(--text2);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    padding: 1px 6px;
+    white-space: nowrap;
+  }
+  .tile-actions {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Status dots */
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+  .dot-active    { background: var(--green); }
+  .dot-inactive  { background: var(--text3); }
+  .dot-suspended { background: var(--yellow); }
+
+  /* Proxy chips (pension fund tiles) */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 4px; min-height: 20px; }
+  .proxy-chip {
+    font-family: var(--mono);
+    font-size: .62rem;
+    font-weight: 500;
+    color: var(--text2);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 2px 7px;
+    cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+    white-space: nowrap;
+  }
+  .proxy-chip:hover {
+    background: var(--red-dim);
+    border-color: var(--sig-ex-bd);
+    color: var(--red);
+  }
+  .tile-add-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding-top: 7px;
+    border-top: 1px solid var(--border);
+  }
+  .tile-select {
+    font-family: var(--mono);
+    font-size: .62rem;
+    background: var(--input-bg);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 3px 7px;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Add form sidebar */
+  .add-form-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    position: sticky;
+    top: calc(var(--nav-h) + 12px);
+  }
+  .add-form-bar-label {
+    font-family: var(--sans);
+    font-size: .63rem;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+  .add-form-bar form { display: flex; flex-direction: column; gap: 9px; }
+  .add-form-field { display: flex; flex-direction: column; gap: 4px; }
+  .add-form-field label { font-family: var(--sans); font-size: .62rem; color: var(--text3); }
+
+  /* DB stats card */
+  .db-stats { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+  .db-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: .70rem;
+  }
+
+  /* Misc legacy */
+  .btn-green { background: var(--green); border-color: var(--green); color: #002a1c;
+    font-family: var(--mono); font-size: .65rem; padding: 5px 14px;
+    border-radius: 3px; cursor: pointer; border: 1px solid transparent; }
+  .btn-green:hover { opacity: .85; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <div class="page-title">ETF <strong>Admin</strong></div>
+    <div class="page-subtitle">ETF universe · {{ etfs|length }} tickers · {{ pension_funds|length }} pension funds</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- Section 1: ETF Universe                                                   -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="admin-section">
+
+  <div class="admin-body">
+
+    <!-- Left: Add ETF form + DB stats -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+
+      <div class="add-form-bar" style="position:sticky;top:calc(var(--nav-h) + 12px)">
+        <div class="add-form-bar-label">Add ETF to Universe</div>
+        <form method="post" action="/admin/add_etf">
+          <div class="add-form-field">
+            <label>Ticker</label>
+            <input class="form-input" type="text" name="ticker" placeholder="VWRP.L" required
+                   style="text-transform:uppercase">
+          </div>
+          <div class="add-form-field">
+            <label>Name</label>
+            <input class="form-input" type="text" name="name" placeholder="Vanguard FTSE All-World">
+          </div>
+          <div class="add-form-field">
+            <label>Sector</label>
+            <select class="form-select" name="sector">
+              {% for s in sectors %}
+              <option value="{{ s }}">{{ sector_labels[s] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="add-form-field">
+            <label>Benchmark</label>
+            <input class="form-input" type="text" name="benchmark_ticker" value="{{ base_ticker }}">
+          </div>
+          <div class="add-form-field">
+            <label>Display Order</label>
+            <input class="form-input" type="number" name="display_order" value="99" min="1" max="999">
+          </div>
+          <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:4px">+ Add</button>
+        </form>
+      </div>
+
+      <div class="add-form-bar" style="position:static">
+        <div class="add-form-bar-label">Database</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;justify-content:space-between;font-size:.70rem"><span class="dim">Price rows</span><span>{{ db_stats.price_rows }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.70rem"><span class="dim">Date range</span><span style="font-size:.64rem">{{ db_stats.date_min }} → {{ db_stats.date_max }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.70rem"><span class="dim">Signal rows</span><span>{{ db_stats.signal_rows }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.70rem"><span class="dim">Model version</span><span style="color:var(--accent)">{{ db_stats.model_version }}</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right: ETF tiles -->
+    <div>
+      <div class="admin-section-hd" style="margin-bottom:10px">
+        <div>
+          <div class="page-title" style="font-size:1.05rem">ETF <strong>Universe</strong></div>
+          <div class="page-subtitle">{{ etfs|length }} tickers registered</div>
+        </div>
+        <div class="sort-bar">
+          <span class="sort-bar-label">Sort</span>
+          <button class="btn btn-sm sort-btn active" data-grid="etf" data-sort="ticker">Ticker</button>
+          <button class="btn btn-sm sort-btn" data-grid="etf" data-sort="sector">Sector</button>
+          <button class="btn btn-sm sort-btn" data-grid="etf" data-sort="status">Status</button>
+          <button class="btn btn-sm sort-btn" data-grid="etf" data-sort="order">Order</button>
+        </div>
+      </div>
+      <div id="etf-grid" class="tile-grid">
+    {% for e in etfs %}
+    {% set st = 'suspended' if e.suspended else ('active' if e.active else 'inactive') %}
+    <div class="admin-tile tile-{{ st }}"
+         data-ticker="{{ e.ticker }}"
+         data-sector="{{ sector_labels.get(e.sector, e.sector or '') }}"
+         data-status="{{ '1' if e.suspended else ('0' if e.active else '2') }}"
+         data-order="{{ e.display_order or 0 }}">
+
+      <div class="tile-hd">
+        <div class="tile-hd-left">
+          <div class="tile-primary">
+            {% if e.suspended %}
+              <span class="status-dot dot-suspended"></span>
+            {% elif e.active %}
+              <span class="status-dot dot-active"></span>
+            {% else %}
+              <span class="status-dot dot-inactive"></span>
+            {% endif %}
+            {{ e.ticker }}
+          </div>
+          <div class="tile-secondary">{{ e.name or '—' }}</div>
+        </div>
+      </div>
+
+      <div class="tile-meta">
+        <span class="sector-tag">{{ sector_labels.get(e.sector, e.sector or '—') }}</span>
+        <span class="tile-tag">{{ e.benchmark_ticker or base_ticker }}</span>
+        <span class="tile-tag">Ord {{ e.display_order }}</span>
+        {% if e.suspended %}
+          <span class="tile-tag" style="color:var(--yellow);border-color:var(--sig-ea-bd)">SUSP</span>
+        {% elif not e.active %}
+          <span class="tile-tag" style="color:var(--text3)">EXCLUDED</span>
+        {% endif %}
+      </div>
+
+      <div class="tile-actions">
+        {% if e.suspended %}
+        <form method="post" action="/admin/unsuspend" style="margin:0">
+          <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <button class="btn btn-sm" style="color:var(--yellow);border-color:var(--sig-ea-bd)">Reinstate</button>
+        </form>
+        {% else %}
+        <form method="post" action="/admin/suspend" style="margin:0">
+          <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <button class="btn btn-sm btn-danger">Suspend</button>
+        </form>
+        {% endif %}
+        {% if e.active and not e.suspended %}
+        <form method="post" action="/admin/deactivate" style="margin:0">
+          <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <button class="btn btn-sm">Exclude</button>
+        </form>
+        {% elif not e.active %}
+        <form method="post" action="/admin/activate" style="margin:0">
+          <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <button class="btn btn-sm" style="color:var(--green);border-color:var(--sig-sb-bd)">Include</button>
+        </form>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+    </div><!-- /etf-grid -->
+    </div><!-- /right col -->
+  </div><!-- /admin-body -->
+
+</div><!-- /admin-section ETF -->
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- Section 2: Pension Funds                                                  -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="admin-section" style="padding-top:8px">
+
+  <div class="admin-body">
+
+    <!-- Left: Add fund form -->
+    <div>
+      <div class="add-form-bar">
+        <div class="add-form-bar-label">Add Pension Fund</div>
+        <form method="POST" action="/admin/add-fund">
+          <div class="add-form-field">
+            <label>Short code</label>
+            <input class="form-input" type="text" name="code" placeholder="LG-GLOB-EQ" required
+                   style="text-transform:uppercase" pattern="[A-Za-z0-9-]+"
+                   title="Letters, numbers and hyphens only">
+          </div>
+          <div class="add-form-field">
+            <label>Full name</label>
+            <input class="form-input" type="text" name="name" placeholder="L&amp;G PMC Global Equity" required>
+          </div>
+          <button type="submit" class="btn btn-green" style="width:100%;justify-content:center;margin-top:4px">+ Add Fund</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right: Fund tiles -->
+    <div>
+      <div class="admin-section-hd" style="margin-bottom:10px">
+        <div>
+          <div class="page-title" style="font-size:1.05rem">Pension Funds <strong>&amp; Proxy Mappings</strong></div>
+          <div class="page-subtitle">{{ pension_funds|length }} fund{{ 's' if pension_funds|length != 1 }} defined</div>
+        </div>
+        <div class="sort-bar">
+          <span class="sort-bar-label">Sort</span>
+          <button class="btn btn-sm sort-btn active" data-grid="pf" data-sort="code">Code</button>
+          <button class="btn btn-sm sort-btn" data-grid="pf" data-sort="name">Name</button>
+          <button class="btn btn-sm sort-btn" data-grid="pf" data-sort="count">Proxies</button>
+        </div>
+      </div>
+      <div id="pf-grid" class="tile-grid">
+    {% if not pension_funds %}
+    <p style="font-family:var(--sans);font-size:.72rem;color:var(--text3);grid-column:1/-1;padding:8px 0">
+      No pension funds defined yet.
+    </p>
+    {% else %}
+    {% for f in pension_funds %}
+    <div class="admin-tile tile-active"
+         data-code="{{ f.code }}"
+         data-name="{{ f.name|lower }}"
+         data-count="{{ f.tickers|length }}">
+
+      <div class="tile-hd">
+        <div class="tile-hd-left">
+          <div class="tile-primary">{{ f.code }}</div>
+          <div class="tile-secondary">{{ f.name }}</div>
+        </div>
+        <form method="POST" action="/admin/remove-fund" style="margin:0;flex-shrink:0">
+          <input type="hidden" name="fund_id" value="{{ f.id }}">
+          <button type="submit" class="btn btn-sm btn-danger" style="padding:2px 7px;font-size:.58rem"
+                  onclick="return confirm('Delete {{ f.code }} and all its proxy mappings?')">✕</button>
+        </form>
+      </div>
+
+      <div class="chip-row">
+        {% if f.tickers %}
+          {% for t in f.tickers|sort %}
+          <form method="POST" action="/admin/remove-proxy" style="margin:0">
+            <input type="hidden" name="fund_id" value="{{ f.id }}">
+            <input type="hidden" name="ticker" value="{{ t }}">
+            <button type="submit" class="proxy-chip" title="Click to remove {{ t }}">{{ t }}</button>
+          </form>
+          {% endfor %}
+        {% else %}
+          <span style="font-family:var(--sans);font-size:.62rem;color:var(--text3);font-style:italic">No proxies mapped</span>
+        {% endif %}
+      </div>
+
+      <div class="tile-add-row">
+        <select name="ticker" class="tile-select" id="sel-{{ f.id }}">
+          <option value="">— add proxy —</option>
+          {% for e in etfs|sort(attribute='ticker') %}
+          {% if e.active %}
+          <option value="{{ e.ticker }}">{{ e.ticker }}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+        <form method="POST" action="/admin/add-proxy" style="margin:0;display:contents">
+          <input type="hidden" name="fund_id" value="{{ f.id }}">
+          <input type="hidden" name="ticker" id="hid-{{ f.id }}" value="">
+          <button type="submit" class="btn btn-sm btn-green"
+                  onclick="document.getElementById('hid-{{ f.id }}').value=document.getElementById('sel-{{ f.id }}').value">+</button>
+        </form>
+      </div>
+
+    </div>
+    {% endfor %}
+    {% endif %}
+    </div><!-- /pf-grid -->
+    </div><!-- /right col -->
+  </div><!-- /admin-body -->
+
+</div><!-- /admin-section pension funds -->
+
+<script>
+(function(){
+  // ── Generic tile grid sort ──────────────────────────────────────────────────
+  function initTileSort(gridId) {
+    const grid = document.getElementById(gridId);
+    if(!grid) return;
+    let sortKey = null, sortAsc = true;
+
+    function sort(key) {
+      if(sortKey === key) sortAsc = !sortAsc; else { sortKey = key; sortAsc = true; }
+      const tiles = Array.from(grid.querySelectorAll('.admin-tile'));
+      tiles.sort((a,b) => {
+        let av = a.dataset[key] || '', bv = b.dataset[key] || '';
+        const an = parseFloat(av), bn = parseFloat(bv);
+        const cmp = !isNaN(an) && !isNaN(bn) ? an - bn : av.localeCompare(bv);
+        return sortAsc ? cmp : -cmp;
+      });
+      tiles.forEach(t => grid.appendChild(t));
+      document.querySelectorAll(`.sort-btn[data-grid="${gridId.replace('-grid','')}"]`).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sort === key);
+      });
+    }
+
+    document.querySelectorAll(`.sort-btn[data-grid="${gridId.replace('-grid','')}"]`).forEach(btn => {
+      btn.addEventListener('click', () => sort(btn.dataset.sort));
+    });
+
+    // apply default
+    const defaultBtn = document.querySelector(`.sort-btn[data-grid="${gridId.replace('-grid','')}"].active`);
+    if(defaultBtn) { sortKey = defaultBtn.dataset.sort; sort(sortKey); }
+  }
+
+  initTileSort('etf-grid');
+  initTileSort('pf-grid');
+})();
+</script>
+
+{% endblock %}

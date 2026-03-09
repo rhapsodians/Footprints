@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Page wrapper ── */
+  .lp-wrap {
+    padding: 36px 32px 60px;
+    max-width: 1100px;
+  }
+
+  /* ── Hero header ── */
+  .lp-hero { margin-bottom: 36px; }
+
+  .lp-hero-name {
+    font-family: var(--sans);
+    font-size: 1.85rem;
+    font-weight: 300;
+    color: var(--text);
+    letter-spacing: -.01em;
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .lp-hero-name strong { font-weight: 500; }
+
+  .lp-hero-desc {
+    font-family: var(--sans);
+    font-size: .82rem;
+    color: var(--text2);
+    margin-bottom: 14px;
+  }
+
+  .lp-hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: .60rem;
+    letter-spacing: .07em;
+    color: var(--text3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 10px;
+  }
+  .lp-hero-tag .tag-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: .7;
+    flex-shrink: 0;
+  }
+  .lp-hero-tag .tag-sep { opacity: .3; }
+
+  /* ── Main two-column layout ── */
+  .lp-layout {
+    display: grid;
+    grid-template-columns: 1fr 268px;
+    gap: 24px;
+    align-items: start;
+  }
+  @media(max-width:860px) { .lp-layout { grid-template-columns: 1fr; } }
+
+  /* ── Section label ── */
+  .lp-section-label {
+    font-family: var(--sans);
+    font-size: .65rem;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  /* ── Nav cards grid ── */
+  .lp-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  @media(max-width:560px) { .lp-cards { grid-template-columns: 1fr; } }
+
+  a.lp-card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border2);
+    border-radius: 4px;
+    padding: 16px 16px 14px;
+    text-decoration: none;
+    transition: background .15s, border-color .15s, transform .12s, box-shadow .15s;
+  }
+  a.lp-card:hover {
+    background: var(--surface2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,.18);
+  }
+
+  /* Accent colours per card */
+  a.lp-card.card-green  { border-left-color: var(--sig-sb); }
+  a.lp-card.card-green:hover  { border-color: var(--sig-sb-bd); border-left-color: var(--sig-sb); }
+  a.lp-card.card-blue   { border-left-color: var(--sig-ah); }
+  a.lp-card.card-blue:hover   { border-color: var(--sig-ah-bd); border-left-color: var(--sig-ah); }
+  a.lp-card.card-neutral { border-left-color: var(--border2); }
+  a.lp-card.card-neutral:hover { border-color: var(--border2); }
+
+  .lp-card-glyph {
+    font-family: var(--mono);
+    font-size: .58rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    color: var(--text3);
+    margin-bottom: 9px;
+  }
+  .lp-card-title {
+    font-family: var(--sans);
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .lp-card-desc {
+    font-family: var(--sans);
+    font-size: .70rem;
+    color: var(--text2);
+    line-height: 1.45;
+  }
+
+  /* ── Signal summary panel ── */
+  .sp {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px 16px 16px;
+  }
+  .sp-meta {
+    font-family: var(--mono);
+    font-size: .58rem;
+    color: var(--text3);
+    letter-spacing: .04em;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sp-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 12px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    border: 1px solid transparent;
+    transition: filter .12s;
+    cursor: default;
+  }
+  .sp-row:hover { filter: brightness(1.08); }
+  .sp-lbl {
+    font-family: var(--sans);
+    font-size: .68rem;
+    font-weight: 400;
+  }
+  .sp-cnt {
+    font-family: var(--mono);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .sp-empty {
+    font-family: var(--sans);
+    font-size: .70rem;
+    color: var(--text3);
+    text-align: center;
+    padding: 12px 0;
+  }
+
+  .recompute-form {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lp-wrap">
+
+  <!-- ① Hero -->
+  <div class="lp-hero">
+    <div class="lp-hero-name">Institutional <strong>Footprints</strong></div>
+    <div class="lp-hero-desc">Weekly ETF rotation engine &middot; L&amp;G Pension Fund Universe</div>
+    <div class="lp-hero-tag">
+      <span class="tag-dot"></span>
+      <span>{{ model_version }}</span>
+      <span class="tag-sep">·</span>
+      <span>as of {{ as_of }}</span>
+    </div>
+  </div>
+
+  <div class="lp-layout">
+
+    <!-- ② Nav cards -->
+    <div>
+      <div class="lp-section-label">Navigate</div>
+      <div class="lp-cards">
+
+        <a class="lp-card card-blue" href="/entry">
+          <div class="lp-card-glyph">ENTRY</div>
+          <div class="lp-card-title">Entry Form</div>
+          <div class="lp-card-desc">Enter weekly OHLCV data from LSEG Workspace</div>
+        </a>
+
+        <a class="lp-card card-green" href="/dashboard">
+          <div class="lp-card-glyph">DASH</div>
+          <div class="lp-card-title">Dashboard</div>
+          <div class="lp-card-desc">Signal cards with sparklines and detail panel</div>
+        </a>
+
+        <a class="lp-card card-green" href="/heatmap">
+          <div class="lp-card-glyph">MAP</div>
+          <div class="lp-card-title">Heatmap</div>
+          <div class="lp-card-desc">All ETFs &times; all KPIs in a colour-coded table</div>
+        </a>
+
+        <a class="lp-card card-neutral" href="/history">
+          <div class="lp-card-glyph">LOG</div>
+          <div class="lp-card-title">History</div>
+          <div class="lp-card-desc">Signal change log and database coverage</div>
+        </a>
+
+        <a class="lp-card card-neutral" href="/guide">
+          <div class="lp-card-glyph">GUIDE</div>
+          <div class="lp-card-title">KPI Guide</div>
+          <div class="lp-card-desc">Plain-English guide to every signal and metric</div>
+        </a>
+
+        <a class="lp-card card-neutral" href="/admin">
+          <div class="lp-card-glyph">ADMIN</div>
+          <div class="lp-card-title">Admin</div>
+          <div class="lp-card-desc">Add or exclude ETFs, import LSEG history</div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- ③ Signal summary -->
+    <div>
+      <div class="lp-section-label">Signal Summary</div>
+      <div class="sp">
+        <div class="sp-meta">{{ n_active }} active ETFs &middot; {{ as_of }}</div>
+
+        {% set sig_cfg = [
+          ('STRONG BUY',        'var(--sig-sb-bg)', 'var(--sig-sb)', 'var(--sig-sb-bd)'),
+          ('EARLY ACCUMULATION','var(--sig-ea-bg)', 'var(--sig-ea)', 'var(--sig-ea-bd)'),
+          ('ACCUMULATING/HOLD', 'var(--sig-ah-bg)', 'var(--sig-ah)', 'var(--sig-ah-bd)'),
+          ('NEUTRAL',           'transparent',      'var(--text2)',  'var(--border)'),
+          ('EXIT/DISTRIBUTION', 'var(--sig-ex-bg)', 'var(--sig-ex)', 'var(--sig-ex-bd)'),
+        ] %}
+
+        {% set ns = namespace(has=false) %}
+        {% for label, bg, fg, bd in sig_cfg %}
+          {% if sig_counts.get(label, 0) > 0 %}{% set ns.has = true %}{% endif %}
+        {% endfor %}
+
+        {% if ns.has %}
+          {% for label, bg, fg, bd in sig_cfg %}
+            {% set cnt = sig_counts.get(label, 0) %}
+            {% if cnt > 0 %}
+            <div class="sp-row" style="background:{{ bg }};border-color:{{ bd }}">
+              <span class="sp-lbl" style="color:{{ fg }}">{{ label }}</span>
+              <span class="sp-cnt" style="color:{{ fg }}">{{ cnt }}</span>
+            </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="sp-empty">No signals computed yet</div>
+        {% endif %}
+
+        {% if sig_counts.get('NO DATA', 0) > 0 %}
+        <div class="sp-row" style="border-color:var(--border)">
+          <span class="sp-lbl" style="color:var(--text3)">NO DATA</span>
+          <span class="sp-cnt" style="color:var(--text3)">{{ sig_counts['NO DATA'] }}</span>
+        </div>
+        {% endif %}
+
+        <div class="recompute-form">
+          <form method="post" action="/recompute">
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+              ↻ &nbsp;Recompute Signals
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

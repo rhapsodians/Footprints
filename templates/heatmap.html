@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+{% block title %}KPI Heatmap{% endblock %}
+
+{% block head %}
+<style>
+/* ── Control band (fund filter + sort + legend) ── */
+.hm-controls{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px}
+.hm-ctrl-row{display:flex;align-items:center;gap:8px;padding:7px 0;flex-wrap:wrap}
+.hm-ctrl-row+.hm-ctrl-row{border-top:1px solid var(--border)}
+.ctrl-lbl{font-family:var(--mono);font-size:.54rem;font-weight:600;letter-spacing:.10em;color:var(--text3);white-space:nowrap;width:88px;flex-shrink:0;text-transform:uppercase}
+.ctrl-chips{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+/* Unified chip style — used for both fund and sort */
+.chip{font-family:var(--mono);font-size:.60rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:3px 9px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap;line-height:1.4}
+.chip:hover{border-color:var(--border2);color:var(--text)}
+.chip.on,.chip.active{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
+/* Legacy aliases so JS still works */
+.sb{font-family:var(--mono);font-size:.60rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:3px 9px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap;line-height:1.4}
+.sb:hover{border-color:var(--border2);color:var(--text)}
+.sb.active{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
+.hm-fchip{font-family:var(--mono);font-size:.60rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:3px 9px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap;line-height:1.4}
+.hm-fchip:hover{border-color:var(--border2);color:var(--text)}
+.hm-fchip.on{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
+/* Legend */
+.legend{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap;padding-left:16px;border-left:1px solid var(--border)}
+.li{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:.56rem;color:var(--text3)}
+.ls{width:18px;height:7px;border-radius:2px}
+/* ETF heatmap section header */
+.etf-section-hdr{display:flex;align-items:center;gap:10px;padding:12px 28px 0;font-family:var(--mono);font-size:.55rem;font-weight:600;color:var(--text3);letter-spacing:.10em}
+.etf-section-hdr-line{flex:1;height:1px;background:var(--border)}
+.etf-section-meta{font-size:.52rem;font-weight:400;color:var(--text3);letter-spacing:.04em;margin-left:4px}
+/* fund bar legacy — hidden, chips moved into control band */
+.hm-fund-bar{display:none!important}
+.fund-tag-hm{display:inline-block;font-family:var(--mono);font-size:.47rem;color:var(--accent);border:1px solid var(--accent);border-radius:2px;padding:1px 3px;margin:1px;opacity:.7}
+.hm-outer{padding:4px 28px 60px}
+.hm-wrap{overflow:auto;max-height:calc(100vh - 230px);border:1px solid var(--border);border-radius:4px}
+.hm-table{width:100%;border-collapse:collapse;min-width:1400px}
+.hm-table thead th{font-family:var(--mono);font-size:.56rem;color:var(--text3);letter-spacing:.05em;text-align:center;padding:6px 5px;white-space:nowrap;position:sticky;top:0;background:var(--bg);z-index:10;box-shadow:0 2px 0 var(--border)}
+.hm-table thead th.thl{text-align:left}
+.etf-row td{padding:2px 3px;border-bottom:1px solid var(--border);vertical-align:middle}
+.hm-table tbody tr:last-child td{border-bottom:none}
+.ct{font-family:var(--mono);font-size:.70rem;font-weight:600;color:var(--text);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap}
+.cn{font-family:var(--mono);font-size:.60rem;color:var(--text2);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap;max-width:165px;overflow:hidden;text-overflow:ellipsis}
+.cat{font-family:var(--mono);font-size:.58rem;color:var(--text3);background:var(--surface);border-radius:3px;padding:5px 7px;white-space:nowrap}
+.hc{padding:4px 3px;border-radius:3px;text-align:center;vertical-align:middle;font-family:var(--mono);font-size:.66rem;font-weight:500;min-width:48px;white-space:nowrap;cursor:help}
+.hc .v{display:block;line-height:1}.hc .s{display:block;font-size:.50rem;opacity:.65;margin-top:2px}
+.sc{min-width:100px;font-size:.56rem;letter-spacing:.01em;padding:4px 5px}
+.md{display:flex;justify-content:center;gap:2px;align-items:center}
+.md div{width:7px;height:7px;border-radius:2px}
+.hi-5{background:rgba(0,200,150,.55);color:#002a1c}.hi-4{background:rgba(0,200,150,.38);color:#003d2a}
+.hi-3{background:rgba(0,200,150,.22);color:var(--green)}.hi-2{background:rgba(0,200,150,.12);color:var(--green)}
+.hi-1{background:rgba(0,200,150,.06);color:var(--green)}.hi-0{background:var(--surface);color:var(--text2)}
+.lo-1{background:rgba(255,77,106,.06);color:var(--red)}.lo-2{background:rgba(255,77,106,.12);color:var(--red)}
+.lo-3{background:rgba(255,77,106,.22);color:var(--red)}.lo-4{background:rgba(255,77,106,.38);color:var(--red)}
+.lo-5{background:rgba(255,77,106,.55);color:#3d0010}
+.lq-5{background:rgba(160,170,185,.55);color:#0a0c0f}.lq-4{background:rgba(160,170,185,.35);color:var(--text)}
+.lq-3{background:rgba(160,170,185,.20);color:var(--text)}.lq-2{background:rgba(160,170,185,.11);color:var(--text2)}
+.lq-1{background:rgba(160,170,185,.05);color:var(--text2)}.lq-0{background:var(--surface);color:var(--text3)}
+.tl-badge{display:inline-block;font-size:.56rem;font-weight:600;font-family:var(--mono);padding:1px 4px;border-radius:3px;margin-left:3px;vertical-align:middle}
+.tl-hi{background:rgba(0,200,150,.18);color:var(--green)}.tl-mid{background:rgba(0,200,150,.08);color:var(--green)}
+.tl-neu{background:rgba(160,170,185,.12);color:var(--text2)}.tl-lo{background:rgba(255,77,106,.10);color:var(--red)}
+.s-SB{background:var(--sig-sb-bg);color:var(--sig-sb);border:1px solid var(--sig-sb-bd);font-weight:700}
+.s-EA{background:var(--sig-ea-bg);color:var(--sig-ea);border:1px solid var(--sig-ea-bd);font-weight:700}
+.s-AH{background:var(--sig-ah-bg);color:var(--sig-ah);border:1px solid var(--sig-ah-bd);font-weight:700}
+.s-NT{background:var(--sig-nt-bg);color:var(--sig-nt);border:1px solid var(--sig-nt-bd)}
+.s-EX{background:var(--sig-ex-bg);color:var(--sig-ex);border:1px solid var(--sig-ex-bd);font-weight:700}
+.ct-link{padding:2px 4px;background:var(--surface);border-radius:3px;text-align:center;vertical-align:middle;width:24px}
+.dash-link{font-size:.75rem;color:var(--text3);text-decoration:none;display:block;padding:3px 4px;border-radius:3px;transition:color .12s}
+.dash-link:hover{color:var(--accent)}
+.hth{cursor:pointer;user-select:none;transition:color .12s}
+.hth:hover,.hth.active{color:var(--accent)}
+.ktt{position:fixed;z-index:960;max-width:300px;min-width:190px;background:var(--surface);border:1px solid var(--accent);border-radius:5px;padding:10px 12px;box-shadow:0 8px 32px rgba(0,0,0,.45);pointer-events:none;display:none}
+.ktt.show{display:block}
+.ktt-hdr{font-family:var(--mono);font-size:.62rem;font-weight:700;color:var(--text);letter-spacing:.06em;margin-bottom:3px}
+.ktt-sub{font-family:var(--mono);font-size:.52rem;color:var(--text3);margin-bottom:4px}
+.ktt-def{font-size:.67rem;color:var(--text2);line-height:1.5;margin-bottom:7px}
+.ktt-ctx{font-family:var(--mono);font-size:.62rem;padding:5px 7px;border-radius:3px;line-height:1.4;white-space:pre-line}
+.ktt-ctx.pos{background:var(--green-dim);color:var(--green)}
+.ktt-ctx.neg{background:var(--red-dim);color:var(--red)}
+.ktt-ctx.neu{background:var(--surface2);color:var(--text2)}
+.ktt-ctx.warn{background:var(--yellow-dim);color:var(--yellow)}
+
+/* ── Sector heatmap strip ── */
+.sec-hm-wrap{padding:12px 28px 0;border-bottom:1px solid var(--border)}
+.sec-hm-hdr{font-family:var(--mono);font-size:.55rem;font-weight:600;color:var(--text3);letter-spacing:.10em;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.sec-hm-hdr-line{flex:1;height:1px;background:var(--border)}
+.sec-view-toggle{display:flex;gap:3px;margin-left:6px;flex-shrink:0}
+.sec-vbtn{font-family:var(--mono);font-size:.52rem;font-weight:600;letter-spacing:.07em;color:var(--text3);background:none;border:1px solid var(--border);border-radius:3px;padding:2px 8px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap}
+.sec-vbtn:hover{border-color:var(--border2);color:var(--text2)}
+.sec-vbtn.active{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
+.sec-hm-grid{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:14px}
+.sec-tile{position:relative;width:220px;flex:0 0 220px;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:11px 12px 10px 15px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.sec-tile:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.sec-tile.sec-active{border-color:var(--accent);outline:2px solid var(--accent);outline-offset:-1px}
+.sec-tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:5px 0 0 5px}
+.sec-tile.srot-5::before{background:rgba(0,200,150,.85)}
+.sec-tile.srot-4::before{background:rgba(0,200,150,.60)}
+.sec-tile.srot-3::before{background:rgba(0,200,150,.32)}
+.sec-tile.srot-2::before{background:var(--border2)}
+.sec-tile.srot-1::before{background:rgba(255,77,106,.32)}
+.sec-tile.srot-0::before{background:rgba(255,77,106,.65)}
+.sec-head-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1px}
+.sec-name{font-family:var(--mono);font-size:.68rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sec-rot{font-family:var(--mono);font-size:.80rem;font-weight:700;line-height:1;flex-shrink:0;margin-left:8px}
+.sec-rot.srot-5,.sec-rot.srot-4,.sec-rot.srot-3{color:var(--green)}
+.sec-rot.srot-2{color:var(--text3)}
+.sec-rot.srot-1,.sec-rot.srot-0{color:var(--red)}
+.sec-sig-bar{display:flex;height:4px;border-radius:2px;overflow:hidden;margin:5px 0 4px;gap:1px}
+.sec-sig-bar div{height:100%;border-radius:1px;min-width:3px}
+.sec-sig-bar .bsb{background:var(--sig-sb)}
+.sec-sig-bar .bea{background:var(--sig-ea)}
+.sec-sig-bar .bah{background:var(--sig-ah)}
+.sec-sig-bar .bnt{background:var(--border2)}
+.sec-sig-bar .bex{background:var(--sig-ex)}
+.sec-etf-list{margin-top:7px;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--border);padding-top:6px}
+.sec-etf-row{display:flex;align-items:flex-start;gap:6px}
+.sec-etf-sig{width:4px;flex-shrink:0;border-radius:2px;margin-top:2px;align-self:stretch;min-height:8px}
+.sec-etf-sig.ssb{background:var(--sig-sb)}.sec-etf-sig.sea{background:var(--sig-ea)}
+.sec-etf-sig.sah{background:var(--sig-ah)}.sec-etf-sig.snt{background:var(--border2)}
+.sec-etf-sig.sex{background:var(--sig-ex)}
+.sec-etf-body{flex:1;min-width:0}
+.sec-etf-ticker{font-family:var(--mono);font-size:.63rem;font-weight:600;color:var(--text);line-height:1.2}
+.sec-etf-name{font-family:var(--mono);font-size:.52rem;color:var(--text2);line-height:1.3;white-space:normal;word-break:break-word}
+.sec-etf-funds{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px}
+.sec-fund-tag{font-family:var(--mono);font-size:.44rem;font-weight:600;color:var(--accent);background:var(--blue-dim);border:1px solid rgba(74,158,255,.25);border-radius:2px;padding:1px 3px;white-space:nowrap;letter-spacing:.02em}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <div class="page-title">KPI <strong>Heatmap</strong></div>
+    <div class="page-subtitle">All signals &amp; metrics at a glance · colour intensity = magnitude · as of {{ as_of_date or "—" }}</div>
+  </div>
+</div>
+
+
+<!-- ── SECTOR HEATMAP STRIP ── -->
+<div class="sec-hm-wrap" id="sec-hm-wrap">
+  <div class="sec-hm-hdr">
+    SECTOR OVERVIEW
+    <div class="sec-hm-hdr-line"></div>
+    <div class="sec-view-toggle">
+      <button class="sec-vbtn active" id="sec-btn-all"  onclick="secView('all')">ALL ETFs</button>
+      <button class="sec-vbtn"        id="sec-btn-prox" onclick="secView('proxy')">PENSION PROXIES</button>
+    </div>
+  </div>
+  <div class="sec-hm-grid" id="sec-hm-grid"></div>
+</div>
+
+<!-- hidden legacy target — fund chips rendered inside .hm-controls instead -->
+<div class="hm-fund-bar" id="hm-fund-bar" style="display:none"></div>
+
+<!-- ── UNIFIED CONTROL BAND ── -->
+<div class="hm-controls">
+  <!-- Row 1: Pension fund filter -->
+  <div class="hm-ctrl-row" id="hm-fund-row">
+    <span class="ctrl-lbl">FUND FILTER</span>
+    <div class="ctrl-chips" id="hm-fund-chips">
+      <!-- populated by JS -->
+      <span style="font-family:var(--mono);font-size:.57rem;color:var(--text3);padding:3px 0">—</span>
+    </div>
+    <div class="legend">
+      <div class="li"><div class="ls" style="background:rgba(0,200,150,.50)"></div>Strong +</div>
+      <div class="li"><div class="ls" style="background:rgba(0,200,150,.14)"></div>Mild +</div>
+      <div class="li"><div class="ls" style="background:var(--surface);border:1px solid var(--border)"></div>Neutral</div>
+      <div class="li"><div class="ls" style="background:rgba(255,77,106,.14)"></div>Mild −</div>
+      <div class="li"><div class="ls" style="background:rgba(255,77,106,.50)"></div>Strong −</div>
+    </div>
+  </div>
+  <!-- Row 2: Sort -->
+  <div class="hm-ctrl-row">
+    <span class="ctrl-lbl">SORT BY</span>
+    <div class="ctrl-chips">
+      <button class="sb active" onclick="doSort('signal',this)">SIGNAL</button>
+      <button class="sb" onclick="doSort('rotation',this)">ROTATION</button>
+      <button class="sb" onclick="doSort('rs20va',this)">RS VOL-ADJ</button>
+      <button class="sb" onclick="doSort('rsaccel',this)">RS ACCEL</button>
+      <button class="sb" onclick="doSort('pressure',this)">PRESSURE</button>
+      <button class="sb" onclick="doSort('turnover',this)">TURNOVER</button>
+      <button class="sb" onclick="doSort('trend',this)">TREND</button>
+      <button class="sb" onclick="doSort('confidence',this)">CONFIDENCE</button>
+      <button class="sb" onclick="doSort('ticker',this)">TICKER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ETF HEATMAP SECTION HEADER ── -->
+<div class="etf-section-hdr">
+  ETF HEATMAP
+  <span class="etf-section-meta" id="etf-section-count"></span>
+  <div class="etf-section-hdr-line"></div>
+</div>
+
+<div class="hm-outer">
+<div class="hm-wrap">
+<table class="hm-table" id="ht">
+  <thead><tr>
+    <th class="thl"></th>
+    <th class="thl hth" onclick="doSort('ticker',this)">TICKER ⇅</th>
+    <th class="thl hth" onclick="doSort('name',this)">NAME ⇅</th>
+    <th class="thl hth" onclick="doSort('fund',this)">FUND ⇅</th>
+    <th class="thl hth" onclick="doSort('sector',this)">SECTOR ⇅</th>
+    <th class="hth" onclick="doSort('signal',this)">SIGNAL ⇅</th>
+    <th class="hth" onclick="doSort('rotation',this)">ROTATION ⇅</th>
+    <th class="hth" onclick="doSort('confidence',this)">CONF ⇅</th>
+    <th class="hth" onclick="doSort('trend',this)">TREND ⇅</th>
+    <th class="hth" onclick="doSort('rs20va',this)">RS20 V-ADJ ⇅</th>
+    <th class="hth" onclick="doSort('rsaccel',this)">RS ACCEL ⇅</th>
+    <th class="hth" onclick="doSort('rs20raw',this)">RS20% ⇅</th>
+    <th class="hth" onclick="doSort('pressure',this)">PRESSURE ⇅</th>
+    <th class="hth" onclick="doSort('ppw',this)">PRESS WKS% ⇅</th>
+    <th class="hth" onclick="doSort('turnover',this)">TURN RATIO ⇅</th>
+    <th class="hth" onclick="doSort('turnz',this)">TURN Z ⇅</th>
+    <th class="hth" onclick="doSort('size',this)">AVG TURN ⇅</th>
+    <th class="hth">LATEST TURN</th>
+  </tr></thead>
+  <tbody id="hb"></tbody>
+</table>
+</div><!-- /hm-wrap -->
+</div><!-- /hm-outer -->
+
+<div id="ktt" class="ktt">
+  <div class="ktt-hdr" id="ktt-hdr"></div>
+  <div class="ktt-sub" id="ktt-sub"></div>
+  <div class="ktt-def" id="ktt-def"></div>
+  <div class="ktt-ctx" id="ktt-ctx"></div>
+</div>
+
+<script>
+const DATA = {{ rows_js|safe }};
+const SL   = {{ sector_labels|tojson }};
+const PF   = {{ fund_map_js|safe }};
+const SO   = {'STRONG BUY':0,'EARLY ACCUMULATION':1,'ACCUMULATING/HOLD':2,'NEUTRAL':3,'EXIT/DISTRIBUTION':4};
+let curSort='signal', sortDir=1, hmFund=null, activeSector=null;
+
+const HM_KPI = {
+  signal:   {name:'SIGNAL',            def:'Composite signal from all KPI groups. Driven by rotation score, trend, pressure, RS. See Guide for exact conditions.'},
+  rotation: {name:'ROTATION SCORE',    def:'Weighted composite 0–100: 18% trend, 22% vol-adj RS20, 15% RS accel rank, 15% turnover rank, 15% pressure rank, 10% pressure positive weeks%, 5% sector confirmation.'},
+  conf:     {name:'CONFIDENCE',        def:'Signal reliability 0–100: 30% liquidity (vs £5M/wk), 20% history depth (vs 100w), 15% turnover stability, 20% sector confirmation, 15% data completeness. HIGH≥75, MODERATE 50–74, LOW<50.'},
+  trend:    {name:'TREND SCORE',       def:'Score 0–4: (1) Close>MA20 (2) Close>MA100 (3) MA20>MA100 (4) MA100 now > MA100 20w ago. Requires 100 weeks of price data.'},
+  rs20va:   {name:'RS20 VOL-ADJ RANK', def:'(20w ETF return minus VWRP.L return) ÷ 20w realised volatility, cross-sectionally ranked 0–100pct. Primary RS input — filters out high-vol sleeves distorting raw RS ranks.'},
+  rsaccel:  {name:'RS ACCEL RANK',     def:'(RS4 raw − RS12 raw) ÷ vol_20w, ranked 0–100pct. Measures whether benchmark-relative outperformance is accelerating or decelerating.'},
+  rs20raw:  {name:'RS20% (RAW)',        def:"ETF 20w return minus VWRP.L 20w return. Positive = outperforming the global market. Retained alongside vol-adj rank for interpretability."},
+  pressure: {name:'PRESSURE 20W',      def:'Sum of (CLV × £turnover) over 20 weeks. CLV = ((close−low)−(high−close))/(high−low). Positive = net accumulation; negative = distribution.'},
+  ppw:      {name:'PRESSURE WEEKS%',   def:'% of the last 20 weeks where signed pressure was positive. 100% = every week showed net accumulation at the weekly close.'},
+  turnratio:{name:'TURNOVER RATIO',    def:'20w average £ turnover ÷ 100w average £ turnover. Above 1.0 = participation expanding vs long-term baseline — rising institutional interest.'},
+  turnz:    {name:'TURNOVER Z-SCORE',  def:'(Latest week £ volume − 100w mean) ÷ 100w std dev. Measures weekly abnormality vs history. Winsorised at 2nd/98th pct before ranking.'},
+  turn:     {name:'AVG WEEKLY TURN',   def:'Mean £ value traded per week over last 20 weeks (close_GBP × volume). Drives liquidity component of confidence score. ≥£5M/wk = institutional grade.'}
+};
+
+function hmCtx(key,val){
+  const fc=(n,d=2)=>n==null||isNaN(n)?'—':n.toLocaleString('en-GB',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const fC=n=>{if(n==null||isNaN(n))return'£0';const a=Math.abs(n),s=n<0?'-':'+';if(a>=1e9)return s+'£'+fc(a/1e9,1)+'B';if(a>=1e6)return s+'£'+fc(a/1e6,1)+'M';if(a>=1e3)return s+'£'+fc(a/1e3,0)+'K';return s+'£'+fc(a,0);};
+  if(key==='signal'){
+    if(val==='STRONG BUY')return{t:'Rotation ≥72, trend ≥3/4, pressure>0, RS20>0, confidence≥50. All primary conditions satisfied.',c:'pos'};
+    if(val==='EARLY ACCUMULATION')return{t:'Pressure flipped positive (prev 20w ≤0, now >0). RS accel>0, RS4>0, turnover z>0, close<MA100. Early inflection — watch for structural confirmation.',c:'pos'};
+    if(val==='ACCUMULATING/HOLD')return{t:'Rotation ≥60, trend ≥3/4, pressure>0, RS20>0. Constructive but not full confirmation.',c:'neu'};
+    if(val==='NEUTRAL')return{t:'Mixed evidence. No clear institutional directional bias. Wait for conditions to clarify.',c:'neu'};
+    if(val==='EXIT/DISTRIBUTION')return{t:'Rotation <35, trend ≤2/4, pressure<0, RS20<0. Institutional selling dominant.',c:'neg'};
+    return{t:'Insufficient history.',c:'neu'};
+  }
+  if(key==='rotation'){
+    const v=parseFloat(val);
+    if(v>=72)return{t:fc(v,1)+' — Strong. Above STRONG BUY threshold (≥72). All component scores healthy.',c:'pos'};
+    if(v>=60)return{t:fc(v,1)+' — Constructive. Above ACCUMULATING/HOLD threshold.',c:'pos'};
+    if(v>=35)return{t:fc(v,1)+' — Neutral zone. Mixed signals across components.',c:'neu'};
+    return{t:fc(v,1)+' — Weak. Below EXIT/DISTRIBUTION threshold.',c:'neg'};
+  }
+  if(key==='conf'){
+    if(val==='HIGH')return{t:'HIGH (≥75). Strong liquidity, deep history (100w+), stable turnover, sector confirmed.',c:'pos'};
+    if(val==='MODERATE')return{t:'MODERATE (50–74). One or more components partially satisfied. Exercise appropriate caution.',c:'neu'};
+    if(val==='LOW')return{t:'LOW (<50). Deficiency: thin history (<100w), low liquidity, unstable turnover, or sector unconfirmed.',c:'neg'};
+    return{t:'Not computed.',c:'neu'};
+  }
+  if(key==='trend'){
+    const parts=String(val).split('|');
+    const score=parseInt(parts[0]),cl=parseFloat(parts[1]),m20=parseFloat(parts[2]),m100=parseFloat(parts[3]);
+    const c1=cl>m20,c2=cl>m100,c3=m20>m100;
+    const c4=(score-(c1?1:0)-(c2?1:0)-(c3?1:0))===1;
+    const T='✓ ',F='✗ ';
+    const chk=(c1?T:F)+'Close>MA20\n'+(c2?T:F)+'Close>MA100\n'+(c3?T:F)+'MA20>MA100\n'+(c4?T:F)+'MA100 rising';
+    const col=score>=3?'pos':score>=2?'neu':'neg';
+    return{t:score+'/4\n\n'+chk,c:col};
+  }
+  if(key==='rs20va'){
+    const v=parseFloat(val);
+    if(v>=80)return{t:fc(v,0)+'pct — Top quintile. Efficient outperformance vs benchmark.',c:'pos'};
+    if(v>=60)return{t:fc(v,0)+'pct — Above median vol-adj RS. Constructive relative leadership.',c:'pos'};
+    if(v>=40)return{t:fc(v,0)+'pct — Around median. No strong relative edge.',c:'neu'};
+    if(v>=20)return{t:fc(v,0)+'pct — Below median. Lagging on volatility-adjusted basis.',c:'warn'};
+    return{t:fc(v,0)+'pct — Bottom quintile. Significant vol-adj underperformance.',c:'neg'};
+  }
+  if(key==='rsaccel'){
+    const v=parseFloat(val);
+    if(v>=80)return{t:fc(v,0)+'pct — RS strongly accelerating. Short-term outperformance well ahead of medium-term.',c:'pos'};
+    if(v>=60)return{t:fc(v,0)+'pct — RS acceleration positive. Relative strength is improving.',c:'pos'};
+    if(v>=40)return{t:fc(v,0)+'pct — Near median. RS momentum broadly flat.',c:'neu'};
+    return{t:fc(v,0)+'pct — RS decelerating. Short-term relative strength lagging medium-term.',c:'neg'};
+  }
+  if(key==='rs20raw'){
+    const v=parseFloat(val);
+    if(v>=10)return{t:'+'+fc(v,2)+'% — Strongly outperforming. Beating global market by '+fc(v,2)+'% over 20w.',c:'pos'};
+    if(v>=3)return{t:'+'+fc(v,2)+'% — Outperforming VWRP.L.',c:'pos'};
+    if(v>=-3)return{t:(v>=0?'+':'')+fc(v,2)+'% — Tracking global market. No significant edge.',c:'neu'};
+    if(v>=-10)return{t:fc(v,2)+'% — Underperforming. Lagging by '+fc(Math.abs(v),2)+'%.',c:'warn'};
+    return{t:fc(v,2)+'% — Significantly underperforming vs global market.',c:'neg'};
+  }
+  if(key==='pressure'){
+    const v=parseFloat(val);
+    if(v>5e7)return{t:fC(v)+' — Very strong sustained accumulation over 20w.',c:'pos'};
+    if(v>2e6)return{t:fC(v)+' — Clear net accumulation. Buying pressure dominant.',c:'pos'};
+    if(v>0)return{t:fC(v)+' — Mild net buying pressure.',c:'pos'};
+    if(v>-2e6)return{t:fC(v)+' — Mild net selling pressure.',c:'warn'};
+    if(v>-5e7)return{t:fC(v)+' — Clear distribution over 20w.',c:'neg'};
+    return{t:fC(v)+' — Heavy sustained distribution.',c:'neg'};
+  }
+  if(key==='ppw'){
+    const v=parseFloat(val);
+    if(v>=90)return{t:fc(v,0)+'% — Exceptional consistency. Positive pressure nearly every week.',c:'pos'};
+    if(v>=70)return{t:fc(v,0)+'% — Good consistency. Accumulation weeks dominant.',c:'pos'};
+    if(v>=50)return{t:fc(v,0)+'% — Marginal net positive. Slightly more accumulation than distribution.',c:'neu'};
+    if(v>=30)return{t:fc(v,0)+'% — Marginal net negative. Distribution weeks more common.',c:'warn'};
+    return{t:fc(v,0)+'% — Mostly distribution. Positive pressure in under 30% of weeks.',c:'neg'};
+  }
+  if(key==='turnratio'){
+    const v=parseFloat(val);
+    if(v>=1.4)return{t:fc(v,2)+'× — Significantly elevated. 20w avg '+Math.round((v-1)*100)+'% above 100w baseline.',c:'pos'};
+    if(v>=1.2)return{t:fc(v,2)+'× — Above average. Participation expanding vs baseline.',c:'pos'};
+    if(v>=0.9)return{t:fc(v,2)+'× — Normal range. In line with the 100w baseline.',c:'neu'};
+    if(v>=0.75)return{t:fc(v,2)+'× — Below average. Participation fading.',c:'warn'};
+    return{t:fc(v,2)+'× — Notably quiet. Well below 100w baseline.',c:'neg'};
+  }
+  if(key==='turnz'){
+    const v=parseFloat(val);
+    if(v>=2)return{t:fc(v,2)+'σ — Highly anomalous this week. Volume well above 100w mean.',c:'pos'};
+    if(v>=0.5)return{t:fc(v,2)+'σ — Moderately elevated this week.',c:'pos'};
+    if(v>=-0.5)return{t:fc(v,2)+'σ — Normal. In line with 100w history.',c:'neu'};
+    if(v>=-2)return{t:fc(v,2)+'σ — Quiet week. Below historical mean.',c:'warn'};
+    return{t:fc(v,2)+'σ — Very quiet. Unusually low volume.',c:'neg'};
+  }
+  if(key==='turn'){
+    const parts=String(val).split('|');
+    const avg=parseFloat(parts[0]),lat=parts.length>1?parseFloat(parts[1]):null;
+    let liq,c;
+    if(avg>=500e6){liq='Ultra-liquid. Massive institutional flows. Signals highly reliable.';c='pos';}
+    else if(avg>=50e6){liq='Very highly liquid. Deep market.';c='pos';}
+    else if(avg>=5e6){liq='Highly liquid. Institutional grade.';c='pos';}
+    else if(avg>=1e6){liq='Moderately liquid. Signals meaningful but can be noisy.';c='neu';}
+    else if(avg>=250e3){liq='Lower liquidity. Signals noisier.';c='warn';}
+    else{liq='Low liquidity. Interpret all signals with caution.';c='neg';}
+    let txt='20W avg: '+fC(avg)+'/wk — '+liq;
+    if(lat!=null&&!isNaN(lat)&&lat>0){
+      const r=lat/avg;
+      txt+='\nLatest: '+fC(lat)+'/wk — '+(r>=1.4?'Significantly above avg ('+r.toFixed(2)+'×).':r>=1.1?'Moderately above avg ('+r.toFixed(2)+'×).':r>=0.85?'In line ('+r.toFixed(2)+'×).':'Below avg ('+r.toFixed(2)+'×).');
+    }
+    return{t:txt,c:c};
+  }
+  return{t:'',c:'neu'};
+}
+
+function _kttPos(e){var tt=document.getElementById('ktt'),pw=tt.offsetWidth||290,ph=tt.offsetHeight||120;var x=e.clientX+18,y=e.clientY-14;if(x+pw>window.innerWidth-8)x=e.clientX-pw-8;if(y+ph>window.innerHeight-8)y=window.innerHeight-ph-8;if(y<8)y=8;tt.style.left=x+'px';tt.style.top=y+'px';}
+function hideKtt(){document.getElementById('ktt').classList.remove('show');}
+function showHmTip(e,key,val,ticker){var info=HM_KPI[key]||{};var ctx=hmCtx(key,val)||{};if(!ctx||!ctx.t)return;document.getElementById('ktt-hdr').textContent=info.name||key;document.getElementById('ktt-sub').textContent=ticker||'';document.getElementById('ktt-def').textContent=info.def||'';var cd=document.getElementById('ktt-ctx');cd.textContent=ctx.t;cd.className='ktt-ctx '+(ctx.c||'neu');document.getElementById('ktt').classList.add('show');_kttPos(e);}
+document.addEventListener('mousemove',function(e){if(document.getElementById('ktt').classList.contains('show'))_kttPos(e);});
+
+function ic(v,t){if(v==null||isNaN(v))return'hi-0';if(v>=t[4])return'hi-5';if(v>=t[3])return'hi-4';if(v>=t[2])return'hi-3';if(v>=t[1])return'hi-2';if(v>=t[0])return'hi-1';if(v>=-t[0])return'hi-0';if(v>=-t[1])return'lo-1';if(v>=-t[2])return'lo-2';if(v>=-t[3])return'lo-3';if(v>=-t[4])return'lo-4';return'lo-5';}
+function pctCls(v){if(v==null||isNaN(v))return'hi-0';if(v>=80)return'hi-5';if(v>=65)return'hi-3';if(v>=50)return'hi-1';if(v>=35)return'hi-0';if(v>=20)return'lo-2';return'lo-4';}
+function rotCls(v){if(v==null||isNaN(v))return'hi-0';if(v>=80)return'hi-5';if(v>=65)return'hi-3';if(v>=50)return'hi-1';if(v>=35)return'hi-0';if(v>=20)return'lo-2';return'lo-4';}
+function confCls(b){if(b==='HIGH')return'hi-3';if(b==='MODERATE')return'hi-1';if(b==='LOW')return'lo-2';return'hi-0';}
+function fc(n,d=2){return(n==null||isNaN(n))?'—':n.toLocaleString('en-GB',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fC(n){if(n==null||isNaN(n))return'£0';const a=Math.abs(n),s=n<0?'-':'+';if(a>=1e9)return s+'£'+fc(a/1e9,1)+'B';if(a>=1e6)return s+'£'+fc(a/1e6,1)+'M';if(a>=1e3)return s+'£'+fc(a/1e3,0)+'K';return s+'£'+fc(a,0);}
+function scls(sig){if(sig==='STRONG BUY')return's-SB';if(sig==='EARLY ACCUMULATION')return's-EA';if(sig==='ACCUMULATING/HOLD')return's-AH';if(sig==='EXIT/DISTRIBUTION')return's-EX';return's-NT';}
+function turnStr(v){if(v==null||isNaN(v))return'—';if(v>=1e9)return'£'+(v/1e9).toFixed(1)+'B';if(v>=1e6)return'£'+(v/1e6).toFixed(1)+'M';return'£'+(v/1e3).toFixed(0)+'K';}
+function lqCls(v){return v>=500e6?'lq-5':v>=50e6?'lq-4':v>=5e6?'lq-3':v>=1e6?'lq-2':v>=250e3?'lq-1':'lq-0';}
+
+function mkRow(e){
+  const t=e.ticker;
+  const ts=e.trend_score_raw!=null?e.trend_score_raw:(e.trend||0);
+  const dots=[0,1,2,3].map(i=>`<div style="background:${ts>i?'var(--green)':'var(--border2)'};width:7px;height:7px;border-radius:2px"></div>`).join('');
+  const fTags=(e.funds||[]).map(fid=>PF[fid]?`<span class="fund-tag-hm" title="${PF[fid].name}">${PF[fid].code}</span>`:'').join('');
+  const avg=e.avg_turn_20w||0, lat=e.turn_latest||0;
+  const r=(avg&&lat)?lat/avg:null;
+  const tlBadge=r?` <span class="${r>=1.4?'tl-hi':r>=1.1?'tl-mid':r>=0.85?'tl-neu':'tl-lo'} tl-badge">${r.toFixed(2)}×</span>`:'';
+  const rs20r=e.rs20_raw!=null?e.rs20_raw:(e.rs20_pct!=null?e.rs20_pct:null);
+  const trendVal=`${ts}|${e.close||0}|${e.ma20||0}|${e.ma100||0}`;
+  return `<td class="ct-link"><a href="/dashboard?open=${encodeURIComponent(t)}" class="dash-link" title="Open in dashboard">↗</a></td>`+
+    `<td class="ct">${t}</td>`+
+    `<td class="cn" title="${e.name||''}">${e.name||'—'}</td>`+
+    `<td class="cat">${fTags||'—'}</td>`+
+    `<td class="cat">${SL[e.sector]||e.sector||'—'}</td>`+
+    `<td class="hc sc ${scls(e.signal)}" onmouseenter="showHmTip(event,'signal','${e.signal}','${t}')" onmouseleave="hideKtt()"><span class="v">${e.signal||'—'}</span></td>`+
+    `<td class="hc ${rotCls(e.rotation_score)}" onmouseenter="showHmTip(event,'rotation',${e.rotation_score||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rotation_score,1)}</span></td>`+
+    `<td class="hc ${confCls(e.confidence_bucket)}" onmouseenter="showHmTip(event,'conf','${e.confidence_bucket||''}','${t}')" onmouseleave="hideKtt()"><span class="v" style="font-size:.57rem">${e.confidence_bucket||'—'}</span></td>`+
+    `<td class="hc ${ts===4?'hi-4':ts===3?'hi-2':ts===2?'hi-0':ts===1?'lo-2':'lo-4'}" onmouseenter="showHmTip(event,'trend','${trendVal}','${t}')" onmouseleave="hideKtt()"><div class="md">${dots}</div><span class="s">${ts!=null?ts+'/4':'—'}</span></td>`+
+    `<td class="hc ${pctCls(e.rs20_vol_adj_rank_pct)}" onmouseenter="showHmTip(event,'rs20va',${e.rs20_vol_adj_rank_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rs20_vol_adj_rank_pct,0)}%</span></td>`+
+    `<td class="hc ${pctCls(e.rs_accel_vol_adj_rank_pct)}" onmouseenter="showHmTip(event,'rsaccel',${e.rs_accel_vol_adj_rank_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rs_accel_vol_adj_rank_pct,0)}%</span></td>`+
+    `<td class="hc ${ic(rs20r,[0.5,2,5,10,15])}" onmouseenter="showHmTip(event,'rs20raw',${rs20r||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${rs20r!=null?(rs20r>0?'+':'')+fc(rs20r,2)+'%':'—'}</span></td>`+
+    `<td class="hc ${ic(e.pressure_20w,[1e4,5e5,2e6,1e7,5e7])}" onmouseenter="showHmTip(event,'pressure',${e.pressure_20w||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fC(e.pressure_20w||0)}</span></td>`+
+    `<td class="hc ${ic((e.pressure_pos_weeks_pct||50)-50,[5,10,20,30,45])}" onmouseenter="showHmTip(event,'ppw',${e.pressure_pos_weeks_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.pressure_pos_weeks_pct,0)}%</span></td>`+
+    `<td class="hc ${ic((e.turnover_ratio_20_100||1)-1,[0.05,0.1,0.2,0.35,0.5])}" onmouseenter="showHmTip(event,'turnratio',${e.turnover_ratio_20_100||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_ratio_20_100,2)}×</span></td>`+
+    `<td class="hc ${ic(e.turnover_z_20,[0.25,0.5,1,2,3])}" onmouseenter="showHmTip(event,'turnz',${e.turnover_z_20||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_z_20,2)}σ</span></td>`+
+    `<td class="hc ${lqCls(avg)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(avg)}</span><span class="s">/ wk</span></td>`+
+    `<td class="hc ${lqCls(lat)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(lat)}</span><span class="s">/ wk${tlBadge}</span></td>`;
+}
+
+function getSorted(){
+  return [...DATA].sort((a,b)=>{
+    let v;
+    const ts=x=>x.trend_score_raw!=null?x.trend_score_raw:(x.trend||0);
+    const rs20r=x=>x.rs20_raw!=null?x.rs20_raw:(x.rs20_pct||0);
+    if(curSort==='signal'){const oa=SO[a.signal]??5,ob=SO[b.signal]??5;v=oa!==ob?oa-ob:(b.rotation_score||0)-(a.rotation_score||0);}
+    else if(curSort==='ticker')v=a.ticker.localeCompare(b.ticker);
+    else if(curSort==='name')v=(a.name||'').localeCompare(b.name||'');
+    else if(curSort==='fund'){const fa=(a.funds||[]).map(id=>PF[id]?.code||'').join(','),fb=(b.funds||[]).map(id=>PF[id]?.code||'').join(',');v=fa.localeCompare(fb);}
+    else if(curSort==='sector')v=(a.sector||'').localeCompare(b.sector||'');
+    else if(curSort==='rotation')v=(b.rotation_score||0)-(a.rotation_score||0);
+    else if(curSort==='confidence')v=(b.confidence_score||0)-(a.confidence_score||0);
+    else if(curSort==='trend')v=ts(b)-ts(a)||(b.rotation_score||0)-(a.rotation_score||0);
+    else if(curSort==='rs20va')v=(b.rs20_vol_adj_rank_pct||0)-(a.rs20_vol_adj_rank_pct||0);
+    else if(curSort==='rsaccel')v=(b.rs_accel_vol_adj_rank_pct||0)-(a.rs_accel_vol_adj_rank_pct||0);
+    else if(curSort==='rs20raw')v=rs20r(b)-rs20r(a);
+    else if(curSort==='pressure')v=(b.pressure_20w||0)-(a.pressure_20w||0);
+    else if(curSort==='ppw')v=(b.pressure_pos_weeks_pct||0)-(a.pressure_pos_weeks_pct||0);
+    else if(curSort==='turnover')v=(b.turnover_ratio_20_100||0)-(a.turnover_ratio_20_100||0);
+    else if(curSort==='turnz')v=(b.turnover_z_20||0)-(a.turnover_z_20||0);
+    else if(curSort==='size')v=(b.avg_turn_20w||0)-(a.avg_turn_20w||0);
+    else v=0;
+    if(curSort!=='signal')v*=sortDir;
+    return v;
+  });
+}
+function render(){
+  let sorted=getSorted();
+  if(hmFund!=null){const tks=PF[hmFund]?.tickers||[];sorted=sorted.filter(e=>tks.includes(e.ticker));}
+  if(activeSector!=null){sorted=sorted.filter(e=>(e.sector||'OTHER')===activeSector);}
+  let html='';
+  sorted.forEach(e=>{html+=`<tr class="etf-row">${mkRow(e)}</tr>`;});
+  document.getElementById('hb').innerHTML=html||'<tr><td colspan="18" style="text-align:center;padding:32px;color:var(--text3)">No data — run a recompute first.</td></tr>';
+  // Update section count badge
+  const cntEl=document.getElementById('etf-section-count');
+  if(cntEl){const n=sorted.length,tot=DATA.length;cntEl.textContent=n<tot?n+' of '+tot+' ETFs':n+' ETFs';}
+}
+function doSort(by,btn){
+  if(curSort===by)sortDir*=-1; else{curSort=by;sortDir=1;}
+  document.querySelectorAll('.sb,.hth').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  render();
+}
+
+// Pension fund filter chips — rendered into unified control band
+(function(){
+  const container=document.getElementById('hm-fund-chips');
+  if(!container)return;
+  const fids=Object.keys(PF);
+  if(!fids.length)return;
+  container.innerHTML=''; // clear placeholder
+  const allBtn=document.createElement('button');allBtn.className='hm-fchip on';allBtn.textContent='ALL';
+  allBtn.title='Show all ETFs';
+  allBtn.onclick=function(){hmFund=null;document.querySelectorAll('.hm-fchip').forEach(c=>c.classList.remove('on'));this.classList.add('on');render();};
+  container.appendChild(allBtn);
+  fids.forEach(fid=>{
+    const f=PF[fid];
+    const btn=document.createElement('button');btn.className='hm-fchip';
+    btn.textContent=f.code+' ('+f.tickers.length+')';btn.title=f.name;
+    btn.onclick=function(){hmFund=parseInt(fid);document.querySelectorAll('.hm-fchip').forEach(c=>c.classList.remove('on'));this.classList.add('on');render();};
+    container.appendChild(btn);
+  });
+})();
+
+
+// Sector heatmap
+let secViewMode = 'all'; // 'all' | 'proxy'
+
+function secView(mode){
+  secViewMode = mode;
+  document.getElementById('sec-btn-all').classList.toggle('active', mode==='all');
+  document.getElementById('sec-btn-prox').classList.toggle('active', mode==='proxy');
+  renderSecGrid();
+}
+
+// Pre-group all ETFs by sector (static — DATA never changes)
+const _setfs = {};
+DATA.forEach(e => { const sec=e.sector||'OTHER'; if(!_setfs[sec])_setfs[sec]=[]; _setfs[sec].push(e); });
+
+// Pension proxy set — tickers with at least one fund mapping
+const PROXY_TICKERS = new Set(DATA.filter(e=>(e.funds||[]).length>0).map(e=>e.ticker));
+
+const _sigCls = {'STRONG BUY':'ssb','EARLY ACCUMULATION':'sea',
+                 'ACCUMULATING/HOLD':'sah','EXIT/DISTRIBUTION':'sex'};
+
+function _rotCl(v){
+  if(v>=70)return'srot-5';if(v>=60)return'srot-4';if(v>=50)return'srot-3';
+  if(v>=40)return'srot-2';if(v>=30)return'srot-1';return'srot-0';
+}
+
+function renderSecGrid(){
+  const grid=document.getElementById('sec-hm-grid');
+  if(!grid)return;
+  const proxyOnly=secViewMode==='proxy';
+  const prevActive=activeSector;
+  grid.innerHTML='';
+
+  // Aggregate per sector for current view
+  const smap={};
+  Object.entries(_setfs).forEach(([sec,etfs])=>{
+    const viewEtfs=proxyOnly?etfs.filter(e=>PROXY_TICKERS.has(e.ticker)):etfs;
+    if(!viewEtfs.length)return;
+    const agg={sb:0,ea:0,ah:0,nt:0,ex:0,rotSum:0,rotN:0,etfs:viewEtfs};
+    viewEtfs.forEach(e=>{
+      if(e.signal==='STRONG BUY')              agg.sb++;
+      else if(e.signal==='EARLY ACCUMULATION') agg.ea++;
+      else if(e.signal==='ACCUMULATING/HOLD')  agg.ah++;
+      else if(e.signal==='EXIT/DISTRIBUTION')  agg.ex++;
+      else                                     agg.nt++;
+      if(e.rotation_score!=null){agg.rotSum+=e.rotation_score;agg.rotN++;}
+    });
+    smap[sec]=agg;
+  });
+
+  // Sort by avg rotation desc
+  const secs=Object.keys(smap).sort((a,b)=>{
+    const ra=smap[a].rotN?smap[a].rotSum/smap[a].rotN:0;
+    const rb=smap[b].rotN?smap[b].rotSum/smap[b].rotN:0;
+    return rb-ra;
+  });
+
+  secs.forEach(sec=>{
+    const agg=smap[sec],avgRot=agg.rotN?agg.rotSum/agg.rotN:0,rc=_rotCl(avgRot),label=SL[sec]||sec;
+    const barParts=[{cls:'bsb',n:agg.sb},{cls:'bea',n:agg.ea},{cls:'bah',n:agg.ah},{cls:'bnt',n:agg.nt},{cls:'bex',n:agg.ex}].filter(p=>p.n>0);
+    const barHtml=barParts.map(p=>`<div class="${p.cls}" style="flex:${p.n}"></div>`).join('');
+
+    const etfsSorted=[...agg.etfs].sort((a,b)=>(b.rotation_score||0)-(a.rotation_score||0));
+    const etfHtml=etfsSorted.map(e=>{
+      const sc=_sigCls[e.signal]||'snt';
+      const fundTags=(e.funds||[]).map(fid=>PF[fid]?`<span class="sec-fund-tag" title="${PF[fid].name}">${PF[fid].code}</span>`:'').filter(Boolean).join('');
+      const fundsHtml=fundTags?`<div class="sec-etf-funds">${fundTags}</div>`:'';
+      return `<div class="sec-etf-row"><div class="sec-etf-sig ${sc}"></div><div class="sec-etf-body"><div class="sec-etf-ticker">${e.ticker}</div><div class="sec-etf-name">${e.name||'&mdash;'}</div>${fundsHtml}</div></div>`;
+    }).join('');
+
+    const tile=document.createElement('div');
+    tile.className=`sec-tile ${rc}`;
+    if(prevActive===sec){tile.dataset.active='1';tile.classList.add('sec-active');}
+    tile.innerHTML=
+      `<div class="sec-head-row"><div class="sec-name">${label}</div><div class="sec-rot ${rc}">${avgRot.toFixed(1)}</div></div>`+
+      `<div class="sec-sig-bar">${barHtml}</div>`+
+      `<div class="sec-etf-list">${etfHtml}</div>`;
+
+    tile.addEventListener('click',()=>{
+      if(tile.dataset.active==='1'){tile.dataset.active='0';tile.classList.remove('sec-active');activeSector=null;}
+      else{document.querySelectorAll('.sec-tile').forEach(t=>{t.dataset.active='0';t.classList.remove('sec-active');});tile.dataset.active='1';tile.classList.add('sec-active');activeSector=sec;}
+      render();
+    });
+    grid.appendChild(tile);
+  });
+}
+
+renderSecGrid();
+
+render();
+</script>
+{% endblock %}

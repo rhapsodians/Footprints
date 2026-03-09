@@ -1,0 +1,818 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<style>
+/* ── Summary chips bar ── */
+.sum-bar{display:flex;gap:3px;padding:9px 28px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;align-items:center}
+.chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:3px;cursor:pointer;border:1px solid transparent;transition:background .15s;font-family:var(--mono)}
+.chip:hover,.chip.on{border-color:var(--border2);background:var(--surface2)}
+.chip .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.chip .cl{font-size:.62rem;color:var(--text2)}
+.chip .cn{font-size:.8rem;font-weight:600}
+.chip.sb .dot{background:var(--sig-sb)}.chip.sb .cn{color:var(--sig-sb)}
+.chip.ea .dot{background:var(--sig-ea)}.chip.ea .cn{color:var(--sig-ea)}
+.chip.ah .dot{background:var(--sig-ah)}.chip.ah .cn{color:var(--sig-ah)}
+.chip.nt .dot{background:var(--sig-nt)}.chip.nt .cn{color:var(--text2)}
+.chip.ex .dot{background:var(--sig-ex)}.chip.ex .cn{color:var(--sig-ex)}
+.chip.nd .dot{background:var(--text3)}.chip.nd .cn{color:var(--text3)}
+.sdiv{flex:1}
+
+/* ── Pension fund bar ── */
+.fund-bar{display:flex;gap:4px;padding:6px 28px;border-bottom:1px solid var(--border);background:var(--bg);flex-wrap:wrap;align-items:center}
+.fund-lbl{font-family:var(--mono);font-size:.58rem;color:var(--text3);margin-right:4px;white-space:nowrap}
+.fchip{font-family:var(--mono);font-size:.6rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:3px 9px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.fchip:hover,.fchip.on{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
+.schip{font-family:var(--mono);font-size:.6rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:3px 9px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.schip:hover,.schip.on{border-color:var(--text2);color:var(--text1);background:var(--surface2)}
+.fund-tag{display:inline-block;font-family:var(--mono);font-size:.48rem;color:var(--accent);border:1px solid var(--accent);border-radius:2px;padding:1px 4px;margin:1px 2px 0 0;opacity:.75;white-space:nowrap;vertical-align:middle}
+.sec-tag{display:inline-block;font-family:var(--mono);font-size:.52rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);border:1px solid var(--border);border-radius:2px;padding:1px 5px;white-space:nowrap}
+.nm-sec{margin-top:4px}
+
+/* ── Sort bar ── */
+.sbar{display:flex;align-items:center;gap:6px;padding:7px 28px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.sbar span{font-family:var(--mono);font-size:.60rem;color:var(--text3)}
+.sb2{font-family:var(--mono);font-size:.60rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:3px 8px;cursor:pointer;transition:all .15s}
+.sb2:hover,.sb2.active{border-color:var(--accent);color:var(--accent)}
+.asof{font-family:var(--mono);font-size:.60rem;color:var(--text3);margin-left:auto}
+
+/* ── Card grid ── */
+.gc{padding:12px 28px 120px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:9px}
+.etf-card{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:12px 14px 10px;cursor:pointer;transition:border-color .15s,background .15s}
+.etf-card:hover{border-color:var(--border2);background:var(--surface2)}
+.etf-card.selected{border-color:var(--accent)!important}
+.etf-card.hidden{display:none}
+.etf-card.signal-sb{border-left:3px solid var(--sig-sb)}
+.etf-card.signal-ea{border-left:3px solid var(--sig-ea)}
+.etf-card.signal-ah{border-left:3px solid var(--sig-ah)}
+.etf-card.signal-nt{border-left:3px solid var(--border2)}
+.etf-card.signal-ex{border-left:3px solid var(--sig-ex)}
+.etf-card.signal-nd{border-left:3px solid var(--text3);opacity:.55}
+.ct{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px}
+.tk{font-family:var(--mono);font-size:.80rem;font-weight:600;color:var(--text)}
+.nm{font-size:.67rem;color:var(--text2);margin-top:2px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+
+/* ── Badge ── */
+.badge{font-family:var(--mono);font-size:.56rem;font-weight:600;padding:2px 6px;border-radius:2px;white-space:nowrap;letter-spacing:.04em;border:1px solid transparent;display:inline-block;pointer-events:none}
+.badge-sb{background:var(--sig-sb-bg);color:var(--sig-sb);border-color:var(--sig-sb-bd);font-weight:700}
+.badge-ea{background:var(--sig-ea-bg);color:var(--sig-ea);border-color:var(--sig-ea-bd);font-weight:700}
+.badge-ah{background:var(--sig-ah-bg);color:var(--sig-ah);border-color:var(--sig-ah-bd);font-weight:700}
+.badge-nt{background:var(--sig-nt-bg);color:var(--sig-nt);border-color:var(--sig-nt-bd)}
+.badge-ex{background:var(--sig-ex-bg);color:var(--sig-ex);border-color:var(--sig-ex-bd);font-weight:700}
+.badge-nd{background:transparent;color:var(--text3);border-color:var(--border)}
+.badge-prev{opacity:.38;font-weight:400!important;filter:saturate(.4)}
+.sig-trans{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;justify-content:flex-end;pointer-events:none}
+.sig-arrow{font-size:.60rem;color:var(--text3)}
+
+/* ── Metric grid on card ── */
+.cm{display:grid;grid-template-columns:1fr 1fr;gap:4px 6px;margin-top:7px;overflow:hidden}
+.hovkpi-wrap{cursor:default;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.ml{font-family:var(--mono);font-size:.56rem;color:var(--text3);letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv{font-family:var(--mono);font-size:.72rem;font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.pos{color:var(--green)}.neg{color:var(--red)}.neu{color:var(--text2)}
+.td2{display:flex;align-items:center;gap:3px;min-width:0}
+.tdot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.spw{height:56px;margin-top:9px;min-width:0;grid-column:span 2}
+.hovkpi{border-bottom:1px dashed transparent;transition:border-color .12s}
+.hovkpi-wrap:hover .hovkpi{border-bottom-color:var(--text3)}
+
+/* ── Overlay ── */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:199;display:none}
+.ov.open{display:block}
+
+/* ── Right-side detail panel ── */
+.dp{position:fixed;right:0;top:0;bottom:0;width:440px;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;z-index:200;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column}
+.dp.open{transform:translateX(0)}
+.dp-close{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:.63rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:2px 7px;cursor:pointer;transition:all .15s}
+.dp-close:hover{border-color:var(--red);color:var(--red)}
+.dp-hist-btn{position:absolute;top:12px;right:86px;font-family:var(--mono);font-size:.63rem;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:2px;padding:2px 7px;cursor:pointer;transition:all .15s}
+.dp-hist-btn:hover{background:var(--blue-dim)}
+.dh{padding:16px 16px 10px;border-bottom:1px solid var(--border)}
+.dtk{font-family:var(--mono);font-size:1.05rem;font-weight:600;color:var(--text)}
+.dnm{font-size:.72rem;color:var(--text2);margin-top:3px}
+.db{padding:13px 16px;flex:1}
+.cw{height:180px;margin-bottom:12px;background:var(--surface2);border-radius:3px;padding:9px;border:1px solid var(--border);position:relative}
+.exp-btn{position:absolute;top:5px;right:5px;font-family:var(--mono);font-size:.56rem;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:2px 6px;cursor:pointer;z-index:2;transition:all .12s}
+.exp-btn:hover{border-color:var(--accent);color:var(--accent)}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.dm{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:7px 10px}
+.dml{font-family:var(--mono);font-size:.57rem;color:var(--text2);letter-spacing:.05em}
+.dmv{font-family:var(--mono);font-size:.90rem;font-weight:600;margin-top:2px}
+.dst{font-family:var(--mono);font-size:.60rem;color:var(--text3);letter-spacing:.10em;text-transform:uppercase;margin-bottom:5px;margin-top:12px}
+.cr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
+.cr:last-child{border-bottom:none}
+.crl{font-family:var(--mono);font-size:.64rem;color:var(--text2)}
+.crv{font-family:var(--mono);font-size:.64rem;font-weight:500}
+.check{color:var(--green)}.cross{color:var(--red)}
+.ib{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;font-size:.56rem;font-family:var(--mono);font-style:normal;font-weight:700;color:var(--text3);background:none;border:1px solid var(--border);border-radius:50%;cursor:pointer;margin-left:4px;vertical-align:middle;line-height:1;padding:0;transition:all .12s;flex-shrink:0}
+.ib:hover,.ib.active{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
+
+/* ── Full-screen chart overlay ── */
+.fs-ov{position:fixed;inset:0;background:var(--bg);z-index:500;display:none;flex-direction:column}
+.fs-ov.open{display:flex}
+.fs-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.fs-title{font-family:var(--mono);font-size:.82rem;font-weight:600;color:var(--text)}
+.fs-meta{font-family:var(--mono);font-size:.64rem;color:var(--text2);margin-left:12px}
+.fs-close{font-family:var(--mono);font-size:.64rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:4px 12px;cursor:pointer;transition:all .15s}
+.fs-close:hover{border-color:var(--red);color:var(--red)}
+.fs-legend{display:flex;gap:16px;padding:7px 20px 0;flex-shrink:0}
+.fs-li{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.62rem;color:var(--text2)}
+.fs-sw{width:22px;height:2px;border-radius:1px}
+.fs-body{flex:1;padding:14px 20px;min-height:0}
+
+/* ── History modal ── */
+.hist-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:400;align-items:center;justify-content:center}
+.hist-ov.open{display:flex}
+.hist-modal{background:var(--surface);border:1px solid var(--border2);border-radius:6px;width:min(95vw,1040px);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.hist-hdr{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0;gap:10px}
+.hist-title{font-family:var(--mono);font-size:.78rem;font-weight:600;color:var(--text);letter-spacing:.04em;flex:1}
+.hist-close-btn{font-family:var(--mono);font-size:.62rem;background:none;border:1px solid var(--border);border-radius:2px;color:var(--text2);padding:2px 8px;cursor:pointer}
+.hist-close-btn:hover{border-color:var(--red);color:var(--red)}
+.hist-info-bar{display:flex;align-items:center;gap:14px;padding:5px 16px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0}
+.hist-count{font-family:var(--mono);font-size:.60rem;color:var(--accent)}
+.hist-hint{font-family:var(--mono);font-size:.57rem;color:var(--text3);margin-left:auto}
+.hist-scroll{overflow:auto;flex:1}
+.hist-tbl{width:100%;border-collapse:collapse;font-family:var(--mono)}
+.hth{font-size:.57rem;color:var(--text3);letter-spacing:.05em;text-align:right;padding:6px 10px;border-bottom:2px solid var(--border);position:sticky;top:0;background:var(--surface2);cursor:pointer;user-select:none;white-space:nowrap}
+.hth-l{text-align:left!important}
+.hth:hover{color:var(--accent)}
+.hth.h-asc::after{content:" ▲";font-size:.46rem;color:var(--accent)}
+.hth.h-desc::after{content:" ▼";font-size:.46rem;color:var(--accent)}
+.hist-tbl td{font-size:.66rem;padding:4px 10px;border-bottom:1px solid var(--border2);text-align:right;color:var(--text);white-space:nowrap}
+.htd-l{text-align:left!important;color:var(--text2)!important}
+.hist-tbl tr:hover td{background:var(--surface2)}
+
+/* ── KPI popover (panel ℹ buttons) ── */
+.kpop{position:fixed;z-index:900;width:260px;background:var(--surface);border:1px solid var(--accent);border-radius:5px;padding:12px 13px;box-shadow:0 8px 32px rgba(0,0,0,.35);display:none;pointer-events:auto}
+.kpop.show{display:block}
+.kpop-title{font-family:var(--mono);font-size:.68rem;font-weight:700;color:var(--text);letter-spacing:.04em;margin-bottom:6px}
+.kpop-def{font-size:.70rem;color:var(--text2);line-height:1.55;margin-bottom:8px}
+.kpop-ctx{font-family:var(--mono);font-size:.65rem;padding:6px 8px;border-radius:3px;line-height:1.45;white-space:pre-line}
+.kpop-ctx.pos{background:var(--green-dim);color:var(--green)}
+.kpop-ctx.neg{background:var(--red-dim);color:var(--red)}
+.kpop-ctx.neu{background:var(--surface2);color:var(--text2)}
+.kpop-ctx.warn{background:var(--yellow-dim);color:var(--yellow)}
+
+/* ── KPI hover tooltip (card) ── */
+.ktt{position:fixed;z-index:960;max-width:300px;min-width:190px;background:var(--surface);border:1px solid var(--accent);border-radius:5px;padding:10px 12px;box-shadow:0 8px 32px rgba(0,0,0,.45);pointer-events:none;display:none}
+.ktt.show{display:block}
+.ktt-hdr{font-family:var(--mono);font-size:.62rem;font-weight:700;color:var(--text);letter-spacing:.06em;margin-bottom:3px}
+.ktt-sub{font-family:var(--mono);font-size:.52rem;color:var(--text3);margin-bottom:4px}
+.ktt-def{font-size:.67rem;color:var(--text2);line-height:1.5;margin-bottom:7px}
+.ktt-ctx{font-family:var(--mono);font-size:.62rem;padding:5px 7px;border-radius:3px;line-height:1.4;white-space:pre-line}
+.ktt-ctx.pos{background:var(--green-dim);color:var(--green)}
+.ktt-ctx.neg{background:var(--red-dim);color:var(--red)}
+.ktt-ctx.neu{background:var(--surface2);color:var(--text2)}
+.ktt-ctx.warn{background:var(--yellow-dim);color:var(--yellow)}
+
+/* ── Turnover badge ── */
+.tl-sub{font-size:.54rem;font-weight:400;color:var(--text3);letter-spacing:.03em;text-transform:uppercase;margin-left:1px}
+.tl-badge{display:inline-block;font-size:.57rem;font-weight:600;font-family:var(--mono);padding:1px 4px;border-radius:2px;margin-left:3px;vertical-align:middle}
+.tl-hi{background:rgba(0,212,160,.18);color:var(--green)}
+.tl-mid{background:rgba(0,212,160,.08);color:var(--green)}
+.tl-neu{background:rgba(160,170,185,.12);color:var(--text2)}
+.tl-lo{background:rgba(255,64,96,.10);color:var(--red)}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header" style="padding:12px 28px;margin-bottom:0;border-bottom:1px solid var(--border)">
+  <div>
+    <div class="page-title">Signal <strong>Dashboard</strong></div>
+    <div class="page-subtitle">Tape-derived signals &middot; L&amp;G Pension Fund Universe &middot; as of {{ as_of_date or '—' }}</div>
+  </div>
+  <div class="page-actions">
+    {% if dates %}
+    <select style="font-family:var(--mono);font-size:.68rem;background:var(--input-bg);border:1px solid var(--border2);border-radius:2px;color:var(--text);padding:5px 9px;outline:none" onchange="location='?date='+this.value">
+      {% for d in dates %}<option value="{{ d }}" {% if d==as_of_date %}selected{% endif %}>{{ d }}</option>{% endfor %}
+    </select>
+    {% endif %}
+    <form method="post" action="/recompute" style="margin:0">
+      <input type="hidden" name="date" value="{{ as_of_date }}">
+      <button type="submit" class="btn btn-primary" style="font-size:.68rem">↻ RECOMPUTE</button>
+    </form>
+  </div>
+</div>
+
+<!-- Signal filter chips -->
+<div class="sum-bar">
+  <div class="chip sb" onclick="filt('STRONG BUY')"><div class="dot"></div><span class="cl">STRONG BUY</span><span class="cn" id="csb">0</span></div>
+  <div class="chip ea" onclick="filt('EARLY ACCUMULATION')"><div class="dot"></div><span class="cl">EARLY ACC</span><span class="cn" id="cea">0</span></div>
+  <div class="chip ah" onclick="filt('ACCUMULATING/HOLD')"><div class="dot"></div><span class="cl">ACCUMULATING</span><span class="cn" id="cah">0</span></div>
+  <div class="chip nt" onclick="filt('NEUTRAL')"><div class="dot"></div><span class="cl">NEUTRAL</span><span class="cn" id="cnt">0</span></div>
+  <div class="chip ex" onclick="filt('EXIT/DISTRIBUTION')"><div class="dot"></div><span class="cl">EXIT/DIST</span><span class="cn" id="cex">0</span></div>
+  <div class="chip nd" id="chip-nd" onclick="filt('NO DATA')" style="display:none"><div class="dot"></div><span class="cl">NO DATA</span><span class="cn" id="cnd">0</span></div>
+  <div class="sdiv"></div>
+  <div class="chip" onclick="filt(null)" style="opacity:.55"><span class="cl">ALL</span></div>
+</div>
+
+<!-- Pension fund filter (populated by JS if funds exist) -->
+<div class="fund-bar" id="fund-bar" style="display:none">
+  <span class="fund-lbl">PENSION FUND:</span>
+</div>
+
+<!-- Sector filter bar (populated by JS) -->
+<div class="fund-bar" id="sector-bar" style="display:none">
+  <span class="fund-lbl">SECTOR:</span>
+</div>
+
+<!-- Sort bar -->
+<div class="sbar">
+  <span>SORT:</span>
+  <button class="sb2 active" onclick="doSort('signal',this)">SIGNAL</button>
+  <button class="sb2" onclick="doSort('ticker',this)">TICKER A–Z</button>
+  <button class="sb2" onclick="doSort('rotation',this)">ROTATION</button>
+  <button class="sb2" onclick="doSort('rs20',this)">RS20%</button>
+  <button class="sb2" onclick="doSort('dv',this)">DV SURPRISE</button>
+  <button class="sb2" onclick="doSort('trend',this)">TREND</button>
+  <button class="sb2" onclick="doSort('size',this)">SIZE</button>
+  <span class="asof">{{ as_of_date }}</span>
+</div>
+
+<!-- Card grid -->
+<div class="gc"><div class="grid" id="grid"></div></div>
+
+<!-- Overlay + detail panel -->
+<div class="ov" id="ov" onclick="closeD()"></div>
+
+<!-- Price history modal -->
+<div class="hist-ov" id="hist-ov">
+  <div class="hist-modal">
+    <div class="hist-hdr">
+      <span class="hist-title" id="hist-title"></span>
+      <button class="hist-close-btn" onclick="closeHistory()">✕ CLOSE</button>
+    </div>
+    <div class="hist-info-bar">
+      <span id="hist-count" class="hist-count"></span>
+      <span class="hist-hint">Click column headers to sort</span>
+    </div>
+    <div class="hist-scroll">
+      <table id="hist-tbl" class="hist-tbl">
+        <thead><tr>
+          <th class="hth hth-l" data-col="d">DATE</th>
+          <th class="hth" data-col="o">OPEN</th>
+          <th class="hth" data-col="h">HIGH</th>
+          <th class="hth" data-col="l">LOW</th>
+          <th class="hth" data-col="c">CLOSE</th>
+          <th class="hth" data-col="v">VOLUME</th>
+          <th class="hth" data-col="turnover">TURNOVER</th>
+        </tr></thead>
+        <tbody id="hist-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Full-screen chart -->
+<div class="fs-ov" id="fs-ov">
+  <div class="fs-bar">
+    <div style="display:flex;align-items:baseline">
+      <span class="fs-title" id="fs-ticker"></span>
+      <span class="fs-meta" id="fs-name"></span>
+    </div>
+    <button class="fs-close" onclick="closeExpand()">✕ CLOSE (ESC)</button>
+  </div>
+  <div class="fs-legend">
+    <div class="fs-li"><div class="fs-sw" id="fs-sw-price"></div><span id="fs-lb-price"></span></div>
+    <div class="fs-li"><div class="fs-sw" style="background:#5b8cf5"></div><span>MA20</span></div>
+    <div class="fs-li"><div class="fs-sw" style="background:#f5c842"></div><span>MA100</span></div>
+  </div>
+  <div class="fs-body"><canvas id="fs-chart"></canvas></div>
+</div>
+
+<!-- Detail slide panel -->
+<div class="dp" id="dp">
+  <button class="dp-hist-btn" onclick="openHistory(curTicker)">⊟ HISTORY</button>
+  <button class="dp-close" onclick="closeD()">✕ CLOSE</button>
+  <div class="dh">
+    <div class="dtk" id="dtk"></div>
+    <div class="dnm" id="dnm"></div>
+    <div style="margin-top:9px" id="dbadge"></div>
+  </div>
+  <div class="db">
+    <div class="cw"><canvas id="dc"></canvas><button class="exp-btn" onclick="expandChart()">⛶ EXPAND</button></div>
+    <div class="dg" id="dmet"></div>
+    <div class="dst">SIGNAL CONDITIONS</div><div id="dcond"></div>
+    <div class="dst" style="margin-top:14px">PRICE LEVELS</div><div id="dlev"></div>
+    <div class="dst" style="margin-top:14px">SIGNAL REASON</div>
+    <div id="dreason" style="font-size:.67rem;color:var(--text2);line-height:1.55;padding:5px 0;font-family:var(--mono)"></div>
+  </div>
+</div>
+
+<!-- KPI popover (panel i-buttons) -->
+<div id="kpop" class="kpop">
+  <div class="kpop-title" id="kpop-title"></div>
+  <div class="kpop-def" id="kpop-def"></div>
+  <div class="kpop-ctx" id="kpop-ctx"></div>
+</div>
+<!-- KPI hover tooltip (card hover) -->
+<div id="d-ktt" class="ktt">
+  <div class="ktt-hdr" id="d-ktt-hdr"></div>
+  <div class="ktt-sub" id="d-ktt-sub"></div>
+  <div class="ktt-def" id="d-ktt-def"></div>
+  <div class="ktt-ctx" id="d-ktt-ctx"></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const D = {{ etf_data_js|safe }};
+const PF = {{ fund_map_js|safe }};
+const SL = {{ sector_labels|tojson }};
+const SO = {'STRONG BUY':0,'EARLY ACCUMULATION':1,'ACCUMULATING/HOLD':2,'NEUTRAL':3,'EXIT/DISTRIBUTION':4,'NO DATA':5};
+const SC = {'STRONG BUY':'sb','EARLY ACCUMULATION':'ea','ACCUMULATING/HOLD':'ah','NEUTRAL':'nt','EXIT/DISTRIBUTION':'ex','NO DATA':'nd'};
+const BC = {'STRONG BUY':'badge-sb','EARLY ACCUMULATION':'badge-ea','ACCUMULATING/HOLD':'badge-ah','NEUTRAL':'badge-nt','EXIT/DISTRIBUTION':'badge-ex','NO DATA':'badge-nd'};
+let cf=null, cff=null, csec=null, cs='signal', dChart=null, fsChart=null, curTicker=null;
+
+// ── KPI definitions ──────────────────────────────────────────────────────────
+const KPI = {
+  close:{title:'CLOSE PRICE',def:'Most recent weekly closing price for this ETF (GBp). The price at which the market last traded when the session ended.'},
+  trend:{title:'TREND HEALTH',def:'Scores 0–4: (1) price above MA20, (2) price above MA100, (3) MA20 above MA100, (4) MA100 rising vs 20 weeks ago. Each condition adds 1 point.'},
+  dvs:{title:'TURNOVER RATIO (20W/100W)',def:'Average £ volume over 20 weeks vs the 100-week baseline. Above 1.00× = participation expanding vs historical norm — consistent with rising institutional interest.'},
+  crdp:{title:'PRESSURE 20W',def:'20-week cumulative signed pressure: CLV × £ turnover each week. CLV = ((close−low)−(high−close))/(H−L). Positive = net accumulation; negative = distribution. Replaces v1 CRDP20.'},
+  rotation:{title:'ROTATION SCORE',def:'Weighted composite 0–100: 18% trend, 22% vol-adj RS20 rank, 15% RS accel rank, 15% turnover rank, 15% pressure rank, 10% pressure positive weeks%, 5% sector confirmation. ≥72 = STRONG BUY, ≥60 = ACCUM/HOLD, <35 = EXIT.'},
+  rs20:{title:'RS20% — RELATIVE STRENGTH',def:"The ETF's 20-week return minus VWRP.L's 20-week return. Positive = outperforming the global market; negative = lagging."},
+  ret20:{title:'20-WEEK RETURN',def:'Absolute % change in closing price over the last 20 weeks (approx. 5 months). Not benchmark-adjusted.'},
+  ret3m:{title:'3-MONTH RETURN',def:'Absolute % change over the last 12 weeks (approx. one quarter). Longer-term than the 20-week figure.'},
+  ma20:{title:'PRICE vs MA20',def:'How far current price sits above/below its 20-week moving average (%). Above = positive short-term momentum.'},
+  ma100:{title:'PRICE vs MA100',def:'How far current price sits above/below its 100-week moving average (%). A structural reading of long-run trend.'},
+  turn:{title:'AVG WEEKLY TURNOVER',def:'Average £ value traded per week over the last 20 weeks (close × volume). A spike vs the 20W avg can signal unusual institutional activity.'},
+  sig_sb:{title:'STRONG BUY',def:'Highest-conviction signal. Rotation score ≥72 AND trend ≥3/4 AND pressure_20w positive AND RS20 positive AND confidence ≥50. All primary conditions simultaneously satisfied.'},
+  sig_ea:{title:'EARLY ACCUMULATION',def:'Inflection-point alert. Pressure has just flipped positive after a negative period (pressure_prev_20w ≤ 0, pressure_20w > 0), RS acceleration positive, RS4 positive, turnover expanding, price still below MA100. Institutional buyers beginning to accumulate before price has recovered. Treat as a watch signal — structural confirmation pending.'},
+  sig_ah:{title:'ACCUMULATING / HOLD',def:'Constructive signal. Rotation score ≥60 AND trend ≥3/4 AND pressure_20w positive AND RS20 positive. Core conditions met but not at full-conviction threshold. Solid hold; watch for remaining conditions to align.'},
+  sig_nt:{title:'NEUTRAL',def:'Mixed evidence. No clear institutional directional bias across the primary conditions. Neither accumulation nor distribution is dominant. Hold existing positions and wait for clarity.'},
+  sig_ex:{title:'EXIT / DISTRIBUTION',def:'Institutional selling signal. Rotation score <35 AND trend ≤2/4 AND pressure_20w negative AND RS20 negative. Weight of evidence points to distribution. Review any holding rationale carefully.'}
+};
+
+function kpiCtx(key, val) {
+  if(key==='close') return {t:'Current price: '+fmt(val)+'p', c:'neu'};
+  if(key==='trend') {
+    const pts=String(val).split('|'), score=parseInt(pts[0]);
+    const cl=parseFloat(pts[1]), m20=parseFloat(pts[2]), m100=parseFloat(pts[3]);
+    const c1=cl>m20, c2=cl>m100, c3=m20>m100, c4=(score-(c1?1:0)-(c2?1:0)-(c3?1:0))===1;
+    const T='✓ ', F='✗ ';
+    const chk=(c1?T:F)+'Price above MA20: '+(c1?'yes — momentum intact':'no — below 20-week avg')+'\n'
+             +(c2?T:F)+'Price above MA100: '+(c2?'yes — structure sound':'no — below 100-week avg')+'\n'
+             +(c3?T:F)+'MA20 above MA100: '+(c3?'yes — bullish alignment':'no — bearish crossover')+'\n'
+             +(c4?T:F)+'MA100 rising: '+(c4?'yes — long-run trend accelerating':'no — 100W avg flat/declining');
+    if(score===4) return {t:'4/4 — All conditions met. Full structural uptrend. Maximum trend strength.',c:'pos'};
+    if(score===0) return {t:'0/4 — Full structural downtrend.\n\n'+chk+'\n\nAll four conditions broken simultaneously.',c:'neg'};
+    const map={3:{c:'pos',h:'3/4 — Mostly constructive.'},2:{c:'neu',h:'2/4 — Mixed signals.'},1:{c:'neg',h:'1/4 — Deteriorating.'}};
+    const m=map[score]||{c:'neu',h:score+'/4'};
+    return {t:m.h+'\n\n'+chk, c:m.c};
+  }
+  if(key==='dvs') {
+    const v=parseFloat(val);
+    if(v>=1.4) return {t:fmt(v,2)+'× — Significantly elevated. Money flowing '+(Math.round((v-1)*100))+'% faster than long-run avg.',c:'pos'};
+    if(v>=1.2) return {t:fmt(v,2)+'× — Above 1.20× threshold. Healthy institutional participation.',c:'pos'};
+    if(v>=0.9) return {t:fmt(v,2)+'× — Normal range. Volume in line with history.',c:'neu'};
+    if(v>=0.75) return {t:fmt(v,2)+'× — Below average. Institutional interest may be fading.',c:'warn'};
+    return {t:fmt(v,2)+'× — Notably quiet. Well below historical baseline.',c:'neg'};
+  }
+  if(key==='crdp') {
+    const v=parseFloat(val);
+    if(v>5e7) return {t:fC(v)+' — Very strong sustained accumulation over 20 weeks.',c:'pos'};
+    if(v>2e6) return {t:fC(v)+' — Clearly positive buying pressure.',c:'pos'};
+    if(v>0)   return {t:fC(v)+' — Mild net buying.',c:'pos'};
+    if(v>-2e6) return {t:fC(v)+' — Mild net selling.',c:'warn'};
+    if(v>-5e7) return {t:fC(v)+' — Clear selling pressure. Possible distribution.',c:'neg'};
+    return {t:fC(v)+' — Heavy sustained distribution.',c:'neg'};
+  }
+  if(key==='rs20') {
+    const v=parseFloat(val);
+    if(v>=10) return {t:(v>0?'+':'')+fmt(v,2)+'% — Strongly outperforming. Capital rotating in.',c:'pos'};
+    if(v>=3)  return {t:'+'+fmt(v,2)+'% — Outperforming global market.',c:'pos'};
+    if(v>=-3) return {t:(v>0?'+':'')+fmt(v,2)+'% — In line with global market.',c:'neu'};
+    if(v>=-10) return {t:fmt(v,2)+'% — Underperforming benchmark.',c:'warn'};
+    return {t:fmt(v,2)+'% — Significantly underperforming.',c:'neg'};
+  }
+  if(key==='ret20'||key==='ret3m') {
+    const v=parseFloat(val), label=key==='ret20'?'past 20 weeks':'past 3 months';
+    if(v>=10) return {t:(v>0?'+':'')+fmt(v,2)+'% — Strong gain over the '+label+'.',c:'pos'};
+    if(v>=3)  return {t:'+'+fmt(v,2)+'% — Positive return over the '+label+'.',c:'pos'};
+    if(v>=-3) return {t:(v>0?'+':'')+fmt(v,2)+'% — Broadly flat over the '+label+'.',c:'neu'};
+    if(v>=-10) return {t:fmt(v,2)+'% — Negative return over the '+label+'.',c:'warn'};
+    return {t:fmt(v,2)+'% — Significant loss over the '+label+'.',c:'neg'};
+  }
+  if(key==='ma20'||key==='ma100') {
+    const v=parseFloat(val), period=key==='ma20'?'20-week':'100-week';
+    if(v>15)  return {t:(v>0?'+':'')+fmt(v,1)+'% above '+period+' avg — strongly extended.',c:'pos'};
+    if(v>3)   return {t:'+'+fmt(v,1)+'% above '+period+' avg — healthy momentum.',c:'pos'};
+    if(v>=-3) return {t:(v>0?'+':'')+fmt(v,1)+'% vs '+period+' avg — near average.',c:'neu'};
+    if(v>=-15) return {t:fmt(v,1)+'% below '+period+' avg — lagging trend.',c:'warn'};
+    return {t:fmt(v,1)+'% below '+period+' avg — well below trend.',c:'neg'};
+  }
+  if(key==='turn') {
+    const parts=String(val).split('|'), avg=parseFloat(parts[0]), latest=parts.length>1?parseFloat(parts[1]):null;
+    let liq, c;
+    if(avg>=500e6){liq='Ultra-liquid. Institutional flows at scale.';c='pos';}
+    else if(avg>=50e6){liq='Very highly liquid. Strong institutional presence.';c='pos';}
+    else if(avg>=5e6){liq='Highly liquid. Good institutional coverage.';c='pos';}
+    else if(avg>=1e6){liq='Moderately liquid. Signals meaningful but may vary.';c='neu';}
+    else if(avg>=250e3){liq='Lower liquidity. Signals can be noisier.';c:'warn';}
+    else{liq='Low liquidity. Interpret signals with caution.';c='neg';}
+    let txt='20W avg: '+fC(avg)+'/wk — '+liq;
+    if(latest!=null&&!isNaN(latest)&&latest>0){
+      const r=latest/avg;
+      const latCtx=r>=1.4?'Significantly above 20W avg ('+r.toFixed(2)+'×) — elevated this week.':
+                   r>=1.1?'Moderately above 20W avg ('+r.toFixed(2)+'×).':
+                   r>=0.85?'In line with 20W avg ('+r.toFixed(2)+'×).':
+                   'Below 20W avg ('+r.toFixed(2)+'×) — quieter week.';
+      txt+='\nLatest: '+fC(latest)+'/wk — '+latCtx;
+    }
+    return {t:txt, c:c||'neu'};
+  }
+  if(key==='sig_sb') return {t:'STRONG BUY — All primary conditions met. Rotation ≥72, full trend alignment, sustained accumulation, RS positive.',c:'pos'};
+  if(key==='sig_ea') return {t:'EARLY ACCUMULATION — Pressure just flipped positive. Watch signal: institutional buyers entering before structural confirmation. Higher risk, higher potential.',c:'warn'};
+  if(key==='sig_ah') return {t:'ACCUMULATING/HOLD — Core conditions met. Constructive setup, not yet at full-conviction threshold. Hold and monitor.',c:'pos'};
+  if(key==='sig_nt') return {t:'NEUTRAL — Mixed signals. No dominant institutional bias detectable. Wait for clarity before acting.',c:'neu'};
+  if(key==='sig_ex') return {t:'EXIT/DISTRIBUTION — Institutional selling dominant. Weight of evidence negative across rotation, trend, pressure and RS.',c:'neg'};
+  return {t:'',c:'neu'};
+}
+
+// ── Tooltip display functions ────────────────────────────────────────────────
+let activeIb=null;
+function showPop(btn, key, val) {
+  if(activeIb) activeIb.classList.remove('active');
+  const pop=document.getElementById('kpop');
+  if(activeIb===btn&&pop.classList.contains('show')){pop.classList.remove('show');activeIb=null;return;}
+  activeIb=btn; btn.classList.add('active');
+  const info=KPI[key]||{};
+  document.getElementById('kpop-title').textContent=info.title||key;
+  document.getElementById('kpop-def').textContent=info.def||'';
+  const ctx=kpiCtx(key,val);
+  const cd=document.getElementById('kpop-ctx');
+  cd.textContent=ctx.t; cd.className='kpop-ctx '+(ctx.c||'neu');
+  pop.classList.add('show');
+  const br=btn.getBoundingClientRect(), pw=260, ph=160;
+  let left=Math.min(br.left, window.innerWidth-pw-12);
+  let top=br.top-ph-10;
+  if(top<8) top=br.bottom+8;
+  pop.style.left=Math.max(8,left)+'px'; pop.style.top=top+'px';
+}
+function hidePop() {
+  document.getElementById('kpop').classList.remove('show');
+  if(activeIb){activeIb.classList.remove('active');activeIb=null;}
+}
+function _kttPos(ev) {
+  const tt=document.getElementById('d-ktt'),pw=tt.offsetWidth||300,ph=tt.offsetHeight||120;
+  let x=ev.clientX+18, y=ev.clientY-14;
+  if(x+pw>window.innerWidth-8) x=ev.clientX-pw-8;
+  if(y+ph>window.innerHeight-8) y=window.innerHeight-ph-8;
+  if(y<8) y=8;
+  tt.style.left=x+'px'; tt.style.top=y+'px';
+}
+function hideKpi() { document.getElementById('d-ktt').classList.remove('show'); }
+function showKpi(ev, key, val, ticker) {
+  const info=KPI[key]||{}, ctx=kpiCtx(key,val)||{};
+  if(!ctx.t) return;
+  document.getElementById('d-ktt-hdr').textContent=info.title||key;
+  document.getElementById('d-ktt-sub').textContent=ticker||'';
+  document.getElementById('d-ktt-def').textContent=info.def||'';
+  const cd=document.getElementById('d-ktt-ctx');
+  cd.textContent=ctx.t; cd.className='ktt-ctx '+(ctx.c||'neu');
+  document.getElementById('d-ktt').classList.add('show');
+  _kttPos(ev);
+}
+document.addEventListener('mousemove', ev=>{
+  if(document.getElementById('d-ktt').classList.contains('show')) _kttPos(ev);
+});
+document.addEventListener('click', e=>{
+  const pop=document.getElementById('kpop');
+  if(!pop.contains(e.target)&&!e.target.classList.contains('ib')) hidePop();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    if(document.getElementById('fs-ov').classList.contains('open')) closeExpand();
+    else hidePop();
+  }
+});
+
+// ── Formatters ───────────────────────────────────────────────────────────────
+function fmt(n, d=2) { return n==null?'—':n.toLocaleString('en-GB',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function fC(n) {
+  const a=Math.abs(n), s=n<0?'-':'+ ';
+  if(a>=1e9) return s+'£'+fmt(a/1e9,2)+'B';
+  if(a>=1e6) return s+'£'+fmt(a/1e6,2)+'M';
+  if(a>=1e3) return s+'£'+fmt(a/1e3,1)+'K';
+  return s+'£'+fmt(a,0);
+}
+
+// ── Sorted key list ──────────────────────────────────────────────────────────
+function sk() {
+  const vis=cff!=null?(PF[cff]?.tickers||[]):null;
+  let k=Object.keys(D).filter(t=>(!vis||vis.includes(t))&&(!cf||D[t].signal===cf)&&(!csec||D[t].sector===csec));
+  if(cs==='signal')    k.sort((a,b)=>{const oa=SO[D[a].signal]??5,ob=SO[D[b].signal]??5;return oa!==ob?oa-ob:(D[b].rs20_pct||0)-(D[a].rs20_pct||0)});
+  else if(cs==='ticker')   k.sort((a,b)=>a.localeCompare(b));
+  else if(cs==='rotation') k.sort((a,b)=>(D[b].rotation_score||0)-(D[a].rotation_score||0));
+  else if(cs==='rs20')     k.sort((a,b)=>(D[b].rs20_pct||0)-(D[a].rs20_pct||0));
+  else if(cs==='dv')       k.sort((a,b)=>(D[b].dv_surprise||0)-(D[a].dv_surprise||0));
+  else if(cs==='trend')    k.sort((a,b)=>(D[b].trend||0)-(D[a].trend||0)||(D[b].rs20_pct||0)-(D[a].rs20_pct||0));
+  else if(cs==='size')     k.sort((a,b)=>(D[b].avg_turn_20w||0)-(D[a].avg_turn_20w||0));
+  return k;
+}
+
+// ── Signal badge HTML ────────────────────────────────────────────────────────
+function mkBadge(e, lg) {
+  const bc=BC[e.signal]||'badge-nt', sz=lg?'font-size:.7rem;padding:3px 9px':'';
+  if(!e.prev_signal||e.prev_signal===e.signal)
+    return '<span class="badge '+bc+'"'+(sz?' style="'+sz+'"':'')+'>'+e.signal+'</span>';
+  const pc=BC[e.prev_signal]||'badge-nt', psz=lg?'font-size:.62rem;padding:2px 7px':'';
+  return '<div class="sig-trans">'
+       +'<span class="badge badge-prev '+pc+'"'+(psz?' style="'+psz+'"':'')+'>'+e.prev_signal+'</span>'
+       +'<span class="sig-arrow">→</span>'
+       +'<span class="badge '+bc+'"'+(sz?' style="'+sz+'"':'')+'>'+e.signal+'</span>'
+       +'</div>';
+}
+
+// ── Sparkline ────────────────────────────────────────────────────────────────
+function spark(canvas, ticker) {
+  const e=D[ticker]; if(!e) return;
+  const ctx=canvas.getContext('2d'), w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const vals=e.weekly_closes||[];
+  if(vals.length<2) return;
+  const mn=Math.min(...vals), mx=Math.max(...vals), rng=mx-mn||1;
+  ctx.strokeStyle=vals[vals.length-1]>=vals[0]?'var(--sig-sb)':'var(--sig-ex)';
+  ctx.lineWidth=1.3; ctx.beginPath();
+  vals.forEach((v,i)=>{const x=(i/(vals.length-1))*w, y=h-((v-mn)/rng)*(h-2)-1; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});
+  ctx.stroke();
+}
+
+// ── Build cards ──────────────────────────────────────────────────────────────
+function buildCards() {
+  const g=document.getElementById('grid'); g.innerHTML='';
+  sk().forEach(t=>{
+    const e=D[t], sc=SC[e.signal]||'nt';
+    const rc=e.rs20_pct>0?'pos':e.rs20_pct<0?'neg':'neu';
+    const cc=e.crdp20>0?'pos':e.crdp20<0?'neg':'neu';
+    const dc=e.dv_surprise>=1.2?'pos':e.dv_surprise<0.9?'neg':'neu';
+    const tH=[0,1,2,3].map(i=>`<div class="tdot" style="background:${e.trend>i?'var(--sig-sb)':'var(--border2)'}"></div>`).join('');
+    const fTags=(e.funds||[]).map(fid=>PF[fid]?`<span class="fund-tag">${PF[fid].code}</span>`:'').join('');
+    const secLabel=e.sector&&SL[e.sector]?SL[e.sector]:e.sector||'';
+    const secTag=secLabel?`<span class="sec-tag">${secLabel}</span>`:'';
+    const tv=e.avg_turn_20w, tl=e.turn_latest;
+    const tfmt=tv==null?'—':tv>=1e9?'£'+(tv/1e9).toFixed(1)+'B':tv>=1e6?'£'+(tv/1e6).toFixed(1)+'M':tv>=1e3?'£'+(tv/1e3).toFixed(0)+'K':'£'+tv.toFixed(0);
+    const tlfmt=tl==null?'—':tl>=1e9?'£'+(tl/1e9).toFixed(1)+'B':tl>=1e6?'£'+(tl/1e6).toFixed(1)+'M':tl>=1e3?'£'+(tl/1e3).toFixed(0)+'K':'£'+tl.toFixed(0);
+    const tlRatio=(tv&&tl)?tl/tv:null;
+    const tlBadge=tlRatio==null?'':tlRatio>=1.4?`<span class="tl-badge tl-hi">${tlRatio.toFixed(2)}×</span>`:tlRatio>=1.1?`<span class="tl-badge tl-mid">${tlRatio.toFixed(2)}×</span>`:tlRatio>=0.85?`<span class="tl-badge tl-neu">${tlRatio.toFixed(2)}×</span>`:`<span class="tl-badge tl-lo">${tlRatio.toFixed(2)}×</span>`;
+    const tc=tv==null?'neu':tv>=50e6?'pos':tv>=1e6?'neu':tv>=250e3?'warn':'neg';
+    const cid='sp_'+t.replace(/\./g,'_');
+    const card=document.createElement('div');
+    card.className=`etf-card signal-${sc}`;
+    card.dataset.t=t; card.dataset.s=e.signal;
+    card.innerHTML=
+      `<div class="ct">`+
+        `<div><div class="tk">${t}</div><div class="nm">${e.name||''}${fTags?' &nbsp;'+fTags:''}</div>${secTag?`<div class="nm-sec">${secTag}</div>`:''}</div>`+
+        `<div style="text-align:right" class="hovkpi-wrap" onmouseenter="showKpi(event,'${'sig_'+(SC[e.signal]||'nt')}',0,'${t}')" onmouseleave="hideKpi()">${mkBadge(e,false)}</div>`+
+      `</div>`+
+      `<div class="cm">`+
+        `<div class="hovkpi-wrap" onmouseenter="showKpi(event,'close',${e.close||0},'${t}')" onmouseleave="hideKpi()"><div class="ml">CLOSE</div><div class="mv neu hovkpi">${fmt(e.close)}</div></div>`+
+        `<div class="hovkpi-wrap" onmouseenter="showKpi(event,'rs20',${e.rs20_pct||0},'${t}')" onmouseleave="hideKpi()"><div class="ml">RS20%</div><div class="mv ${rc} hovkpi">${(e.rs20_pct>0?'+':'')+fmt(e.rs20_pct,2)+'%'}</div></div>`+
+        `<div class="hovkpi-wrap" onmouseenter="showKpi(event,'trend','${e.trend||0}|${e.close||0}|${e.ma20||0}|${e.ma100||0}','${t}')" onmouseleave="hideKpi()"><div class="ml">TREND</div><div class="td2 hovkpi">${tH}</div></div>`+
+        `<div class="hovkpi-wrap" onmouseenter="showKpi(event,'dvs',${e.dv_surprise||0},'${t}')" onmouseleave="hideKpi()"><div class="ml">TURN RATIO</div><div class="mv ${dc} hovkpi">${fmt(e.dv_surprise,2)}×</div></div>`+
+        `<div style="grid-column:span 2" class="hovkpi-wrap" onmouseenter="showKpi(event,'crdp',${e.crdp20||0},'${t}')" onmouseleave="hideKpi()"><div class="ml">PRESSURE 20W</div><div class="mv ${cc} hovkpi">${fC(e.crdp20||0)}</div></div>`+
+        `<div style="grid-column:span 2" class="hovkpi-wrap" onmouseenter="showKpi(event,'turn','${tv||0}|${tl||0}','${t}')" onmouseleave="hideKpi()"><div class="ml">AVG TURN/WK</div><div class="mv ${tc} hovkpi">${tfmt} <span class="tl-sub">avg</span> &nbsp; ${tlfmt} <span class="tl-sub">latest</span>${tlBadge}</div></div>`+
+        `<div class="spw"><canvas id="${cid}" width="270" height="56"></canvas></div>`+
+      `</div>`;
+    card.addEventListener('click', ()=>openD(t));
+    g.appendChild(card);
+    requestAnimationFrame(()=>{ const c=document.getElementById(cid); if(c) spark(c,t); });
+  });
+}
+
+function filt(sig) { cf=sig; buildCards(); counts(); }
+function filtFund(fid, btn) {
+  cff=fid; document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on')); btn.classList.add('on');
+  cf=null; buildCards(); counts();
+}
+function filtSec(sec, btn) {
+  csec=sec; document.querySelectorAll('.schip').forEach(c=>c.classList.remove('on')); btn.classList.add('on');
+  buildCards(); counts();
+}
+function doSort(by, btn) {
+  cs=by; document.querySelectorAll('.sb2').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); buildCards();
+}
+
+// ── Counts ───────────────────────────────────────────────────────────────────
+function counts() {
+  const c={'STRONG BUY':0,'EARLY ACCUMULATION':0,'ACCUMULATING/HOLD':0,'NEUTRAL':0,'EXIT/DISTRIBUTION':0,'NO DATA':0};
+  const vis=cff!=null?(PF[cff]?.tickers||[]):null;
+  Object.entries(D).forEach(([t,e])=>{ if(vis&&!vis.includes(t)) return; if(c[e.signal]!=null) c[e.signal]++; });
+  document.getElementById('csb').textContent=c['STRONG BUY'];
+  document.getElementById('cea').textContent=c['EARLY ACCUMULATION'];
+  document.getElementById('cah').textContent=c['ACCUMULATING/HOLD'];
+  document.getElementById('cnt').textContent=c['NEUTRAL'];
+  document.getElementById('cex').textContent=c['EXIT/DISTRIBUTION'];
+  document.getElementById('cnd').textContent=c['NO DATA'];
+  const nd=document.getElementById('chip-nd'); if(nd) nd.style.display=c['NO DATA']>0?'flex':'none';
+}
+
+// ── Chart builder ────────────────────────────────────────────────────────────
+// Resample daily price_series to weekly (last close of each ISO week)
+function toWeekly(ps) {
+  if(!ps||!ps.length) return [];
+  const buckets={};
+  ps.forEach(p=>{
+    const d=new Date(p.d), y=d.getUTCFullYear();
+    // ISO week: shift so Monday=0
+    const dow=(d.getUTCDay()+6)%7;
+    const thu=new Date(d); thu.setUTCDate(d.getUTCDate()+(3-dow));
+    const jan4=new Date(Date.UTC(thu.getUTCFullYear(),0,4));
+    const wk=Math.ceil(((thu-jan4)/86400000+((jan4.getUTCDay()+6)%7+1))/7);
+    const key=thu.getUTCFullYear()*100+wk;
+    // keep the latest date in each ISO week
+    if(!buckets[key]||p.d>buckets[key].d) buckets[key]=p;
+  });
+  return Object.keys(buckets).sort().map(k=>buckets[k]);
+}
+
+function buildChartOn(t, canvasId, small) {
+  const e=D[t]; if(!e) return null;
+  // Use server-pre-computed weekly arrays (MA20/MA100 match the engine exactly)
+  const dates=e.weekly_dates||[], vals=e.weekly_closes||[];
+  const ma20a=e.weekly_ma20||[];
+  const isUp=vals.length>1&&vals[vals.length-1]>=vals[0];
+  const lc=isUp?'#00d4a0':'#ff4060';
+  // MA100: use rolling array where available, otherwise extend the engine scalar
+  // across the full chart so the reference level is always visible
+  const ma100a=e.weekly_ma100||[];
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {type:'line', data:{labels:dates, datasets:[
+    {label:t,data:vals,borderColor:lc,borderWidth:small?1.5:2,pointRadius:0,tension:.1,fill:false},
+    {label:'MA20',data:ma20a,borderColor:'#5b8cf5',borderWidth:small?1:1.5,borderDash:[3,3],pointRadius:0,tension:0},
+    {label:'MA100',data:ma100a,borderColor:'#f5c842',borderWidth:small?1:1.5,borderDash:[5,4],pointRadius:0,tension:0}
+  ]}, options:{responsive:true,maintainAspectRatio:false,animation:false,
+    plugins:{legend:{display:!small,labels:{color:'var(--text2)',font:{family:'IBM Plex Mono',size:9},boxWidth:18,padding:7}}},
+    scales:{x:{display:!small,grid:{color:'var(--border)'},ticks:{color:'var(--text2)',font:{family:'IBM Plex Mono',size:9},maxTicksLimit:small?0:12,maxRotation:0}},
+            y:{grid:{color:'var(--border)'},ticks:{color:'var(--text2)',font:{family:'IBM Plex Mono',size:9},maxTicksLimit:5}}}}});
+}
+
+// ── Expand chart ─────────────────────────────────────────────────────────────
+function expandChart() {
+  if(!curTicker) return;
+  const e=D[curTicker], ps=e.price_series||[], vals=ps.map(p=>p.c);
+  const isUp=vals.length>1&&vals[vals.length-1]>=vals[0], lc=isUp?'#00d4a0':'#ff4060';
+  document.getElementById('fs-ticker').textContent=curTicker;
+  document.getElementById('fs-name').textContent='  '+e.name;
+  document.getElementById('fs-sw-price').style.background=lc;
+  document.getElementById('fs-lb-price').textContent=curTicker;
+  if(fsChart){fsChart.destroy();fsChart=null;}
+  document.getElementById('fs-ov').classList.add('open');
+  // Build after display:flex is applied so offsetWidth is non-zero
+  requestAnimationFrame(()=>{
+    const fc=document.getElementById('fs-chart'); fc.width=fc.offsetWidth; fc.height=fc.offsetHeight;
+    if(fsChart){fsChart.destroy();fsChart=null;}
+    fsChart=buildChartOn(curTicker,'fs-chart',false);
+  });
+}
+function closeExpand() {
+  document.getElementById('fs-ov').classList.remove('open');
+  if(fsChart){fsChart.destroy();fsChart=null;}
+}
+
+// ── Open detail panel ────────────────────────────────────────────────────────
+function openD(t) {
+  const e=D[t]; if(!e) return;
+  document.getElementById('dtk').textContent=t;
+  document.getElementById('dnm').textContent=e.name||'';
+  document.getElementById('dbadge').innerHTML=mkBadge(e,true);
+  const rc=e.rs20_pct>0?'pos':'neg', cc=e.crdp20>0?'pos':'neg', dc=e.dv_surprise>=1.2?'pos':'neg';
+  document.getElementById('dmet').innerHTML=
+    `<div class="dm"><div class="dml">CLOSE (GBp)<button class="ib" onclick="showPop(this,'close',${e.close||0})">i</button></div><div class="dmv neu">${fmt(e.close)}</div></div>`+
+    `<div class="dm"><div class="dml">RS20 vs BASE<button class="ib" onclick="showPop(this,'rs20',${e.rs20_pct||0})">i</button></div><div class="dmv ${rc}">${(e.rs20_pct>0?'+':'')+fmt(e.rs20_pct,2)+'%'}</div></div>`+
+    `<div class="dm"><div class="dml">TURNOVER RATIO<button class="ib" onclick="showPop(this,'dvs',${e.dv_surprise||0})">i</button></div><div class="dmv ${dc}">${fmt(e.dv_surprise,2)}×</div></div>`+
+    `<div class="dm"><div class="dml">PRESSURE 20W<button class="ib" onclick="showPop(this,'crdp',${e.crdp20||0})">i</button></div><div class="dmv ${cc}">${fC(e.crdp20||0)}</div></div>`+
+    `<div class="dm"><div class="dml">ROTATION SCORE</div><div class="dmv ${(e.rotation_score||0)>=60?'pos':(e.rotation_score||0)<=35?'neg':'neu'}">${fmt(e.rotation_score,1)}</div></div>`+
+    `<div class="dm"><div class="dml">CONFIDENCE</div><div class="dmv ${e.confidence_bucket==='HIGH'?'pos':e.confidence_bucket==='LOW'?'neg':'neu'}">${e.confidence_bucket||'—'} ${e.confidence_score!=null?'('+Math.round(e.confidence_score)+')':''}</div></div>`+
+    `<div class="dm"><div class="dml">AVG TURN/WK<button class="ib" onclick="showPop(this,'turn','${e.avg_turn_20w||0}|${e.turn_latest||0}')">i</button></div><div class="dmv ${(e.avg_turn_20w||0)>=50e6?'pos':(e.avg_turn_20w||0)>=1e6?'neu':'warn'}">${e.avg_turn_20w==null?'—':e.avg_turn_20w>=1e9?'£'+(e.avg_turn_20w/1e9).toFixed(1)+'B':e.avg_turn_20w>=1e6?'£'+(e.avg_turn_20w/1e6).toFixed(1)+'M':'£'+(e.avg_turn_20w/1e3).toFixed(0)+'K'}/wk</div></div>`+
+    `<div class="dm"><div class="dml">SECTOR BREADTH</div><div class="dmv ${e.sector_confirmed?'pos':'neu'}">${e.sector_confirmed?'✓ confirmed':'— not confirmed'}</div></div>`;
+  const tP=e.trend_score_raw>=3||(e.trend||0)>=3, dP=(e.dv_surprise||0)>=1.0, cP=(e.crdp20||e.pressure_20w||0)>0, rP=(e.rs20_raw||e.rs20_pct||0)>0;
+  const rotP=(e.rotation_score||0)>=60, rotSB=(e.rotation_score||0)>=72, confP=(e.confidence_score||0)>=50;
+  document.getElementById('dcond').innerHTML=
+    `<div class="cr"><span class="crl">ROTATION ≥72 (STRONG BUY)<button class="ib" onclick="showPop(this,'rotation',${e.rotation_score||0})">i</button></span><span class="crv ${rotSB?'check':'cross'}">${rotSB?'✓':'✗'} ${(e.rotation_score||0).toFixed(1)}</span></div>`+
+    `<div class="cr"><span class="crl">TREND ≥ 3/4<button class="ib" onclick="showPop(this,'trend','${e.trend_score_raw||e.trend||0}|${e.close||0}|${e.ma20||0}|${e.ma100||0}')">i</button></span><span class="crv ${tP?'check':'cross'}">${tP?'✓':'✗'} ${e.trend_score_raw!=null?e.trend_score_raw:(e.trend||0)}/4</span></div>`+
+    `<div class="cr"><span class="crl">PRESSURE 20W > 0<button class="ib" onclick="showPop(this,'crdp',${e.crdp20||0})">i</button></span><span class="crv ${cP?'check':'cross'}">${cP?'✓':'✗'} ${fC(e.crdp20||0)}</span></div>`+
+    `<div class="cr"><span class="crl">RS20 RAW > 0<button class="ib" onclick="showPop(this,'rs20',${e.rs20_pct||0})">i</button></span><span class="crv ${rP?'check':'cross'}">${rP?'✓':'✗'} ${(rP?'+':'')+fmt(e.rs20_raw||e.rs20_pct||0,2)+'%'}</span></div>`+
+    `<div class="cr"><span class="crl">CONFIDENCE ≥ 50</span><span class="crv ${confP?'check':'cross'}">${confP?'✓':'✗'} ${e.confidence_bucket||'—'} (${Math.round(e.confidence_score||0)})</span></div>`;
+  const aM=e.close>e.ma20, aH=e.close>e.ma100;
+  document.getElementById('dlev').innerHTML=
+    `<div class="cr"><span class="crl">CLOSE</span><span class="crv neu">${fmt(e.close)}</span></div>`+
+    `<div class="cr"><span class="crl">vs MA20<button class="ib" onclick="showPop(this,'ma20',${e.ma20?((e.close-e.ma20)/e.ma20*100):0})">i</button></span><span class="crv ${aM?'check':'cross'}">${fmt(e.ma20)} (${aM?'above':'below'})</span></div>`+
+    `<div class="cr"><span class="crl">vs MA100<button class="ib" onclick="showPop(this,'ma100',${e.ma100?((e.close-e.ma100)/e.ma100*100):0})">i</button></span><span class="crv ${aH?'check':'cross'}">${fmt(e.ma100)} (${aH?'above':'below'})</span></div>`;
+  document.getElementById('dreason').textContent=e.signal_reason||'—';
+  if(dChart){dChart.destroy();dChart=null;}
+  curTicker=t;
+  const _dp=document.getElementById('dp');
+  const _alreadyOpen=_dp.classList.contains('open');
+  document.getElementById('dp').classList.add('open');
+  document.getElementById('ov').classList.add('open');
+  document.querySelectorAll('.etf-card').forEach(c=>c.classList.remove('selected'));
+  // Build chart once panel has real dimensions:
+  // already open → no transition, build on next frame; sliding in → wait for transitionend
+  if(_alreadyOpen){
+    requestAnimationFrame(()=>{ if(dChart){dChart.destroy();dChart=null;} dChart=buildChartOn(curTicker,'dc',true); });
+  } else {
+    function _onTE(ev){
+      if(ev.propertyName!=='transform') return;
+      _dp.removeEventListener('transitionend',_onTE);
+      if(dChart){dChart.destroy();dChart=null;}
+      dChart=buildChartOn(curTicker,'dc',true);
+    }
+    _dp.addEventListener('transitionend',_onTE);
+  }
+  const sel=document.querySelector(`[data-t="${t}"]`); if(sel) sel.classList.add('selected');
+}
+function closeD() {
+  document.getElementById('dp').classList.remove('open');
+  document.getElementById('ov').classList.remove('open');
+  document.querySelectorAll('.etf-card').forEach(c=>c.classList.remove('selected'));
+}
+
+// ── Price history modal ──────────────────────────────────────────────────────
+let _hData=[], _hSort={col:'date',asc:false};
+function closeHistory() { document.getElementById('hist-ov').classList.remove('open'); }
+function _fmtP(n){return n==null?'—':n.toLocaleString('en-GB',{minimumFractionDigits:4,maximumFractionDigits:4})}
+function _fmtV(n){return n==null?'—':Math.round(n).toLocaleString('en-GB')}
+function _fmtT(n){if(n==null)return'—';if(n>=1e9)return'£'+(n/1e9).toFixed(2)+'B';if(n>=1e6)return'£'+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'£'+(n/1e3).toFixed(0)+'K';return'£'+Math.round(n).toLocaleString('en-GB')}
+function renderHistTable() {
+  const sorted=[..._hData].sort((a,b)=>{
+    let av=a[_hSort.col], bv=b[_hSort.col];
+    const c=typeof av==='string'?av.localeCompare(bv):(av||0)-(bv||0);
+    return _hSort.asc?c:-c;
+  });
+  document.getElementById('hist-count').textContent=sorted.length+' rows';
+  document.getElementById('hist-body').innerHTML=sorted.map(r=>
+    `<tr><td class="htd-l">${r.d}</td><td>${_fmtP(r.o)}</td><td>${_fmtP(r.h)}</td><td>${_fmtP(r.l)}</td><td style="font-weight:600">${_fmtP(r.c)}</td><td>${_fmtV(r.v)}</td><td>${_fmtT(r.turnover)}</td></tr>`
+  ).join('');
+  document.querySelectorAll('#hist-tbl .hth').forEach(th=>{
+    th.classList.remove('h-asc','h-desc');
+    if(th.dataset.col===_hSort.col) th.classList.add(_hSort.asc?'h-asc':'h-desc');
+    th.onclick=()=>{ if(_hSort.col===th.dataset.col)_hSort.asc=!_hSort.asc; else{_hSort.col=th.dataset.col;_hSort.asc=false;} renderHistTable(); };
+  });
+}
+function openHistory(ticker) {
+  if(!ticker) return;
+  document.getElementById('hist-title').textContent=ticker+' — PRICE, VOLUME & TURNOVER HISTORY';
+  document.getElementById('hist-body').innerHTML='<tr><td colspan="7" style="color:var(--text3);padding:18px 10px;text-align:center">Loading…</td></tr>';
+  document.getElementById('hist-count').textContent='';
+  document.getElementById('hist-ov').classList.add('open');
+  fetch('/api/prices/'+encodeURIComponent(ticker))
+    .then(r=>r.json())
+    .then(d=>{ _hData=d.rows; _hSort={col:'d',asc:false}; renderHistTable(); })
+    .catch(()=>{ document.getElementById('hist-body').innerHTML='<tr><td colspan="7" style="color:var(--red);padding:16px">Error loading data</td></tr>'; });
+}
+
+// ── Pension fund bar ──────────────────────────────────────────────────────────
+(function(){
+  const bar=document.getElementById('fund-bar');
+  if(!bar) return;
+  const fids=Object.keys(PF);
+  if(!fids.length) return;
+  bar.style.display='flex';
+  const allBtn=document.createElement('button'); allBtn.className='fchip on'; allBtn.textContent='ALL'; allBtn.title='Show all ETFs';
+  allBtn.onclick=function(){ filtFund(null,this); };
+  bar.appendChild(allBtn);
+  fids.forEach(fid=>{
+    const f=PF[fid];
+    const btn=document.createElement('button'); btn.className='fchip';
+    btn.textContent=f.code+' ('+f.tickers.length+')'; btn.title=f.name;
+    btn.onclick=function(){ filtFund(parseInt(fid),this); };
+    bar.appendChild(btn);
+  });
+})();
+
+// ── Sector filter bar ─────────────────────────────────────────────────────────
+(function(){
+  const bar=document.getElementById('sector-bar');
+  if(!bar) return;
+  // Collect sectors present in the data, preserving a logical display order
+  const ORDER=['BASE','UK','US','NAM','EUR','JAP','APAC','EM','GLOBAL',
+                'TECH','HEALTH','DEF','PROP','COMM','MINING','BOND','OTHER'];
+  const present=[...new Set(Object.values(D).map(e=>e.sector).filter(Boolean))];
+  const sectors=ORDER.filter(s=>present.includes(s))
+                     .concat(present.filter(s=>!ORDER.includes(s)).sort());
+  if(!sectors.length) return;
+  bar.style.display='flex';
+  const allBtn=document.createElement('button');
+  allBtn.className='schip on'; allBtn.textContent='ALL';
+  allBtn.onclick=function(){ filtSec(null,this); };
+  bar.appendChild(allBtn);
+  sectors.forEach(s=>{
+    const count=Object.values(D).filter(e=>e.sector===s).length;
+    const btn=document.createElement('button');
+    btn.className='schip';
+    btn.textContent=(SL[s]||s)+' ('+count+')';
+    btn.title=SL[s]||s;
+    btn.onclick=function(){ filtSec(s,this); };
+    bar.appendChild(btn);
+  });
+})();
+counts(); buildCards();
+(function(){ const p=new URLSearchParams(location.search),t=p.get('open'); if(t&&D[t]) openD(t); })();
+</script>
+{% endblock %}
