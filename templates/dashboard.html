@@ -4,18 +4,19 @@
 {% block head %}
 <style>
 /* ── Summary chips bar ── */
-.sum-bar{display:flex;gap:3px;padding:9px 0;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;align-items:center}
-.chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:3px;cursor:pointer;border:1px solid transparent;transition:background .15s;font-family:var(--mono)}
-.chip:hover,.chip.on{border-color:var(--border2);background:var(--surface2)}
-.chip .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.chip .cl{font-size:.73rem;color:var(--text2)}
-.chip .cn{font-size:1.00rem;font-weight:600}
-.chip.sb .dot{background:var(--sig-sb)}.chip.sb .cn{color:var(--sig-sb)}
-.chip.ea .dot{background:var(--sig-ea)}.chip.ea .cn{color:var(--sig-ea)}
-.chip.ah .dot{background:var(--sig-ah)}.chip.ah .cn{color:var(--sig-ah)}
-.chip.nt .dot{background:var(--sig-nt)}.chip.nt .cn{color:var(--text2)}
-.chip.ex .dot{background:var(--sig-ex)}.chip.ex .cn{color:var(--sig-ex)}
-.chip.nd .dot{background:var(--text3)}.chip.nd .cn{color:var(--text3)}
+.sum-bar{display:flex;gap:6px;padding:14px 0 16px;border-bottom:1px solid var(--border);background:var(--bg);flex-wrap:wrap;align-items:stretch}
+.chip{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:5px;cursor:pointer;border:1px solid transparent;transition:all .18s;font-family:var(--mono)}
+.chip:hover{filter:brightness(1.1)}
+.chip.on{filter:brightness(1.15);box-shadow:0 0 0 2px rgba(255,255,255,.08)}
+.chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;opacity:.9}
+.chip .cl{font-size:.73rem;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.chip .cn{font-size:1.20rem;font-weight:700;line-height:1;margin-left:2px}
+.chip.sb{background:var(--sig-sb-bg);border-color:var(--sig-sb-bd)}.chip.sb .dot{background:var(--sig-sb)}.chip.sb .cl{color:var(--sig-sb)}.chip.sb .cn{color:var(--sig-sb)}
+.chip.ea{background:var(--sig-ea-bg);border-color:var(--sig-ea-bd)}.chip.ea .dot{background:var(--sig-ea)}.chip.ea .cl{color:var(--sig-ea)}.chip.ea .cn{color:var(--sig-ea)}
+.chip.ah{background:var(--sig-ah-bg);border-color:var(--sig-ah-bd)}.chip.ah .dot{background:var(--sig-ah)}.chip.ah .cl{color:var(--sig-ah)}.chip.ah .cn{color:var(--sig-ah)}
+.chip.nt{background:var(--neutral-dim);border-color:var(--border2)}.chip.nt .dot{background:var(--text3)}.chip.nt .cl{color:var(--text3)}.chip.nt .cn{color:var(--text2)}
+.chip.ex{background:var(--sig-ex-bg);border-color:var(--sig-ex-bd)}.chip.ex .dot{background:var(--sig-ex)}.chip.ex .cl{color:var(--sig-ex)}.chip.ex .cn{color:var(--sig-ex)}
+.chip.nd{background:var(--surface);border-color:var(--border)}.chip.nd .dot{background:var(--text3)}.chip.nd .cl{color:var(--text3)}.chip.nd .cn{color:var(--text3)}
 .sdiv{flex:1}
 
 /* ── Pension fund bar ── */

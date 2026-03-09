@@ -4,7 +4,7 @@
 {% block head %}
 <style>
 /* ── Control band (fund filter + sort + legend) ── */
-.hm-controls{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:0}
+.hm-controls{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:0 0 4px}
 .hm-ctrl-row{display:flex;align-items:center;gap:8px;padding:7px 0;flex-wrap:wrap}
 .hm-ctrl-row+.hm-ctrl-row{border-top:1px solid var(--border)}
 .ctrl-lbl{font-family:var(--mono);font-size:.73rem;font-weight:600;letter-spacing:.10em;color:var(--text3);white-space:nowrap;width:88px;flex-shrink:0;text-transform:uppercase}
@@ -25,7 +25,7 @@
 .li{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:.73rem;color:var(--text3)}
 .ls{width:18px;height:7px;border-radius:2px}
 /* ETF heatmap section header */
-.etf-section-hdr{display:flex;align-items:center;gap:10px;padding:12px 0 0;font-family:var(--mono);font-size:.80rem;font-weight:600;color:var(--text3);letter-spacing:.10em}
+.etf-section-hdr{display:flex;align-items:center;gap:10px;padding:20px 0 0;font-family:var(--mono);font-size:.80rem;font-weight:600;color:var(--text3);letter-spacing:.10em}
 .etf-section-hdr-line{flex:1;height:1px;background:var(--border)}
 .etf-section-meta{font-size:.73rem;font-weight:400;color:var(--text3);letter-spacing:.04em;margin-left:4px}
 /* fund bar legacy — hidden, chips moved into control band */
