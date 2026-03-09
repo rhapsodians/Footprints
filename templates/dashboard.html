@@ -211,24 +211,28 @@
 
 <!-- Pension fund filter (populated by JS if funds exist) -->
 <div class="fund-bar" id="fund-bar" style="display:none">
-  <span class="fund-lbl">PENSION FUND:</span>
+  <span class="fund-lbl">Pension Fund</span>
+  <div class="fund-chips" id="fund-chips-inner"></div>
 </div>
 
 <!-- Sector filter bar (populated by JS) -->
 <div class="fund-bar" id="sector-bar" style="display:none">
-  <span class="fund-lbl">SECTOR:</span>
+  <span class="fund-lbl">Sector</span>
+  <div class="fund-chips" id="sector-chips-inner"></div>
 </div>
 
 <!-- Sort bar -->
 <div class="sbar">
-  <span>SORT:</span>
-  <button class="sb2 active" onclick="doSort('signal',this)">SIGNAL</button>
-  <button class="sb2" onclick="doSort('ticker',this)">TICKER A–Z</button>
-  <button class="sb2" onclick="doSort('rotation',this)">ROTATION</button>
-  <button class="sb2" onclick="doSort('rs20',this)">RS20%</button>
-  <button class="sb2" onclick="doSort('dv',this)">DV SURPRISE</button>
-  <button class="sb2" onclick="doSort('trend',this)">TREND</button>
-  <button class="sb2" onclick="doSort('size',this)">SIZE</button>
+  <span class="sbar-lbl">Sort</span>
+  <div class="sbar-btns">
+    <button class="sb2 active" onclick="doSort('signal',this)">SIGNAL</button>
+    <button class="sb2" onclick="doSort('ticker',this)">TICKER A–Z</button>
+    <button class="sb2" onclick="doSort('rotation',this)">ROTATION</button>
+    <button class="sb2" onclick="doSort('rs20',this)">RS20%</button>
+    <button class="sb2" onclick="doSort('dv',this)">DV SURPRISE</button>
+    <button class="sb2" onclick="doSort('trend',this)">TREND</button>
+    <button class="sb2" onclick="doSort('size',this)">SIZE</button>
+  </div>
   <span class="asof">{{ as_of_date }}</span>
 </div>
 
@@ -770,11 +774,12 @@ function openHistory(ticker) {
 
 // ── Pension fund bar ──────────────────────────────────────────────────────────
 (function(){
-  const bar=document.getElementById('fund-bar');
+  const bar=document.getElementById('fund-chips-inner')||document.getElementById('fund-bar');
   if(!bar) return;
   const fids=Object.keys(PF);
   if(!fids.length) return;
-  bar.style.display='flex';
+  const outer=document.getElementById('fund-bar'); if(outer) outer.style.display='grid';
+  bar.style.display='flex'; bar.style.flexWrap='wrap'; bar.style.gap='5px';
   const allBtn=document.createElement('button'); allBtn.className='fchip on'; allBtn.textContent='ALL'; allBtn.title='Show all ETFs';
   allBtn.onclick=function(){ filtFund(null,this); };
   bar.appendChild(allBtn);
@@ -789,7 +794,7 @@ function openHistory(ticker) {
 
 // ── Sector filter bar ─────────────────────────────────────────────────────────
 (function(){
-  const bar=document.getElementById('sector-bar');
+  const bar=document.getElementById('sector-chips-inner')||document.getElementById('sector-bar');
   if(!bar) return;
   // Collect sectors present in the data, preserving a logical display order
   const ORDER=['BASE','UK','US','NAM','EUR','JAP','APAC','EM','GLOBAL',
@@ -798,7 +803,8 @@ function openHistory(ticker) {
   const sectors=ORDER.filter(s=>present.includes(s))
                      .concat(present.filter(s=>!ORDER.includes(s)).sort());
   if(!sectors.length) return;
-  bar.style.display='flex';
+  const outerSec=document.getElementById('sector-bar'); if(outerSec) outerSec.style.display='grid';
+  bar.style.display='flex'; bar.style.flexWrap='wrap'; bar.style.gap='5px';
   const allBtn=document.createElement('button');
   allBtn.className='schip on'; allBtn.textContent='ALL';
   allBtn.onclick=function(){ filtSec(null,this); };

@@ -7,17 +7,17 @@
 .hm-controls{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:0 0 4px}
 .hm-ctrl-row{display:flex;align-items:center;gap:8px;padding:7px 0;flex-wrap:wrap}
 .hm-ctrl-row+.hm-ctrl-row{border-top:1px solid var(--border)}
-.ctrl-lbl{font-family:var(--mono);font-size:.73rem;font-weight:600;letter-spacing:.10em;color:var(--text3);white-space:nowrap;width:88px;flex-shrink:0;text-transform:uppercase}
+.ctrl-lbl{font-family:var(--mono);font-size:.73rem;font-weight:600;letter-spacing:.08em;color:var(--text3);white-space:nowrap;width:110px;flex-shrink:0;text-transform:uppercase;padding-top:4px}
 .ctrl-chips{display:flex;gap:4px;flex-wrap:wrap;flex:1}
 /* Unified chip style — used for both fund and sort */
-.chip{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:3px 9px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap;line-height:1.4}
+.chip{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:4px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1.4}
 .chip:hover{border-color:var(--border2);color:var(--text)}
 .chip.on,.chip.active{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
 /* Legacy aliases so JS still works */
-.sb{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:3px 9px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap;line-height:1.4}
+.sb{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:4px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1.4}
 .sb:hover{border-color:var(--border2);color:var(--text)}
 .sb.active{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
-.hm-fchip{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:3px 9px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap;line-height:1.4}
+.hm-fchip{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:4px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1.4}
 .hm-fchip:hover{border-color:var(--border2);color:var(--text)}
 .hm-fchip.on{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
 /* Legend */
@@ -155,22 +155,14 @@
 <div class="hm-controls">
   <!-- Row 1: Pension fund filter -->
   <div class="hm-ctrl-row" id="hm-fund-row">
-    <span class="ctrl-lbl">FUND FILTER</span>
+    <span class="ctrl-lbl">Fund Filter</span>
     <div class="ctrl-chips" id="hm-fund-chips">
-      <!-- populated by JS -->
       <span style="font-family:var(--mono);font-size:.73rem;color:var(--text3);padding:3px 0">—</span>
-    </div>
-    <div class="legend">
-      <div class="li"><div class="ls" style="background:rgba(0,200,150,.50)"></div>Strong +</div>
-      <div class="li"><div class="ls" style="background:rgba(0,200,150,.14)"></div>Mild +</div>
-      <div class="li"><div class="ls" style="background:var(--surface);border:1px solid var(--border)"></div>Neutral</div>
-      <div class="li"><div class="ls" style="background:rgba(255,77,106,.14)"></div>Mild −</div>
-      <div class="li"><div class="ls" style="background:rgba(255,77,106,.50)"></div>Strong −</div>
     </div>
   </div>
   <!-- Row 2: Sort -->
   <div class="hm-ctrl-row">
-    <span class="ctrl-lbl">SORT BY</span>
+    <span class="ctrl-lbl">Sort By</span>
     <div class="ctrl-chips">
       <button class="sb active" onclick="doSort('signal',this)">SIGNAL</button>
       <button class="sb" onclick="doSort('rotation',this)">ROTATION</button>
@@ -181,6 +173,17 @@
       <button class="sb" onclick="doSort('trend',this)">TREND</button>
       <button class="sb" onclick="doSort('confidence',this)">CONFIDENCE</button>
       <button class="sb" onclick="doSort('ticker',this)">TICKER</button>
+    </div>
+  </div>
+  <!-- Row 3: Legend -->
+  <div class="hm-ctrl-row" style="border-top:1px solid var(--border)">
+    <span class="ctrl-lbl">Legend</span>
+    <div class="legend" style="margin-left:0;border-left:none;padding-left:0;gap:14px">
+      <div class="li"><div class="ls" style="background:rgba(0,200,150,.50)"></div>Strong +</div>
+      <div class="li"><div class="ls" style="background:rgba(0,200,150,.14)"></div>Mild +</div>
+      <div class="li"><div class="ls" style="background:var(--surface);border:1px solid var(--border)"></div>Neutral</div>
+      <div class="li"><div class="ls" style="background:rgba(255,77,106,.14)"></div>Mild −</div>
+      <div class="li"><div class="ls" style="background:rgba(255,77,106,.50)"></div>Strong −</div>
     </div>
   </div>
 </div>
