@@ -19,22 +19,25 @@
 .chip.nd{background:var(--surface);border-color:var(--border)}.chip.nd .dot{background:var(--text3)}.chip.nd .cl{color:var(--text3)}.chip.nd .cn{color:var(--text3)}
 .sdiv{flex:1}
 
-/* ── Pension fund bar ── */
-.fund-bar{display:flex;gap:4px;padding:6px 0;border-bottom:1px solid var(--border);background:var(--bg);flex-wrap:wrap;align-items:center}
-.fund-lbl{font-family:var(--mono);font-size:.73rem;color:var(--text3);margin-right:4px;white-space:nowrap}
-.fchip{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:3px 9px;cursor:pointer;transition:all .15s;white-space:nowrap}
-.fchip:hover,.fchip.on{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
-.schip{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:3px 9px;cursor:pointer;transition:all .15s;white-space:nowrap}
-.schip:hover,.schip.on{border-color:var(--text2);color:var(--text1);background:var(--surface2)}
+/* ── Filter / sort control band (mirrors .hm-controls on heatmap) ── */
+.hm-controls-dash{background:var(--surface2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:0 0 4px}
+.hm-ctrl-row-dash{display:flex;align-items:center;gap:8px;padding:7px 0;flex-wrap:wrap}
+.hm-ctrl-row-dash+.hm-ctrl-row-dash{border-top:1px solid var(--border)}
+.ctrl-lbl-dash{font-family:var(--mono);font-size:.73rem;font-weight:600;letter-spacing:.08em;color:var(--text3);white-space:nowrap;width:110px;flex-shrink:0;text-transform:uppercase;padding-top:4px}
+.ctrl-chips-dash{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.fchip{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:4px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1.4}
+.fchip:hover{border-color:var(--border2);color:var(--text)}
+.fchip.on{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
+.schip{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:4px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1.4}
+.schip:hover{border-color:var(--border2);color:var(--text)}
+.schip.on{border-color:var(--text2);color:var(--text);background:var(--surface3)}
 .fund-tag{display:inline-block;font-family:var(--mono);font-size:.73rem;color:var(--accent);border:1px solid var(--accent);border-radius:2px;padding:1px 4px;margin:1px 2px 0 0;opacity:.75;white-space:nowrap;vertical-align:middle}
 .sec-tag{display:inline-block;font-family:var(--mono);font-size:.73rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);border:1px solid var(--border);border-radius:2px;padding:1px 5px;white-space:nowrap}
 .nm-sec{margin-top:4px}
 
-/* ── Sort bar ── */
-.sbar{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
-.sbar span{font-family:var(--mono);font-size:.73rem;color:var(--text3)}
-.sb2{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:3px 8px;cursor:pointer;transition:all .15s}
-.sb2:hover,.sb2.active{border-color:var(--accent);color:var(--accent)}
+.sb2{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:4px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1.4}
+.sb2:hover{border-color:var(--border2);color:var(--text)}
+.sb2.active{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
 .asof{font-family:var(--mono);font-size:.73rem;color:var(--text3);margin-left:auto}
 
 /* ── Card grid ── */
@@ -209,31 +212,32 @@
   <div class="chip" onclick="filt(null)" style="opacity:.55"><span class="cl">ALL</span></div>
 </div>
 
-<!-- Pension fund filter (populated by JS if funds exist) -->
-<div class="fund-bar" id="fund-bar" style="display:none">
-  <span class="fund-lbl">Pension Fund</span>
-  <div class="fund-chips" id="fund-chips-inner"></div>
-</div>
-
-<!-- Sector filter bar (populated by JS) -->
-<div class="fund-bar" id="sector-bar" style="display:none">
-  <span class="fund-lbl">Sector</span>
-  <div class="fund-chips" id="sector-chips-inner"></div>
-</div>
-
-<!-- Sort bar -->
-<div class="sbar">
-  <span class="sbar-lbl">Sort</span>
-  <div class="sbar-btns">
-    <button class="sb2 active" onclick="doSort('signal',this)">SIGNAL</button>
-    <button class="sb2" onclick="doSort('ticker',this)">TICKER A–Z</button>
-    <button class="sb2" onclick="doSort('rotation',this)">ROTATION</button>
-    <button class="sb2" onclick="doSort('rs20',this)">RS20%</button>
-    <button class="sb2" onclick="doSort('dv',this)">DV SURPRISE</button>
-    <button class="sb2" onclick="doSort('trend',this)">TREND</button>
-    <button class="sb2" onclick="doSort('size',this)">SIZE</button>
+<!-- Unified filter + sort control band — same structure as heatmap -->
+<div class="hm-controls-dash">
+  <!-- Pension fund filter (populated by JS) -->
+  <div class="hm-ctrl-row-dash" id="fund-bar" style="display:none">
+    <span class="ctrl-lbl-dash">Pension Fund</span>
+    <div class="ctrl-chips-dash" id="fund-chips-inner"></div>
   </div>
-  <span class="asof">{{ as_of_date }}</span>
+  <!-- Sector filter (populated by JS) -->
+  <div class="hm-ctrl-row-dash" id="sector-bar" style="display:none">
+    <span class="ctrl-lbl-dash">Sector</span>
+    <div class="ctrl-chips-dash" id="sector-chips-inner"></div>
+  </div>
+  <!-- Sort -->
+  <div class="hm-ctrl-row-dash">
+    <span class="ctrl-lbl-dash">Sort</span>
+    <div class="ctrl-chips-dash">
+      <button class="sb2 active" onclick="doSort('signal',this)">SIGNAL</button>
+      <button class="sb2" onclick="doSort('ticker',this)">TICKER A–Z</button>
+      <button class="sb2" onclick="doSort('rotation',this)">ROTATION</button>
+      <button class="sb2" onclick="doSort('rs20',this)">RS20%</button>
+      <button class="sb2" onclick="doSort('dv',this)">DV SURPRISE</button>
+      <button class="sb2" onclick="doSort('trend',this)">TREND</button>
+      <button class="sb2" onclick="doSort('size',this)">SIZE</button>
+    </div>
+    <span class="asof">{{ as_of_date }}</span>
+  </div>
 </div>
 
 <!-- Card grid -->
@@ -778,8 +782,7 @@ function openHistory(ticker) {
   if(!bar) return;
   const fids=Object.keys(PF);
   if(!fids.length) return;
-  const outer=document.getElementById('fund-bar'); if(outer) outer.style.display='grid';
-  bar.style.display='flex'; bar.style.flexWrap='wrap'; bar.style.gap='5px';
+  const outer=document.getElementById('fund-bar'); if(outer) outer.style.display='flex';
   const allBtn=document.createElement('button'); allBtn.className='fchip on'; allBtn.textContent='ALL'; allBtn.title='Show all ETFs';
   allBtn.onclick=function(){ filtFund(null,this); };
   bar.appendChild(allBtn);
@@ -803,8 +806,7 @@ function openHistory(ticker) {
   const sectors=ORDER.filter(s=>present.includes(s))
                      .concat(present.filter(s=>!ORDER.includes(s)).sort());
   if(!sectors.length) return;
-  const outerSec=document.getElementById('sector-bar'); if(outerSec) outerSec.style.display='grid';
-  bar.style.display='flex'; bar.style.flexWrap='wrap'; bar.style.gap='5px';
+  const outerSec=document.getElementById('sector-bar'); if(outerSec) outerSec.style.display='flex';
   const allBtn=document.createElement('button');
   allBtn.className='schip on'; allBtn.textContent='ALL';
   allBtn.onclick=function(){ filtSec(null,this); };
