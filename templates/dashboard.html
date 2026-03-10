@@ -17,6 +17,8 @@
 .chip.nt{background:var(--neutral-dim);border-color:var(--border2)}.chip.nt .dot{background:var(--text3)}.chip.nt .cl{color:var(--text3)}.chip.nt .cn{color:var(--text2)}
 .chip.ex{background:var(--sig-ex-bg);border-color:var(--sig-ex-bd)}.chip.ex .dot{background:var(--sig-ex)}.chip.ex .cl{color:var(--sig-ex)}.chip.ex .cn{color:var(--sig-ex)}
 .chip.nd{background:var(--surface);border-color:var(--border)}.chip.nd .dot{background:var(--text3)}.chip.nd .cl{color:var(--text3)}.chip.nd .cn{color:var(--text3)}
+.chip.chip-all{background:var(--surface2);border:1.5px solid var(--border2)}.chip.chip-all .cl{color:var(--text2);font-weight:600;letter-spacing:.10em}
+.chip.chip-all:hover{background:var(--surface3,var(--surface2));border-color:var(--text3)}
 .sdiv{flex:1}
 
 /* ── Filter / sort control band (mirrors .hm-controls on heatmap) ── */
@@ -209,7 +211,7 @@
   <div class="chip ex" onclick="filt('EXIT/DISTRIBUTION')"><div class="dot"></div><span class="cl">EXIT/DIST</span><span class="cn" id="cex">0</span></div>
   <div class="chip nd" id="chip-nd" onclick="filt('NO DATA')" style="display:none"><div class="dot"></div><span class="cl">NO DATA</span><span class="cn" id="cnd">0</span></div>
   <div class="sdiv"></div>
-  <div class="chip" onclick="filt(null)" style="opacity:.55"><span class="cl">ALL</span></div>
+  <div class="chip chip-all" onclick="filt(null)"><span class="cl">ALL</span></div>
 </div>
 
 <!-- Unified filter + sort control band — same structure as heatmap -->
