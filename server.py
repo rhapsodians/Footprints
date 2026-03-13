@@ -13,7 +13,7 @@ from flask import (Flask, request, redirect, url_for,
                    render_template, flash, jsonify, send_file, make_response)
 
 from collections import Counter
-from config import SIG_STRONG_BUY, SIG_ACCUM, SIG_EXIT
+from config import SIG_STRONG_BUY, SIG_ACCUM, SIG_EXIT, SIG_EARLY_ACCUM
 import config, db, engine
 
 app = Flask(__name__)
@@ -393,6 +393,211 @@ def heatmap():
     ctx.update(signals=sigs, sector_stats=sorted(seen.values(),key=lambda s:-(s.get("sector_score") or 0)),
                fund_map_js=fund_map_js, rows_js=rows_js)
     return render_template("heatmap.html", **ctx)
+
+
+# ── Latest Summary ────────────────────────────────────────────────────────────
+def _proxy_narrative(r):
+    """Generate a 4-5 sentence plain-English narrative for a single proxy ETF."""
+    sig        = r.get("signal", "NEUTRAL")
+    rot        = r.get("rotation_score") or 0
+    rs20       = r.get("rs20_pct") or 0
+    rs20_rank  = r.get("rs20_rank_pct") or 50
+    conf       = r.get("confidence_bucket", "MEDIUM")
+    trend      = int(r.get("trend_score_raw") or 0)
+    press_pct  = r.get("pressure_pos_weeks_pct") or 0
+    press_rank = r.get("pressure_rank_pct") or 50
+    sec_conf   = r.get("sector_confirmed") or 0
+    sec_score  = r.get("sector_score") or 0
+    turn_z     = r.get("turnover_z_20") or 0
+    rs_accel   = r.get("rs_accel_raw") or 0
+    prev       = r.get("prev_signal")
+    name       = r.get("name", r.get("ticker",""))
+    sector     = r.get("sector","")
+
+    lines = []
+
+    # ── Sentence 1: Overall signal verdict ──────────────────────────────────
+    sig_desc = {
+        SIG_STRONG_BUY:  "a Strong Buy",
+        SIG_EARLY_ACCUM: "an Early Accumulation signal",
+        SIG_ACCUM:       "an Accumulating/Hold signal",
+        "NEUTRAL":       "a Neutral signal",
+        SIG_EXIT:        "an Exit/Distribution signal",
+    }.get(sig, f"a {sig} signal")
+
+    rot_desc = ("well above" if rot >= 70 else "above" if rot >= 58
+                else "just above" if rot >= 50 else "below" if rot >= 40 else "well below")
+    lines.append(
+        f"{name} is currently generating {sig_desc}, "
+        f"with a rotation score of {rot:.0f} — {rot_desc} the 50-point neutral threshold."
+    )
+
+    # ── Sentence 2: Momentum / RS ────────────────────────────────────────────
+    rs_dir = "outperforming" if rs20 > 0 else "underperforming"
+    rs_deg = ("strongly " if abs(rs20) > 5 else "modestly " if abs(rs20) > 1.5 else "marginally ")
+    accel_txt = ""
+    if abs(rs_accel) > 0.01:
+        accel_txt = (", and momentum is accelerating" if rs_accel > 0
+                     else ", though momentum is decelerating")
+    lines.append(
+        f"Over the past 20 weeks the ETF has been {rs_deg}{rs_dir} its benchmark "
+        f"by {abs(rs20):.1f}% (ranking in the {rs20_rank:.0f}th percentile universe-wide){accel_txt}."
+    )
+
+    # ── Sentence 3: Pressure / flow ──────────────────────────────────────────
+    press_desc = ("strongly positive" if press_pct >= 70 else
+                  "predominantly positive" if press_pct >= 55 else
+                  "mixed" if press_pct >= 40 else
+                  "predominantly negative" if press_pct >= 25 else "strongly negative")
+    turn_txt = ""
+    if turn_z > 2.5:
+        turn_txt = " Notably, recent volume is running well above its long-run average, suggesting elevated market participation."
+    elif turn_z > 1.5:
+        turn_txt = " Turnover has also picked up relative to its historical baseline."
+    lines.append(
+        f"Buying pressure over the past 20 weeks has been {press_desc} "
+        f"({press_pct:.0f}% of weeks closed with net positive flow, ranking in the {press_rank:.0f}th percentile).{turn_txt}"
+    )
+
+    # ── Sentence 4: Trend ────────────────────────────────────────────────────
+    trend_descs = {
+        4: "Price is above both the 20-week and 100-week moving averages, and the shorter average is above the longer — a fully aligned bullish trend structure.",
+        3: "Price is above both key moving averages, though the trend structure is not yet fully aligned.",
+        2: "Price is above one moving average but below another, indicating a mixed or transitional trend.",
+        1: "Price is below the key moving averages, suggesting the trend remains under pressure.",
+        0: "Price is below both moving averages and trend structure is bearish.",
+    }
+    lines.append(trend_descs.get(trend, "Trend data unavailable."))
+
+    # ── Sentence 5: Sector context + signal change ───────────────────────────
+    if sec_conf and sec_score >= 55:
+        sec_txt = (f"The broader {sector} sector is also confirming this signal "
+                   f"(sector score {sec_score:.0f}), adding conviction to the trade.")
+    elif sec_score >= 45:
+        sec_txt = (f"The broader {sector} sector shows mixed readings "
+                   f"(sector score {sec_score:.0f}), so this is an ETF-specific rather than sector-wide move.")
+    else:
+        sec_txt = (f"The {sector} sector is broadly weak "
+                   f"(sector score {sec_score:.0f}), which adds caution to this signal.")
+
+    if prev:
+        prev_short = (prev.replace("ACCUMULATING/HOLD","Accumulating")
+                         .replace("EXIT/DISTRIBUTION","Exit")
+                         .replace("STRONG BUY","Strong Buy")
+                         .replace("EARLY ACCUMULATION","Early Accumulation"))
+        curr_short = (sig.replace("ACCUMULATING/HOLD","Accumulating")
+                        .replace("EXIT/DISTRIBUTION","Exit")
+                        .replace("STRONG BUY","Strong Buy")
+                        .replace("EARLY ACCUMULATION","Early Accumulation"))
+        sec_txt += f" Signal changed this week from {prev_short} to {curr_short}."
+
+    lines.append(sec_txt)
+
+    return " ".join(lines)
+
+
+@app.route("/summary")
+def summary():
+    as_of  = request.args.get("date", "")
+    dates  = db.get_available_dates()
+    if not as_of and dates: as_of = dates[0]
+
+    sigs = _dicts(db.get_signals_df(as_of_date=as_of if as_of else None))
+    sigs = _enrich_signals(sigs)
+
+    fund_map, etf_fund_map = db.get_pension_maps()
+    for r in sigs:
+        r["funds"] = etf_fund_map.get(r["ticker"], [])
+
+    prev_map = db.get_prev_signals(as_of_date=as_of if as_of else None)
+    for r in sigs:
+        ps = prev_map.get(r["ticker"])
+        r["prev_signal"] = ps if ps and ps != r.get("signal") else None
+        r["narrative"]   = _proxy_narrative(r)
+
+    # ── Signal ordering ──────────────────────────────────────────────────────
+    SIG_ORDER = {SIG_STRONG_BUY: 0, SIG_EARLY_ACCUM: 1, SIG_ACCUM: 2,
+                 "NEUTRAL": 3, SIG_EXIT: 4}
+    def sig_rank(r):
+        return (SIG_ORDER.get(r.get("signal", "NEUTRAL"), 3),
+                -(r.get("rotation_score") or 0))
+
+    # ── Build fund sections ──────────────────────────────────────────────────
+    fund_sections = []
+    for fid, fd in sorted(fund_map.items(), key=lambda x: x[1]["code"]):
+        fund_tickers = set(fd["tickers"])
+        fund_sigs = [r for r in sigs if r["ticker"] in fund_tickers]
+        if not fund_sigs:
+            continue
+        fund_sigs.sort(key=sig_rank)
+
+        buys    = [r for r in fund_sigs if r.get("signal") in (SIG_STRONG_BUY, SIG_EARLY_ACCUM, SIG_ACCUM)]
+        exits   = [r for r in fund_sigs if r.get("signal") == SIG_EXIT]
+        neutral = [r for r in fund_sigs if r.get("signal") == "NEUTRAL"]
+        total   = len(fund_sigs)
+        buy_n, exit_n, neu_n = len(buys), len(exits), len(neutral)
+        sb_n    = sum(1 for r in fund_sigs if r.get("signal") == SIG_STRONG_BUY)
+
+        # Fund-level stance
+        if buy_n == total:
+            stance = "POSITIVE"
+        elif exit_n == total:
+            stance = "NEGATIVE"
+        elif buy_n > exit_n and buy_n >= total * 0.6:
+            stance = "POSITIVE"
+        elif exit_n > buy_n and exit_n >= total * 0.4:
+            stance = "CAUTIOUS"
+        elif buy_n > 0 and exit_n == 0:
+            stance = "MILD POSITIVE"
+        elif exit_n > 0 and buy_n == 0:
+            stance = "MILD NEGATIVE"
+        else:
+            stance = "MIXED"
+
+        transitions = [(r["ticker"], r["name"], r["prev_signal"], r["signal"])
+                       for r in fund_sigs if r.get("prev_signal")]
+
+        fund_sections.append(dict(
+            id=fid, code=fd["code"], name=fd["name"],
+            stance=stance,
+            sigs=fund_sigs, buys=buys, exits=exits, neutral=neutral,
+            transitions=transitions,
+            buy_n=buy_n, exit_n=exit_n, neu_n=neu_n, total=total, sb_n=sb_n,
+        ))
+
+    # ── Unproxied notable signals ────────────────────────────────────────────
+    all_fund_tickers = {t for fd in fund_map.values() for t in fd["tickers"]}
+    notable = [r for r in sigs
+               if r["ticker"] not in all_fund_tickers
+               and r.get("signal") in (SIG_STRONG_BUY, SIG_EARLY_ACCUM, SIG_EXIT)]
+    notable.sort(key=sig_rank)
+
+    # ── Portfolio counts ─────────────────────────────────────────────────────
+    portfolio = dict(
+        total=len(sigs),
+        strong_buy=sum(1 for r in sigs if r.get("signal")==SIG_STRONG_BUY),
+        early_acc=sum(1 for r in sigs if r.get("signal")==SIG_EARLY_ACCUM),
+        accum=sum(1 for r in sigs if r.get("signal")==SIG_ACCUM),
+        neutral=sum(1 for r in sigs if r.get("signal")=="NEUTRAL"),
+        exit=sum(1 for r in sigs if r.get("signal")==SIG_EXIT),
+        high_conf=sum(1 for r in sigs if r.get("confidence_bucket")=="HIGH"),
+        transitions=sum(1 for r in sigs if r.get("prev_signal")),
+    )
+
+    ctx = _ctx("summary", as_of)
+    ctx.update(
+        dates=dates, as_of=as_of,
+        fund_sections=fund_sections,
+        notable=notable,
+        portfolio=portfolio,
+        sig_strong_buy=SIG_STRONG_BUY,
+        sig_early_accum=SIG_EARLY_ACCUM,
+        sig_accum=SIG_ACCUM,
+        sig_exit=SIG_EXIT,
+    )
+    resp = make_response(render_template("summary.html", **ctx))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 # ── History ───────────────────────────────────────────────────────────────────
