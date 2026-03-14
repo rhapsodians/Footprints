@@ -396,6 +396,50 @@ def heatmap():
 
 
 # ── Latest Summary ────────────────────────────────────────────────────────────
+def _short_sig(sig):
+    return (sig.replace("ACCUMULATING/HOLD","ACCUM")
+               .replace("EXIT/DISTRIBUTION","EXIT")
+               .replace("EARLY ACCUMULATION","EARLY ACC")
+               .replace("STRONG BUY","STRONG BUY"))
+
+def _stance(buy_n, exit_n, neu_n, total):
+    if buy_n == total:                              return "POSITIVE"
+    if exit_n == total:                             return "NEGATIVE"
+    if buy_n > exit_n and buy_n >= total * 0.6:    return "POSITIVE"
+    if exit_n >= total * 0.5:                       return "NEGATIVE"
+    if exit_n > buy_n and exit_n >= total * 0.4:   return "CAUTIOUS"
+    if buy_n > 0 and exit_n == 0:                  return "MILD POS"
+    if exit_n > 0 and buy_n == 0:                  return "MILD NEG"
+    return "MIXED"
+
+def _build_fund_rows(fund_map, sigs, SIG_ORDER):
+    """Return list of fund dicts, sorted positive→negative within each provider."""
+    def sig_rank(r):
+        return (SIG_ORDER.get(r.get("signal","NEUTRAL"), 3), -(r.get("rotation_score") or 0))
+
+    rows = []
+    for fid, fd in fund_map.items():
+        fund_tickers = set(fd["tickers"])
+        fund_sigs = [r for r in sigs if r["ticker"] in fund_tickers]
+        if not fund_sigs:
+            continue
+        fund_sigs.sort(key=sig_rank)
+        buys  = [r for r in fund_sigs if r.get("signal") in (SIG_STRONG_BUY, SIG_EARLY_ACCUM, SIG_ACCUM)]
+        exits = [r for r in fund_sigs if r.get("signal") == SIG_EXIT]
+        neu   = [r for r in fund_sigs if r.get("signal") == "NEUTRAL"]
+        total = len(fund_sigs)
+        stance = _stance(len(buys), len(exits), len(neu), total)
+        STANCE_ORDER = {"POSITIVE":0,"MILD POS":1,"MIXED":2,"CAUTIOUS":3,"MILD NEG":4,"NEGATIVE":5}
+        rows.append(dict(
+            id=fid, code=fd["code"], name=fd["name"],
+            stance=stance, stance_order=STANCE_ORDER.get(stance,3),
+            sigs=fund_sigs, buy_n=len(buys), exit_n=len(exits), neu_n=len(neu), total=total,
+            transitions=[(r["ticker"],r["prev_signal"],r["signal"])
+                         for r in fund_sigs if r.get("prev_signal")],
+        ))
+    rows.sort(key=lambda x: (x["stance_order"], x["code"]))
+    return rows
+
 def _proxy_narrative(r):
     """Generate a 4-5 sentence plain-English narrative for a single proxy ETF."""
     sig        = r.get("signal", "NEUTRAL")
@@ -513,66 +557,26 @@ def summary():
     for r in sigs:
         ps = prev_map.get(r["ticker"])
         r["prev_signal"] = ps if ps and ps != r.get("signal") else None
-        r["narrative"]   = _proxy_narrative(r)
 
-    # ── Signal ordering ──────────────────────────────────────────────────────
-    SIG_ORDER = {SIG_STRONG_BUY: 0, SIG_EARLY_ACCUM: 1, SIG_ACCUM: 2,
-                 "NEUTRAL": 3, SIG_EXIT: 4}
-    def sig_rank(r):
-        return (SIG_ORDER.get(r.get("signal", "NEUTRAL"), 3),
-                -(r.get("rotation_score") or 0))
+    SIG_ORDER = {SIG_STRONG_BUY: 0, SIG_EARLY_ACCUM: 1, SIG_ACCUM: 2, "NEUTRAL": 3, SIG_EXIT: 4}
 
-    # ── Build fund sections ──────────────────────────────────────────────────
-    fund_sections = []
-    for fid, fd in sorted(fund_map.items(), key=lambda x: x[1]["code"]):
-        fund_tickers = set(fd["tickers"])
-        fund_sigs = [r for r in sigs if r["ticker"] in fund_tickers]
-        if not fund_sigs:
-            continue
-        fund_sigs.sort(key=sig_rank)
+    # Split fund_map into LG and IL providers
+    lg_map = {fid: fd for fid, fd in fund_map.items() if fd["code"].startswith("LG")}
+    il_map = {fid: fd for fid, fd in fund_map.items() if fd["code"].startswith("IL")}
 
-        buys    = [r for r in fund_sigs if r.get("signal") in (SIG_STRONG_BUY, SIG_EARLY_ACCUM, SIG_ACCUM)]
-        exits   = [r for r in fund_sigs if r.get("signal") == SIG_EXIT]
-        neutral = [r for r in fund_sigs if r.get("signal") == "NEUTRAL"]
-        total   = len(fund_sigs)
-        buy_n, exit_n, neu_n = len(buys), len(exits), len(neutral)
-        sb_n    = sum(1 for r in fund_sigs if r.get("signal") == SIG_STRONG_BUY)
+    lg_rows = _build_fund_rows(lg_map, sigs, SIG_ORDER)
+    il_rows = _build_fund_rows(il_map, sigs, SIG_ORDER)
 
-        # Fund-level stance
-        if buy_n == total:
-            stance = "POSITIVE"
-        elif exit_n == total:
-            stance = "NEGATIVE"
-        elif buy_n > exit_n and buy_n >= total * 0.6:
-            stance = "POSITIVE"
-        elif exit_n > buy_n and exit_n >= total * 0.4:
-            stance = "CAUTIOUS"
-        elif buy_n > 0 and exit_n == 0:
-            stance = "MILD POSITIVE"
-        elif exit_n > 0 and buy_n == 0:
-            stance = "MILD NEGATIVE"
-        else:
-            stance = "MIXED"
-
-        transitions = [(r["ticker"], r["name"], r["prev_signal"], r["signal"])
-                       for r in fund_sigs if r.get("prev_signal")]
-
-        fund_sections.append(dict(
-            id=fid, code=fd["code"], name=fd["name"],
-            stance=stance,
-            sigs=fund_sigs, buys=buys, exits=exits, neutral=neutral,
-            transitions=transitions,
-            buy_n=buy_n, exit_n=exit_n, neu_n=neu_n, total=total, sb_n=sb_n,
-        ))
-
-    # ── Unproxied notable signals ────────────────────────────────────────────
+    # Unproxied notable signals
     all_fund_tickers = {t for fd in fund_map.values() for t in fd["tickers"]}
-    notable = [r for r in sigs
-               if r["ticker"] not in all_fund_tickers
-               and r.get("signal") in (SIG_STRONG_BUY, SIG_EARLY_ACCUM, SIG_EXIT)]
-    notable.sort(key=sig_rank)
+    def sig_rank(r):
+        return (SIG_ORDER.get(r.get("signal","NEUTRAL"), 3), -(r.get("rotation_score") or 0))
+    notable = sorted(
+        [r for r in sigs if r["ticker"] not in all_fund_tickers
+         and r.get("signal") in (SIG_STRONG_BUY, SIG_EARLY_ACCUM, SIG_EXIT)],
+        key=sig_rank
+    )
 
-    # ── Portfolio counts ─────────────────────────────────────────────────────
     portfolio = dict(
         total=len(sigs),
         strong_buy=sum(1 for r in sigs if r.get("signal")==SIG_STRONG_BUY),
@@ -587,13 +591,10 @@ def summary():
     ctx = _ctx("summary", as_of)
     ctx.update(
         dates=dates, as_of=as_of,
-        fund_sections=fund_sections,
-        notable=notable,
-        portfolio=portfolio,
-        sig_strong_buy=SIG_STRONG_BUY,
-        sig_early_accum=SIG_EARLY_ACCUM,
-        sig_accum=SIG_ACCUM,
-        sig_exit=SIG_EXIT,
+        lg_rows=lg_rows, il_rows=il_rows,
+        notable=notable, portfolio=portfolio,
+        sig_strong_buy=SIG_STRONG_BUY, sig_early_accum=SIG_EARLY_ACCUM,
+        sig_accum=SIG_ACCUM, sig_exit=SIG_EXIT,
     )
     resp = make_response(render_template("summary.html", **ctx))
     resp.headers["Cache-Control"] = "no-store"

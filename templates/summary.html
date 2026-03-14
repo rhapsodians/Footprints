@@ -1,119 +1,97 @@
 {% extends "base.html" %}
-{% block title %}Latest Summary{% endblock %}
+{% block title %}Summary{% endblock %}
 
 {% block head %}
 <style>
-/* ── Page ── */
-.sum-page { max-width: 1200px; }
+.sum-page { max-width: 1100px; }
 
-/* ── Print / date bar ── */
+/* ── Print bar ── */
 .print-bar {
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+  padding: 8px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 22px;
 }
 .print-btn {
-  font-family: var(--mono); font-size: .80rem; padding: 5px 14px;
+  font-family: var(--mono); font-size: .80rem; padding: 4px 12px;
   border: 1px solid var(--border); border-radius: 3px;
   background: var(--surface2); color: var(--text2); cursor: pointer; transition: all .15s;
 }
 .print-btn:hover { border-color: var(--accent); color: var(--accent); }
-.print-date { font-family: var(--mono); font-size: .73rem; color: var(--text3); margin-left: auto; }
 
-/* ── Portfolio scorecard ── */
+/* ── Scorecard ── */
 .scorecard {
-  display: flex; gap: 0; margin-bottom: 28px;
+  display: flex; margin-bottom: 26px;
   border: 1px solid var(--border); border-radius: 5px; overflow: hidden;
 }
-.sc-cell {
-  flex: 1; padding: 14px 8px 12px; text-align: center;
-  border-right: 1px solid var(--border); background: var(--surface);
-}
+.sc-cell { flex: 1; padding: 12px 6px 10px; text-align: center; border-right: 1px solid var(--border); background: var(--surface); }
 .sc-cell:last-child { border-right: none; }
-.sc-val { font-family: var(--mono); font-size: 1.53rem; font-weight: 700; line-height: 1; margin-bottom: 5px; }
-.sc-lbl { font-family: var(--mono); font-size: .67rem; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); }
-.sc-cell.buy    .sc-val { color: var(--sig-sb); }
-.sc-cell.exit   .sc-val { color: var(--sig-ex); }
-.sc-cell.neut   .sc-val { color: var(--text2); }
-.sc-cell.change .sc-val { color: var(--sig-ea, #c8a000); }
+.sc-val { font-family: var(--mono); font-size: 1.40rem; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.sc-lbl { font-family: var(--mono); font-size: .67rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); }
+.sc-cell.c-buy  .sc-val { color: var(--sig-sb); }
+.sc-cell.c-exit .sc-val { color: var(--sig-ex); }
+.sc-cell.c-neu  .sc-val { color: var(--text2); }
+.sc-cell.c-chg  .sc-val { color: var(--sig-ea, #c8a000); }
 
-/* ── Section divider ── */
-.sec-divider {
-  font-family: var(--mono); font-size: .73rem; font-weight: 600;
+/* ── Provider section header ── */
+.provider-hdr {
+  font-family: var(--mono); font-size: .73rem; font-weight: 700;
   letter-spacing: .12em; text-transform: uppercase; color: var(--text3);
-  display: flex; align-items: center; gap: 10px; margin: 0 0 16px;
+  display: flex; align-items: center; gap: 10px; margin: 0 0 10px;
 }
-.sec-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.provider-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.provider-hdr + .provider-hdr { margin-top: 28px; }
 
-/* ── 2-column grid ── */
-.fund-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  align-items: start;
+/* ── Fund table ── */
+.fund-table {
+  width: 100%; border-collapse: collapse;
+  border: 1px solid var(--border); border-radius: 5px; overflow: hidden;
+  margin-bottom: 28px; font-family: var(--mono);
 }
+.fund-table thead tr { background: var(--surface2); }
+.fund-table th {
+  font-size: .67rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text3); padding: 7px 10px; border-bottom: 1px solid var(--border);
+  text-align: left; white-space: nowrap;
+}
+.fund-table th.r { text-align: right; }
+.fund-table th.c { text-align: center; }
 
-/* ── Fund card ── */
-.fund-card {
-  border: 1px solid var(--border); border-radius: 5px;
-  overflow: hidden; background: var(--surface);
+/* Fund name row */
+.fund-table tr.fund-row { background: var(--surface); }
+.fund-table tr.fund-row td {
+  padding: 9px 10px 8px; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
 }
-.fund-card.stance-POSITIVE       { border-left: 3px solid var(--sig-sb); }
-.fund-card.stance-MILDPOSITIVE   { border-left: 3px solid rgba(0,200,130,.45); }
-.fund-card.stance-MIXED          { border-left: 3px solid var(--border2); }
-.fund-card.stance-CAUTIOUS       { border-left: 3px solid rgba(255,77,106,.55); }
-.fund-card.stance-MILDNEGATIVE   { border-left: 3px solid rgba(255,77,106,.40); }
-.fund-card.stance-NEGATIVE       { border-left: 3px solid var(--sig-ex); }
+/* Proxy rows */
+.fund-table tr.proxy-row { background: transparent; }
+.fund-table tr.proxy-row:last-of-type td { border-bottom: 2px solid var(--border); }
+.fund-table tr.proxy-row td {
+  padding: 7px 10px; border-bottom: 1px solid var(--border);
+  font-size: .80rem; color: var(--text2); vertical-align: middle;
+}
+.fund-table tr.proxy-row td.r { text-align: right; }
+.fund-table tr.proxy-row td.c { text-align: center; }
 
-.fund-header {
-  padding: 11px 14px 10px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface2);
+/* Stance cell — heatmap colour block */
+.stance-cell {
+  font-size: .67rem; font-weight: 700; letter-spacing: .06em;
+  padding: 3px 8px !important; border-radius: 3px; white-space: nowrap;
+  display: inline-block;
 }
-.fund-header-top {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px;
-}
-.fund-full-name {
-  font-size: .87rem; font-weight: 600; color: var(--text); line-height: 1.35; flex: 1;
-}
-.stance-badge {
-  font-family: var(--mono); font-size: .67rem; font-weight: 700;
-  letter-spacing: .06em; padding: 3px 9px; border-radius: 3px;
-  white-space: nowrap; flex-shrink: 0; margin-top: 1px;
-}
-.badge-POSITIVE     { background: rgba(0,200,130,.15); color: var(--sig-sb); border: 1px solid rgba(0,200,130,.35); }
-.badge-MILDPOSITIVE { background: rgba(0,200,130,.08); color: var(--sig-sb); border: 1px solid rgba(0,200,130,.20); }
-.badge-CAUTIOUS     { background: rgba(255,77,106,.10); color: var(--sig-ex); border: 1px solid rgba(255,77,106,.25); }
-.badge-MILDNEGATIVE { background: rgba(255,77,106,.07); color: var(--sig-ex); border: 1px solid rgba(255,77,106,.18); }
-.badge-NEGATIVE     { background: rgba(255,77,106,.16); color: var(--sig-ex); border: 1px solid rgba(255,77,106,.40); }
-.badge-MIXED        { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+.s-POSITIVE  { background: rgba(0,200,130,.18); color: var(--sig-sb); }
+.s-MILDPOS   { background: rgba(0,200,130,.09); color: var(--sig-sb); }
+.s-MIXED     { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.s-CAUTIOUS  { background: rgba(255,77,106,.10); color: var(--sig-ex); }
+.s-MILDNEG   { background: rgba(255,77,106,.07); color: var(--sig-ex); }
+.s-NEGATIVE  { background: rgba(255,77,106,.22); color: var(--sig-ex); }
 
-.fund-code-line {
-  font-family: var(--mono); font-size: .73rem; color: var(--text3); letter-spacing: .03em;
-}
-
-/* ── Signal change callout ── */
-.change-callout {
-  margin: 10px 14px 0;
-  padding: 7px 10px;
-  background: rgba(200,160,0,.08);
-  border: 1px solid rgba(200,160,0,.25);
-  border-radius: 3px;
-  font-family: var(--mono); font-size: .73rem; color: var(--text2);
-  line-height: 1.5;
-}
-.change-callout strong { color: var(--sig-ea, #c8a000); }
-
-/* ── Proxy entries ── */
-.proxy-list { padding: 4px 0 0; }
-.proxy-entry {
-  padding: 12px 14px 13px;
-  border-top: 1px solid var(--border);
-}
+/* Fund name */
+.fund-name-cell { font-size: .80rem; font-weight: 600; color: var(--text); line-height: 1.3; }
+.fund-code-sm { font-size: .67rem; color: var(--text3); font-weight: 400; margin-top: 1px; }
 
 /* Signal pill */
 .sig-pill {
-  display: inline-block; font-family: var(--mono); font-size: .73rem; font-weight: 700;
-  padding: 2px 8px; border-radius: 3px; white-space: nowrap;
+  display: inline-block; font-family: var(--mono); font-size: .67rem; font-weight: 700;
+  padding: 2px 7px; border-radius: 3px; white-space: nowrap;
 }
 .sig-pill.sb { background: var(--sig-sb-bg); color: var(--sig-sb); border: 1px solid var(--sig-sb-bd); }
 .sig-pill.ea { background: var(--sig-ea-bg); color: var(--sig-ea); border: 1px solid var(--sig-ea-bd); }
@@ -121,50 +99,36 @@
 .sig-pill.nt { background: var(--neutral-dim); color: var(--text3); border: 1px solid var(--border2); }
 .sig-pill.ex { background: var(--sig-ex-bg); color: var(--sig-ex); border: 1px solid var(--sig-ex-bd); }
 
-/* Proxy top row */
-.proxy-top {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
+/* KPI value colouring */
+.kv { font-family: var(--mono); font-size: .80rem; font-weight: 700; }
+.kv-pos  { color: var(--sig-sb); }
+.kv-neg  { color: var(--sig-ex); }
+.kv-warn { color: var(--sig-ea, #c8a000); }
+.kv-neu  { color: var(--text2); }
+
+/* Trend dots */
+.tdots { letter-spacing: 1px; font-size: .73rem; }
+
+/* Transition arrow */
+.prev-sig { font-size: .67rem; color: var(--text3); text-decoration: line-through; margin-right: 2px; }
+.arr { color: var(--text3); margin: 0 2px; }
+
+/* Ticker */
+.ticker { font-weight: 700; color: var(--text); font-size: .80rem; }
+
+/* Change flag */
+.chg-flag {
+  display: inline-block; font-size: .60rem; font-weight: 700;
+  background: rgba(200,160,0,.15); color: var(--sig-ea,#c8a000);
+  border: 1px solid rgba(200,160,0,.30); border-radius: 2px;
+  padding: 1px 4px; margin-left: 4px; vertical-align: middle;
 }
-.proxy-ticker  { font-family: var(--mono); font-size: .87rem; font-weight: 700; color: var(--text); }
-.proxy-etf-name { font-family: var(--mono); font-size: .73rem; color: var(--text3); flex: 1;
-                  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.transition-wrap { display: flex; align-items: center; gap: 5px; }
-.prev-sig { font-family: var(--mono); font-size: .67rem; color: var(--text3); text-decoration: line-through; }
-.arr { color: var(--text3); font-size: .73rem; }
-
-/* Metrics strip */
-.proxy-metrics { display: flex; gap: 16px; margin-bottom: 9px; flex-wrap: wrap; }
-.metric { display: flex; flex-direction: column; gap: 1px; }
-.metric-val {
-  font-family: var(--mono); font-size: .80rem; font-weight: 700; color: var(--text); line-height: 1.2;
-}
-.metric-val.pos  { color: var(--sig-sb); }
-.metric-val.neg  { color: var(--sig-ex); }
-.metric-val.warn { color: var(--sig-ea, #c8a000); }
-.metric-lbl { font-family: var(--mono); font-size: .67rem; letter-spacing: .05em; text-transform: uppercase; color: var(--text3); }
-.trend-dots { letter-spacing: 1px; }
-
-/* Narrative */
-.proxy-narrative { font-size: .80rem; line-height: 1.65; color: var(--text2); }
-
-/* ── Notable ── */
-.notable-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.notable-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; }
-.notable-top  { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-.notable-ticker { font-family: var(--mono); font-weight: 700; font-size: .87rem; color: var(--text); }
-.notable-name   { font-family: var(--mono); font-size: .73rem; color: var(--text3); flex: 1; }
-.notable-sector { font-family: var(--mono); font-size: .73rem; color: var(--text3); border: 1px solid var(--border); border-radius: 2px; padding: 1px 6px; }
-.notable-narrative { font-size: .80rem; line-height: 1.65; color: var(--text2); }
 
 /* ── Print ── */
 @media print {
-  .nav, .print-bar, .page-header { display: none !important; }
-  .fund-card, .notable-card { page-break-inside: avoid; }
-  body, .sum-page { background: white !important; color: black !important; max-width: 100%; }
-  .fund-grid, .notable-grid { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 700px) {
-  .fund-grid, .notable-grid { grid-template-columns: 1fr; }
+  .nav, .print-bar { display: none !important; }
+  body { background: white !important; }
+  .fund-table { page-break-inside: avoid; }
 }
 </style>
 {% endblock %}
@@ -173,8 +137,8 @@
 <div class="sum-page">
 
 <div class="page-header">
-  <div class="page-title">Latest <strong>Summary</strong></div>
-  <div class="page-subtitle">Pension fund rotation signals · L&G WorkSave Universe · as of {{ as_of }}</div>
+  <div class="page-title">Weekly <strong>Summary</strong></div>
+  <div class="page-subtitle">Pension fund rotation signals · L&G &amp; Irish Life · as of {{ as_of }}</div>
 </div>
 
 <div class="print-bar">
@@ -185,49 +149,41 @@
   </select>
   {% endif %}
   <button class="print-btn" onclick="window.print()">⎙ Print / Save PDF</button>
-  <span class="print-date">Generated {{ as_of }}</span>
 </div>
 
 <!-- Scorecard -->
 <div class="scorecard">
-  <div class="sc-cell buy"><div class="sc-val">{{ portfolio.strong_buy }}</div><div class="sc-lbl">Strong Buy</div></div>
-  <div class="sc-cell buy"><div class="sc-val">{{ portfolio.early_acc + portfolio.accum }}</div><div class="sc-lbl">Accumulating</div></div>
-  <div class="sc-cell neut"><div class="sc-val">{{ portfolio.neutral }}</div><div class="sc-lbl">Neutral</div></div>
-  <div class="sc-cell exit"><div class="sc-val">{{ portfolio.exit }}</div><div class="sc-lbl">Exit / Dist</div></div>
-  <div class="sc-cell neut"><div class="sc-val">{{ portfolio.high_conf }}</div><div class="sc-lbl">High Conf</div></div>
-  <div class="sc-cell change"><div class="sc-val">{{ portfolio.transitions }}</div><div class="sc-lbl">Signal Changes</div></div>
-  <div class="sc-cell neut"><div class="sc-val">{{ portfolio.total }}</div><div class="sc-lbl">ETFs Tracked</div></div>
+  <div class="sc-cell c-buy"><div class="sc-val">{{ portfolio.strong_buy }}</div><div class="sc-lbl">Strong Buy</div></div>
+  <div class="sc-cell c-buy"><div class="sc-val">{{ portfolio.early_acc + portfolio.accum }}</div><div class="sc-lbl">Accumulating</div></div>
+  <div class="sc-cell c-neu"><div class="sc-val">{{ portfolio.neutral }}</div><div class="sc-lbl">Neutral</div></div>
+  <div class="sc-cell c-exit"><div class="sc-val">{{ portfolio.exit }}</div><div class="sc-lbl">Exit</div></div>
+  <div class="sc-cell c-neu"><div class="sc-val">{{ portfolio.high_conf }}</div><div class="sc-lbl">High Conf</div></div>
+  <div class="sc-cell c-chg"><div class="sc-val">{{ portfolio.transitions }}</div><div class="sc-lbl">Changes</div></div>
+  <div class="sc-cell c-neu"><div class="sc-val">{{ portfolio.total }}</div><div class="sc-lbl">Total ETFs</div></div>
 </div>
 
-<div class="sec-divider">Pension Fund Proxies</div>
-
-<div class="fund-grid">
-{% for fs in fund_sections %}
-{% set stance_cls = fs.stance | replace(' ','') %}
-<div class="fund-card stance-{{ stance_cls }}">
-
-  <div class="fund-header">
-    <div class="fund-header-top">
-      <span class="fund-full-name">{{ fs.name }}</span>
-      <span class="stance-badge badge-{{ stance_cls }}">{{ fs.stance }}</span>
-    </div>
-    <div class="fund-code-line">
-      {{ fs.code }}&nbsp;·&nbsp;{{ fs.total }} proxy{% if fs.total != 1 %}s{% endif %}&nbsp;·&nbsp;{{ fs.buy_n }} buy{% if fs.buy_n != 1 %}s{% endif %}, {{ fs.neu_n }} neutral, {{ fs.exit_n }} exit{% if fs.exit_n != 1 %}s{% endif %}
-    </div>
-  </div>
-
-  {% if fs.transitions %}
-  <div class="change-callout">
-    <strong>⚡ Signal change this week:</strong>
-    {% for ticker, name, prev, curr in fs.transitions %}
-      {{ ticker }}
-      {{ prev | replace('ACCUMULATING/HOLD','Acc') | replace('EXIT/DISTRIBUTION','Exit') | replace('STRONG BUY','Strong Buy') | replace('EARLY ACCUMULATION','Early Acc') }}
-      → <strong>{{ curr | replace('ACCUMULATING/HOLD','Accum') | replace('EXIT/DISTRIBUTION','Exit') | replace('STRONG BUY','Strong Buy') | replace('EARLY ACCUMULATION','Early Acc') }}</strong>{% if not loop.last %}; {% endif %}
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <div class="proxy-list">
+{# ── Macro to render a provider table ── #}
+{% macro fund_table(rows, label) %}
+{% if rows %}
+<div class="provider-hdr">{{ label }}</div>
+<table class="fund-table">
+  <thead>
+    <tr>
+      <th style="width:22px"></th>
+      <th>Pension Fund</th>
+      <th>Proxy ETF</th>
+      <th>Signal</th>
+      <th class="r">Rotation</th>
+      <th class="r">RS 20w</th>
+      <th class="c">Conf</th>
+      <th class="c">Trend</th>
+      <th class="r">Pressure%</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for fs in rows %}
+  {% set sc = fs.stance | replace(' ','') | replace('MILDPOS','MILDPOS') %}
+  {% set sc2 = 's-' + fs.stance | replace(' POS','POS') | replace(' NEG','NEG') | replace(' ','') %}
   {% for r in fs.sigs %}
   {% set sig = r.signal %}
   {% if sig == sig_strong_buy %}{% set css = 'sb' %}
@@ -237,72 +193,88 @@
   {% else %}{% set css = 'nt' %}{% endif %}
   {% set rot = r.rotation_score | default(0) | round(1) %}
   {% set rs  = r.rs20_pct | default(0) | round(1) %}
+  {% set prs = r.pressure_pos_weeks_pct | default(0) | round(0) | int %}
   {% set trend_dots = '●' * (r.trend | default(0)) + '○' * (4 - (r.trend | default(0))) %}
-
-  <div class="proxy-entry">
-    <div class="proxy-top">
-      <span class="proxy-ticker">{{ r.ticker }}</span>
-      <span class="proxy-etf-name" title="{{ r.name }}">{{ r.name }}</span>
+  <tr class="proxy-row">
+    {# Stance colour block — only on first proxy row of each fund #}
+    {% if loop.first %}
+    <td rowspan="{{ fs.sigs | length }}" style="padding:0!important;width:6px;background:{% if fs.stance=='POSITIVE' %}rgba(0,200,130,.35){% elif fs.stance=='MILD POS' %}rgba(0,200,130,.15){% elif fs.stance=='NEGATIVE' %}rgba(255,77,106,.35){% elif fs.stance in ('CAUTIOUS','MILD NEG') %}rgba(255,77,106,.15){% else %}var(--border){% endif %}"></td>
+    <td rowspan="{{ fs.sigs | length }}" style="vertical-align:top;padding-top:10px!important;border-right:1px solid var(--border)">
+      <div class="fund-name-cell">{{ fs.name }}</div>
+      <div class="fund-code-sm">{{ fs.code }}</div>
+      <div style="margin-top:5px"><span class="stance-cell {{ sc2 }}">{{ fs.stance }}</span></div>
+    </td>
+    {% endif %}
+    <td>
+      <span class="ticker">{{ r.ticker }}</span>
+      {% if r.prev_signal %}<span class="chg-flag">↑ CHANGE</span>{% endif %}
+      <div style="font-size:.67rem;color:var(--text3);margin-top:1px">{{ r.name | truncate(38, true, '…') }}</div>
+    </td>
+    <td>
       {% if r.prev_signal %}
-      <div class="transition-wrap">
-        <span class="prev-sig">{{ r.prev_signal | replace('ACCUMULATING/HOLD','ACC') | replace('EXIT/DISTRIBUTION','EXIT') | replace('STRONG BUY','S.BUY') | replace('EARLY ACCUMULATION','E.ACC') }}</span>
-        <span class="arr">→</span>
-        <span class="sig-pill {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span>
-      </div>
-      {% else %}
-      <span class="sig-pill {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span>
+      <span class="prev-sig">{{ r.prev_signal | replace('ACCUMULATING/HOLD','ACC') | replace('EXIT/DISTRIBUTION','EXIT') | replace('STRONG BUY','S.BUY') | replace('EARLY ACCUMULATION','E.ACC') }}</span><span class="arr">→</span>
       {% endif %}
-    </div>
-
-    <div class="proxy-metrics">
-      <div class="metric">
-        <span class="metric-val {% if rot >= 65 %}pos{% elif rot < 45 %}neg{% elif rot < 52 %}warn{% endif %}">{{ rot }}</span>
-        <span class="metric-lbl">Rotation</span>
-      </div>
-      <div class="metric">
-        <span class="metric-val {% if rs > 0 %}pos{% elif rs < 0 %}neg{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span>
-        <span class="metric-lbl">RS 20w</span>
-      </div>
-      <div class="metric">
-        <span class="metric-val {% if r.confidence_bucket == 'HIGH' %}pos{% endif %}">{{ r.confidence_bucket | default('—') }}</span>
-        <span class="metric-lbl">Confidence</span>
-      </div>
-      <div class="metric">
-        <span class="metric-val trend-dots">{{ trend_dots }}</span>
-        <span class="metric-lbl">Trend ({{ r.trend | default(0) }}/4)</span>
-      </div>
-    </div>
-
-    <div class="proxy-narrative">{{ r.narrative }}</div>
-  </div>
+      <span class="sig-pill {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span>
+    </td>
+    <td class="r"><span class="kv {% if rot >= 65 %}kv-pos{% elif rot < 45 %}kv-neg{% elif rot < 52 %}kv-warn{% else %}kv-neu{% endif %}">{{ rot }}</span></td>
+    <td class="r"><span class="kv {% if rs > 0 %}kv-pos{% elif rs < 0 %}kv-neg{% else %}kv-neu{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
+    <td class="c"><span class="kv {% if r.confidence_bucket == 'HIGH' %}kv-pos{% elif r.confidence_bucket == 'LOW' %}kv-neg{% else %}kv-neu{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
+    <td class="c"><span class="tdots">{{ trend_dots }}</span></td>
+    <td class="r"><span class="kv {% if prs >= 60 %}kv-pos{% elif prs <= 35 %}kv-neg{% else %}kv-neu{% endif %}">{{ prs }}%</span></td>
+  </tr>
   {% endfor %}
-  </div>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endmacro %}
 
-</div>
-{% endfor %}
-</div>
+{{ fund_table(lg_rows, "L&G WorkSave Pension") }}
+{{ fund_table(il_rows, "Irish Life") }}
 
+<!-- Notable unproxied signals -->
 {% if notable %}
-<div class="sec-divider" style="margin-top:32px">Notable Signals — No Fund Proxy</div>
-<div class="notable-grid">
-{% for r in notable %}
-{% set sig = r.signal %}
-{% if sig == sig_strong_buy %}{% set css = 'sb' %}
-{% elif sig == sig_early_accum %}{% set css = 'ea' %}
-{% elif sig == sig_accum %}{% set css = 'ah' %}
-{% elif sig == sig_exit %}{% set css = 'ex' %}
-{% else %}{% set css = 'nt' %}{% endif %}
-<div class="notable-card">
-  <div class="notable-top">
-    <span class="notable-ticker">{{ r.ticker }}</span>
-    <span class="notable-name" title="{{ r.name }}">{{ r.name }}</span>
-    <span class="notable-sector">{{ r.sector }}</span>
-    <span class="sig-pill {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span>
-  </div>
-  <div class="notable-narrative">{{ r.narrative }}</div>
-</div>
-{% endfor %}
-</div>
+<div class="provider-hdr" style="margin-top:4px">Notable — No Fund Proxy</div>
+<table class="fund-table">
+  <thead>
+    <tr>
+      <th>Ticker</th>
+      <th>Name</th>
+      <th>Sector</th>
+      <th>Signal</th>
+      <th class="r">Rotation</th>
+      <th class="r">RS 20w</th>
+      <th class="c">Conf</th>
+      <th class="c">Trend</th>
+      <th class="r">Pressure%</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in notable %}
+  {% set sig = r.signal %}
+  {% if sig == sig_strong_buy %}{% set css = 'sb' %}
+  {% elif sig == sig_early_accum %}{% set css = 'ea' %}
+  {% elif sig == sig_accum %}{% set css = 'ah' %}
+  {% elif sig == sig_exit %}{% set css = 'ex' %}
+  {% else %}{% set css = 'nt' %}{% endif %}
+  {% set rot = r.rotation_score | default(0) | round(1) %}
+  {% set rs  = r.rs20_pct | default(0) | round(1) %}
+  {% set prs = r.pressure_pos_weeks_pct | default(0) | round(0) | int %}
+  {% set trend_dots = '●' * (r.trend | default(0)) + '○' * (4 - (r.trend | default(0))) %}
+  <tr class="proxy-row">
+    <td><span class="ticker">{{ r.ticker }}</span></td>
+    <td style="font-size:.73rem;color:var(--text2)">{{ r.name | truncate(42, true, '…') }}</td>
+    <td><span style="font-family:var(--mono);font-size:.67rem;color:var(--text3);border:1px solid var(--border);border-radius:2px;padding:1px 5px">{{ r.sector }}</span></td>
+    <td><span class="sig-pill {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span></td>
+    <td class="r"><span class="kv {% if rot >= 65 %}kv-pos{% elif rot < 45 %}kv-neg{% elif rot < 52 %}kv-warn{% else %}kv-neu{% endif %}">{{ rot }}</span></td>
+    <td class="r"><span class="kv {% if rs > 0 %}kv-pos{% elif rs < 0 %}kv-neg{% else %}kv-neu{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
+    <td class="c"><span class="kv {% if r.confidence_bucket == 'HIGH' %}kv-pos{% elif r.confidence_bucket == 'LOW' %}kv-neg{% else %}kv-neu{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
+    <td class="c"><span class="tdots">{{ trend_dots }}</span></td>
+    <td class="r"><span class="kv {% if prs >= 60 %}kv-pos{% elif prs <= 35 %}kv-neg{% else %}kv-neu{% endif %}">{{ prs }}%</span></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
 {% endif %}
 
 </div>

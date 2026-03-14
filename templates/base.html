@@ -460,7 +460,7 @@
 <body>
 
 <nav class="topnav">
-  <a class="nav-brand" href="/"><span>F</span>OOTPRINTS</a>
+  <a class="nav-brand" href="/"><span>F</span>OOTPRINTS <span style="font-weight:300;opacity:.45;margin-left:2px">·</span> <span style="font-weight:400;font-size:.80em;opacity:.7;letter-spacing:.04em">{% if active_nav == 'dashboard' %}Dashboard{% elif active_nav == 'heatmap' %}Heatmap{% elif active_nav == 'summary' %}Summary{% elif active_nav == 'history' %}History{% elif active_nav == 'guide' %}Guide{% elif active_nav == 'entry' %}Entry{% elif active_nav == 'admin' %}Admin{% endif %}</span></a>
   <a class="nav-link {% if active_nav == 'home' %}active{% endif %}"      href="/">Home</a>
   <a class="nav-link {% if active_nav == 'entry' %}active{% endif %}"     href="/entry">Entry</a>
   <a class="nav-link {% if active_nav == 'dashboard' %}active{% endif %}" href="/dashboard">Dashboard</a>
