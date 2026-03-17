@@ -130,6 +130,20 @@
 .no-rows { display:none; font-family:var(--mono); font-size:.73rem; color:var(--text3);
            padding:14px 10px; text-align:center; }
 
+/* ── Uniform column widths across all three tables ── */
+.sum-table { table-layout: fixed; }
+.col-fund   { width: 190px; }
+.col-stance { width: 80px; }
+.col-ticker { width: 70px; }
+.col-name   { }
+.col-signal { width: 110px; }
+.col-rot    { width: 66px; }
+.col-rs     { width: 62px; }
+.col-conf   { width: 76px; }
+.col-trend  { width: 56px; }
+.col-press  { width: 66px; }
+.sum-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 @media print {
   .nav, .sum-bar { display: none !important; }
   body { background: white !important; }
@@ -185,6 +199,11 @@
 {% if rows %}
 <div class="sec-hdr">{{ label }}</div>
 <table class="sum-table" id="{{ tbl_id }}">
+  <colgroup>
+    <col class="col-fund"><col class="col-stance"><col class="col-ticker">
+    <col class="col-name"><col class="col-signal"><col class="col-rot">
+    <col class="col-rs"><col class="col-conf"><col class="col-trend"><col class="col-press">
+  </colgroup>
   <thead>
     <tr>
       <th onclick="sortTable('{{ tbl_id }}',0,this)" data-type="str">Pension Fund <span class="sort-icon">⇅</span></th>
@@ -256,17 +275,23 @@
 {% if notable %}
 <div class="sec-hdr" style="margin-top:16px">Notable — No Fund Proxy</div>
 <table class="sum-table" id="tbl-notable">
+  <colgroup>
+    <col class="col-fund"><col class="col-stance"><col class="col-ticker">
+    <col class="col-name"><col class="col-signal"><col class="col-rot">
+    <col class="col-rs"><col class="col-conf"><col class="col-trend"><col class="col-press">
+  </colgroup>
   <thead>
     <tr>
-      <th onclick="sortTable('tbl-notable',0,this)" data-type="str">Ticker <span class="sort-icon">⇅</span></th>
-      <th onclick="sortTable('tbl-notable',1,this)" data-type="str">ETF Name <span class="sort-icon">⇅</span></th>
-      <th onclick="sortTable('tbl-notable',2,this)" data-type="str">Sector <span class="sort-icon">⇅</span></th>
-      <th onclick="sortTable('tbl-notable',3,this)" data-type="num">Signal <span class="sort-icon">⇅</span></th>
-      <th onclick="sortTable('tbl-notable',4,this)" data-type="num" class="r">Rotation <span class="sort-icon">⇅</span></th>
-      <th onclick="sortTable('tbl-notable',5,this)" data-type="num" class="r">RS 20w <span class="sort-icon">⇅</span></th>
-      <th onclick="sortTable('tbl-notable',6,this)" data-type="num" class="c">Confidence <span class="sort-icon">⇅</span></th>
-      <th onclick="sortTable('tbl-notable',7,this)" data-type="num" class="c">Trend <span class="sort-icon">⇅</span></th>
-      <th onclick="sortTable('tbl-notable',8,this)" data-type="num" class="r">Pressure <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',0,this)" data-type="str">Sector <span class="sort-icon">⇅</span></th>
+      <th></th>
+      <th onclick="sortTable('tbl-notable',2,this)" data-type="str">Ticker <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',3,this)" data-type="str">ETF Name <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',4,this)" data-type="num">Signal <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',5,this)" data-type="num" class="r">Rotation <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',6,this)" data-type="num" class="r">RS 20w <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',7,this)" data-type="num" class="c">Confidence <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',8,this)" data-type="num" class="c">Trend <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',9,this)" data-type="num" class="r">Pressure <span class="sort-icon">⇅</span></th>
     </tr>
   </thead>
   <tbody>
@@ -284,9 +309,10 @@
   {% set conf_ord = {'HIGH':2,'MODERATE':1,'LOW':0}.get(r.confidence_bucket, 1) %}
   {% set td  = '●' * trn + '○' * (4 - trn) %}
   <tr data-sig="{{ sig_key }}" data-conf="{{ r.confidence_bucket | default('') }}" data-change="no">
+    <td data-val="{{ r.sector }}"><span style="font-size:.60rem;color:var(--text3);border:1px solid var(--border);border-radius:2px;padding:1px 5px">{{ r.sector }}</span></td>
+    <td></td>
     <td data-val="{{ r.ticker }}"><span class="etf-tk">{{ r.ticker }}</span></td>
     <td data-val="{{ r.name }}"><span class="etf-nm" style="color:var(--text2)">{{ r.name }}</span></td>
-    <td data-val="{{ r.sector }}"><span style="font-size:.60rem;color:var(--text3);border:1px solid var(--border);border-radius:2px;padding:1px 5px">{{ r.sector }}</span></td>
     <td data-val="{{ sig_ord }}"><span class="sp {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span></td>
     <td class="r" data-val="{{ rot }}"><span class="kv {% if rot >= 65 %}pos{% elif rot < 45 %}neg{% elif rot < 52 %}warn{% else %}muted{% endif %}">{{ rot }}</span></td>
     <td class="r" data-val="{{ rs }}"><span class="kv {% if rs > 1 %}pos{% elif rs < -1 %}neg{% else %}muted{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
