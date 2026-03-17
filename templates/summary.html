@@ -3,12 +3,12 @@
 
 {% block head %}
 <style>
-.sum-page { max-width: 1060px; }
+.sum-page { max-width: 1100px; }
 
 /* ── Date / print bar ── */
 .sum-bar {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 0 14px; margin-bottom: 20px; border-bottom: 1px solid var(--border);
+  padding: 8px 0 14px; margin-bottom: 18px; border-bottom: 1px solid var(--border);
 }
 .sum-btn {
   font-family: var(--mono); font-size: .73rem; padding: 4px 11px;
@@ -17,19 +17,26 @@
 }
 .sum-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-/* ── Scorecard strip ── */
+/* ── Scorecard (clickable filter chips) ── */
 .scorecard {
-  display: flex; margin-bottom: 22px;
+  display: flex; margin-bottom: 20px;
   border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
 }
-.sc { flex: 1; padding: 10px 6px 8px; text-align: center; border-right: 1px solid var(--border); background: var(--surface); }
+.sc {
+  flex: 1; padding: 10px 6px 8px; text-align: center;
+  border-right: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; transition: filter .15s, background .15s; user-select: none;
+}
 .sc:last-child { border-right: none; }
+.sc:hover { filter: brightness(1.08); }
+.sc.active { background: var(--surface2); outline: 2px solid var(--accent); outline-offset: -2px; }
 .sc-v { font-family: var(--mono); font-size: 1.27rem; font-weight: 700; line-height: 1; margin-bottom: 3px; }
 .sc-l { font-family: var(--mono); font-size: .60rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); }
 .sc.buy  .sc-v { color: var(--sig-sb); }
 .sc.exit .sc-v { color: var(--sig-ex); }
 .sc.chg  .sc-v { color: var(--sig-ea, #c8a000); }
 .sc.neu  .sc-v { color: var(--text2); }
+.sc.all  .sc-v { color: var(--text3); font-size: .93rem; }
 
 /* ── Section header ── */
 .sec-hdr {
@@ -38,6 +45,7 @@
   display: flex; align-items: center; gap: 8px; margin: 20px 0 6px;
 }
 .sec-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.sec-hdr:first-of-type { margin-top: 0; }
 
 /* ── Main table ── */
 .sum-table {
@@ -49,10 +57,14 @@
 .sum-table th {
   font-size: .60rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
   color: var(--text3); padding: 6px 8px; border-bottom: 1px solid var(--border);
-  white-space: nowrap;
+  white-space: nowrap; cursor: pointer; user-select: none;
 }
+.sum-table th:hover { color: var(--text2); }
 .sum-table th.r { text-align: right; }
 .sum-table th.c { text-align: center; }
+.sort-icon { margin-left: 3px; opacity: .4; font-size: .60rem; }
+.sum-table th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+.sum-table th.sorted { color: var(--accent); }
 
 .sum-table td {
   padding: 6px 8px; border-bottom: 1px solid var(--border);
@@ -61,16 +73,9 @@
 .sum-table tr:last-child td { border-bottom: none; }
 .sum-table td.r { text-align: right; }
 .sum-table td.c { text-align: center; }
+.sum-table tr.hidden { display: none; }
 
-/* Provider tag — LG vs IL */
-.prov-tag {
-  display: inline-block; font-size: .60rem; font-weight: 700; letter-spacing: .06em;
-  padding: 2px 5px; border-radius: 2px; white-space: nowrap;
-}
-.prov-LG { background: rgba(100,149,237,.15); color: #7ba4f0; border: 1px solid rgba(100,149,237,.30); }
-.prov-IL { background: rgba(0,200,130,.12); color: var(--sig-sb); border: 1px solid rgba(0,200,130,.28); }
-
-/* Stance block */
+/* Stance badge */
 .stance {
   display: inline-block; font-size: .60rem; font-weight: 700; letter-spacing: .05em;
   padding: 2px 6px; border-radius: 2px; white-space: nowrap;
@@ -83,12 +88,11 @@
 .st-NEGATIVE { background: rgba(255,77,106,.22); color: var(--sig-ex); }
 
 /* Fund name */
-.fund-nm  { font-size: .73rem; color: var(--text); font-weight: 600; line-height: 1.25; }
-.fund-cd  { font-size: .60rem; color: var(--text3); margin-top: 1px; }
+.fund-nm { font-size: .73rem; color: var(--text); font-weight: 600; line-height: 1.25; }
 
-/* Ticker + ETF name */
-.etf-tk   { font-weight: 700; color: var(--text); font-size: .80rem; }
-.etf-nm   { font-size: .67rem; color: var(--text3); margin-top: 1px; }
+/* Ticker */
+.etf-tk { font-weight: 700; color: var(--text); font-size: .80rem; }
+.etf-nm { font-size: .67rem; color: var(--text3); }
 
 /* Signal pill */
 .sp {
@@ -101,21 +105,20 @@
 .sp.nt { background: var(--neutral-dim); color: var(--text3); border: 1px solid var(--border2); }
 .sp.ex { background: var(--sig-ex-bg); color: var(--sig-ex); border: 1px solid var(--sig-ex-bd); }
 
-/* Signal change */
 .prev-s { font-size: .60rem; color: var(--text3); text-decoration: line-through; margin-right: 2px; }
 .chg-arrow { color: var(--text3); font-size: .67rem; margin: 0 1px; }
 
-/* KPI values */
+/* KPI colours */
 .kv { font-weight: 700; }
-.pos { color: var(--sig-sb); }
-.neg { color: var(--sig-ex); }
-.warn { color: var(--sig-ea, #c8a000); }
+.pos   { color: var(--sig-sb); }
+.neg   { color: var(--sig-ex); }
+.warn  { color: var(--sig-ea, #c8a000); }
 .muted { color: var(--text3); }
 
 /* Trend dots */
 .td { letter-spacing: .5px; font-size: .73rem; }
 
-/* Row accent — left border colour by stance */
+/* Row left-border accent */
 .sum-table tr.r-POSITIVE td:first-child { border-left: 3px solid rgba(0,200,130,.5); }
 .sum-table tr.r-MILDPOS  td:first-child { border-left: 3px solid rgba(0,200,130,.25); }
 .sum-table tr.r-MIXED    td:first-child { border-left: 3px solid var(--border2); }
@@ -123,10 +126,13 @@
 .sum-table tr.r-MILDNEG  td:first-child { border-left: 3px solid rgba(255,77,106,.25); }
 .sum-table tr.r-NEGATIVE td:first-child { border-left: 3px solid rgba(255,77,106,.6); }
 
+/* No-results message */
+.no-rows { display:none; font-family:var(--mono); font-size:.73rem; color:var(--text3);
+           padding:14px 10px; text-align:center; }
+
 @media print {
   .nav, .sum-bar { display: none !important; }
   body { background: white !important; }
-  .sum-table { page-break-inside: avoid; }
 }
 </style>
 {% endblock %}
@@ -149,34 +155,48 @@
   <button class="sum-btn" onclick="window.print()">⎙ Print</button>
 </div>
 
-<!-- Scorecard -->
-<div class="scorecard">
-  <div class="sc buy"><div class="sc-v">{{ portfolio.strong_buy }}</div><div class="sc-l">Strong Buy</div></div>
-  <div class="sc buy"><div class="sc-v">{{ portfolio.early_acc + portfolio.accum }}</div><div class="sc-l">Accumulating</div></div>
-  <div class="sc neu"><div class="sc-v">{{ portfolio.neutral }}</div><div class="sc-l">Neutral</div></div>
-  <div class="sc exit"><div class="sc-v">{{ portfolio.exit }}</div><div class="sc-l">Exit</div></div>
-  <div class="sc neu"><div class="sc-v">{{ portfolio.high_conf }}</div><div class="sc-l">High Conf</div></div>
-  <div class="sc chg"><div class="sc-v">{{ portfolio.transitions }}</div><div class="sc-l">Changes</div></div>
-  <div class="sc neu"><div class="sc-v">{{ portfolio.total }}</div><div class="sc-l">Total ETFs</div></div>
+<!-- Scorecard — clickable signal filters -->
+<div class="scorecard" id="scorecard">
+  <div class="sc all active" data-sig="ALL" onclick="filterSig('ALL',this)">
+    <div class="sc-v">ALL</div><div class="sc-l">Show All</div>
+  </div>
+  <div class="sc buy" data-sig="STRONG BUY" onclick="filterSig('STRONG BUY',this)">
+    <div class="sc-v">{{ portfolio.strong_buy }}</div><div class="sc-l">Strong Buy</div>
+  </div>
+  <div class="sc buy" data-sig="ACCUM" onclick="filterSig('ACCUM',this)">
+    <div class="sc-v">{{ portfolio.early_acc + portfolio.accum }}</div><div class="sc-l">Accumulating</div>
+  </div>
+  <div class="sc neu" data-sig="NEUTRAL" onclick="filterSig('NEUTRAL',this)">
+    <div class="sc-v">{{ portfolio.neutral }}</div><div class="sc-l">Neutral</div>
+  </div>
+  <div class="sc exit" data-sig="EXIT" onclick="filterSig('EXIT',this)">
+    <div class="sc-v">{{ portfolio.exit }}</div><div class="sc-l">Exit</div>
+  </div>
+  <div class="sc neu" data-sig="HIGH" onclick="filterSig('HIGH',this)">
+    <div class="sc-v">{{ portfolio.high_conf }}</div><div class="sc-l">High Conf</div>
+  </div>
+  <div class="sc chg" data-sig="CHANGE" onclick="filterSig('CHANGE',this)">
+    <div class="sc-v">{{ portfolio.transitions }}</div><div class="sc-l">Changes</div>
+  </div>
 </div>
 
-{# ── Helper macro: render one table of fund rows ── #}
-{% macro render_table(rows, provider_label, prov_cls) %}
+{# ── Macro: one sortable table per provider ── #}
+{% macro render_table(rows, label, tbl_id) %}
 {% if rows %}
-<div class="sec-hdr">{{ provider_label }}</div>
-<table class="sum-table">
+<div class="sec-hdr">{{ label }}</div>
+<table class="sum-table" id="{{ tbl_id }}">
   <thead>
     <tr>
-      <th style="width:34px">Source</th>
-      <th>Pension Fund</th>
-      <th>Proxy ETF</th>
-      <th style="width:52px">Stance</th>
-      <th>Signal</th>
-      <th class="r" style="width:54px">Rotation</th>
-      <th class="r" style="width:54px">RS 20w</th>
-      <th class="c" style="width:62px">Confidence</th>
-      <th class="c" style="width:56px">Trend</th>
-      <th class="r" style="width:58px">Pressure</th>
+      <th onclick="sortTable('{{ tbl_id }}',0,this)" data-type="str">Pension Fund <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('{{ tbl_id }}',1,this)" data-type="str">Stance <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('{{ tbl_id }}',2,this)" data-type="str">Ticker <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('{{ tbl_id }}',3,this)" data-type="str">ETF Name <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('{{ tbl_id }}',4,this)" data-type="num">Signal <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('{{ tbl_id }}',5,this)" data-type="num" class="r">Rotation <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('{{ tbl_id }}',6,this)" data-type="num" class="r">RS 20w <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('{{ tbl_id }}',7,this)" data-type="num" class="c">Confidence <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('{{ tbl_id }}',8,this)" data-type="num" class="c">Trend <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('{{ tbl_id }}',9,this)" data-type="num" class="r">Pressure <span class="sort-icon">⇅</span></th>
     </tr>
   </thead>
   <tbody>
@@ -185,92 +205,170 @@
   {% set rc = 'r-' + fs.stance | replace(' POS','POS') | replace(' NEG','NEG') | replace(' ','') %}
   {% for r in fs.sigs %}
   {% set sig = r.signal %}
-  {% if sig == sig_strong_buy %}{% set css = 'sb' %}
-  {% elif sig == sig_early_accum %}{% set css = 'ea' %}
-  {% elif sig == sig_accum %}{% set css = 'ah' %}
-  {% elif sig == sig_exit %}{% set css = 'ex' %}
-  {% else %}{% set css = 'nt' %}{% endif %}
+  {% if sig == sig_strong_buy %}{% set css = 'sb' %}{% set sig_key = 'STRONG BUY' %}{% set sig_ord = 0 %}
+  {% elif sig == sig_early_accum %}{% set css = 'ea' %}{% set sig_key = 'ACCUM' %}{% set sig_ord = 1 %}
+  {% elif sig == sig_accum %}{% set css = 'ah' %}{% set sig_key = 'ACCUM' %}{% set sig_ord = 2 %}
+  {% elif sig == sig_exit %}{% set css = 'ex' %}{% set sig_key = 'EXIT' %}{% set sig_ord = 4 %}
+  {% else %}{% set css = 'nt' %}{% set sig_key = 'NEUTRAL' %}{% set sig_ord = 3 %}{% endif %}
   {% set rot = r.rotation_score | default(0) | round(1) %}
   {% set rs  = r.rs20_pct | default(0) | round(1) %}
   {% set prs = r.pressure_pos_weeks_pct | default(0) | round(0) | int %}
-  {% set td  = '●' * (r.trend | default(0)) + '○' * (4 - (r.trend | default(0))) %}
-  <tr class="{{ rc }}">
-    <td><span class="prov-tag prov-{{ prov_cls }}">{{ prov_cls }}</span></td>
-    <td>
+  {% set trn = r.trend | default(0) %}
+  {% set conf_ord = {'HIGH':2,'MODERATE':1,'LOW':0}.get(r.confidence_bucket, 1) %}
+  {% set td  = '●' * trn + '○' * (4 - trn) %}
+  {% set has_change = 'yes' if r.prev_signal else 'no' %}
+  <tr class="{{ rc }}"
+      data-sig="{{ sig_key }}"
+      data-conf="{{ r.confidence_bucket | default('') }}"
+      data-change="{{ has_change }}">
+    <td data-val="{{ fs.name }}">
       <div class="fund-nm">{{ fs.name }}</div>
-      <div class="fund-cd">{{ fs.code }}</div>
     </td>
-    <td>
-      <div class="etf-tk">{{ r.ticker }}</div>
-      <div class="etf-nm">{{ r.name | truncate(36, true, '…') }}</div>
+    <td data-val="{{ fs.stance_order }}">
+      <span class="stance {{ sc }}">{{ fs.stance }}</span>
     </td>
-    <td><span class="stance {{ sc }}">{{ fs.stance }}</span></td>
-    <td>
+    <td data-val="{{ r.ticker }}"><span class="etf-tk">{{ r.ticker }}</span></td>
+    <td data-val="{{ r.name }}"><span class="etf-nm" style="color:var(--text2)">{{ r.name }}</span></td>
+    <td data-val="{{ sig_ord }}">
       {% if r.prev_signal %}
         <span class="prev-s">{{ r.prev_signal | replace('ACCUMULATING/HOLD','ACC') | replace('EXIT/DISTRIBUTION','EXIT') | replace('STRONG BUY','SB') | replace('EARLY ACCUMULATION','EA') }}</span><span class="chg-arrow">→</span>
       {% endif %}
       <span class="sp {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span>
     </td>
-    <td class="r"><span class="kv {% if rot >= 65 %}pos{% elif rot < 45 %}neg{% elif rot < 52 %}warn{% else %}muted{% endif %}">{{ rot }}</span></td>
-    <td class="r"><span class="kv {% if rs > 1 %}pos{% elif rs < -1 %}neg{% else %}muted{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
-    <td class="c"><span class="kv {% if r.confidence_bucket == 'HIGH' %}pos{% elif r.confidence_bucket == 'LOW' %}neg{% else %}muted{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
-    <td class="c"><span class="td">{{ td }}</span></td>
-    <td class="r"><span class="kv {% if prs >= 60 %}pos{% elif prs <= 35 %}neg{% else %}muted{% endif %}">{{ prs }}%</span></td>
+    <td class="r" data-val="{{ rot }}"><span class="kv {% if rot >= 65 %}pos{% elif rot < 45 %}neg{% elif rot < 52 %}warn{% else %}muted{% endif %}">{{ rot }}</span></td>
+    <td class="r" data-val="{{ rs }}"><span class="kv {% if rs > 1 %}pos{% elif rs < -1 %}neg{% else %}muted{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
+    <td class="c" data-val="{{ conf_ord }}"><span class="kv {% if r.confidence_bucket == 'HIGH' %}pos{% elif r.confidence_bucket == 'LOW' %}neg{% else %}muted{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
+    <td class="c" data-val="{{ trn }}"><span class="td">{{ td }}</span></td>
+    <td class="r" data-val="{{ prs }}"><span class="kv {% if prs >= 60 %}pos{% elif prs <= 35 %}neg{% else %}muted{% endif %}">{{ prs }}%</span></td>
   </tr>
   {% endfor %}
   {% endfor %}
   </tbody>
 </table>
+<div class="no-rows" id="{{ tbl_id }}-norows">No matching rows for this filter.</div>
 {% endif %}
 {% endmacro %}
 
-{{ render_table(lg_rows, "L&G WorkSave Pension", "LG") }}
-{{ render_table(il_rows, "Irish Life", "IL") }}
+{{ render_table(lg_rows, "L&G WorkSave Pension", "tbl-lg") }}
+{{ render_table(il_rows, "Irish Life", "tbl-il") }}
 
 <!-- Notable: no fund proxy -->
 {% if notable %}
 <div class="sec-hdr" style="margin-top:16px">Notable — No Fund Proxy</div>
-<table class="sum-table">
+<table class="sum-table" id="tbl-notable">
   <thead>
     <tr>
-      <th>Ticker</th>
-      <th>ETF Name</th>
-      <th>Sector</th>
-      <th>Signal</th>
-      <th class="r">Rotation</th>
-      <th class="r">RS 20w</th>
-      <th class="c">Confidence</th>
-      <th class="c">Trend</th>
-      <th class="r">Pressure</th>
+      <th onclick="sortTable('tbl-notable',0,this)" data-type="str">Ticker <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',1,this)" data-type="str">ETF Name <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',2,this)" data-type="str">Sector <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',3,this)" data-type="num">Signal <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',4,this)" data-type="num" class="r">Rotation <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',5,this)" data-type="num" class="r">RS 20w <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',6,this)" data-type="num" class="c">Confidence <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',7,this)" data-type="num" class="c">Trend <span class="sort-icon">⇅</span></th>
+      <th onclick="sortTable('tbl-notable',8,this)" data-type="num" class="r">Pressure <span class="sort-icon">⇅</span></th>
     </tr>
   </thead>
   <tbody>
   {% for r in notable %}
   {% set sig = r.signal %}
-  {% if sig == sig_strong_buy %}{% set css = 'sb' %}
-  {% elif sig == sig_early_accum %}{% set css = 'ea' %}
-  {% elif sig == sig_accum %}{% set css = 'ah' %}
-  {% elif sig == sig_exit %}{% set css = 'ex' %}
-  {% else %}{% set css = 'nt' %}{% endif %}
+  {% if sig == sig_strong_buy %}{% set css = 'sb' %}{% set sig_key = 'STRONG BUY' %}{% set sig_ord = 0 %}
+  {% elif sig == sig_early_accum %}{% set css = 'ea' %}{% set sig_key = 'ACCUM' %}{% set sig_ord = 1 %}
+  {% elif sig == sig_accum %}{% set css = 'ah' %}{% set sig_key = 'ACCUM' %}{% set sig_ord = 2 %}
+  {% elif sig == sig_exit %}{% set css = 'ex' %}{% set sig_key = 'EXIT' %}{% set sig_ord = 4 %}
+  {% else %}{% set css = 'nt' %}{% set sig_key = 'NEUTRAL' %}{% set sig_ord = 3 %}{% endif %}
   {% set rot = r.rotation_score | default(0) | round(1) %}
   {% set rs  = r.rs20_pct | default(0) | round(1) %}
   {% set prs = r.pressure_pos_weeks_pct | default(0) | round(0) | int %}
-  {% set td  = '●' * (r.trend | default(0)) + '○' * (4 - (r.trend | default(0))) %}
-  <tr>
-    <td><span class="etf-tk">{{ r.ticker }}</span></td>
-    <td><span class="etf-nm" style="color:var(--text2)">{{ r.name | truncate(42, true, '…') }}</span></td>
-    <td><span style="font-size:.60rem;color:var(--text3);border:1px solid var(--border);border-radius:2px;padding:1px 5px">{{ r.sector }}</span></td>
-    <td><span class="sp {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span></td>
-    <td class="r"><span class="kv {% if rot >= 65 %}pos{% elif rot < 45 %}neg{% elif rot < 52 %}warn{% else %}muted{% endif %}">{{ rot }}</span></td>
-    <td class="r"><span class="kv {% if rs > 1 %}pos{% elif rs < -1 %}neg{% else %}muted{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
-    <td class="c"><span class="kv {% if r.confidence_bucket == 'HIGH' %}pos{% elif r.confidence_bucket == 'LOW' %}neg{% else %}muted{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
-    <td class="c"><span class="td">{{ td }}</span></td>
-    <td class="r"><span class="kv {% if prs >= 60 %}pos{% elif prs <= 35 %}neg{% else %}muted{% endif %}">{{ prs }}%</span></td>
+  {% set trn = r.trend | default(0) %}
+  {% set conf_ord = {'HIGH':2,'MODERATE':1,'LOW':0}.get(r.confidence_bucket, 1) %}
+  {% set td  = '●' * trn + '○' * (4 - trn) %}
+  <tr data-sig="{{ sig_key }}" data-conf="{{ r.confidence_bucket | default('') }}" data-change="no">
+    <td data-val="{{ r.ticker }}"><span class="etf-tk">{{ r.ticker }}</span></td>
+    <td data-val="{{ r.name }}"><span class="etf-nm" style="color:var(--text2)">{{ r.name }}</span></td>
+    <td data-val="{{ r.sector }}"><span style="font-size:.60rem;color:var(--text3);border:1px solid var(--border);border-radius:2px;padding:1px 5px">{{ r.sector }}</span></td>
+    <td data-val="{{ sig_ord }}"><span class="sp {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span></td>
+    <td class="r" data-val="{{ rot }}"><span class="kv {% if rot >= 65 %}pos{% elif rot < 45 %}neg{% elif rot < 52 %}warn{% else %}muted{% endif %}">{{ rot }}</span></td>
+    <td class="r" data-val="{{ rs }}"><span class="kv {% if rs > 1 %}pos{% elif rs < -1 %}neg{% else %}muted{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
+    <td class="c" data-val="{{ conf_ord }}"><span class="kv {% if r.confidence_bucket == 'HIGH' %}pos{% elif r.confidence_bucket == 'LOW' %}neg{% else %}muted{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
+    <td class="c" data-val="{{ trn }}"><span class="td">{{ td }}</span></td>
+    <td class="r" data-val="{{ prs }}"><span class="kv {% if prs >= 60 %}pos{% elif prs <= 35 %}neg{% else %}muted{% endif %}">{{ prs }}%</span></td>
   </tr>
   {% endfor %}
   </tbody>
 </table>
+<div class="no-rows" id="tbl-notable-norows">No matching rows for this filter.</div>
 {% endif %}
 
 </div>
+
+<script>
+// ── Scorecard signal filter ───────────────────────────────────────────────────
+let activeFilter = 'ALL';
+
+function filterSig(sig, el) {
+  activeFilter = sig;
+  // Update chip active state
+  document.querySelectorAll('.sc').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+
+  // Filter every table
+  ['tbl-lg','tbl-il','tbl-notable'].forEach(id => {
+    const tbl = document.getElementById(id);
+    if (!tbl) return;
+    let visible = 0;
+    tbl.querySelectorAll('tbody tr').forEach(row => {
+      let show = false;
+      if (sig === 'ALL') {
+        show = true;
+      } else if (sig === 'HIGH') {
+        show = row.dataset.conf === 'HIGH';
+      } else if (sig === 'CHANGE') {
+        show = row.dataset.change === 'yes';
+      } else {
+        show = row.dataset.sig === sig;
+      }
+      row.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    const noRows = document.getElementById(id + '-norows');
+    if (noRows) noRows.style.display = visible === 0 ? 'block' : 'none';
+  });
+}
+
+// ── Column sort ───────────────────────────────────────────────────────────────
+const sortState = {};
+
+function sortTable(tblId, colIdx, th) {
+  const tbl  = document.getElementById(tblId);
+  const tbody = tbl.querySelector('tbody');
+  const rows  = Array.from(tbody.querySelectorAll('tr'));
+  const type  = th.dataset.type || 'str';
+  const key   = tblId + ':' + colIdx;
+
+  // Toggle direction
+  if (!sortState[key]) sortState[key] = { asc: true };
+  else sortState[key].asc = !sortState[key].asc;
+  const asc = sortState[key].asc;
+
+  // Clear sorted state from all headers in this table
+  tbl.querySelectorAll('th').forEach(h => h.classList.remove('sorted'));
+  th.classList.add('sorted');
+  th.querySelector('.sort-icon').textContent = asc ? '↑' : '↓';
+
+  rows.sort((a, b) => {
+    const av = a.cells[colIdx]?.dataset.val ?? '';
+    const bv = b.cells[colIdx]?.dataset.val ?? '';
+    let cmp;
+    if (type === 'num') {
+      cmp = (parseFloat(av) || 0) - (parseFloat(bv) || 0);
+    } else {
+      cmp = av.localeCompare(bv);
+    }
+    return asc ? cmp : -cmp;
+  });
+
+  rows.forEach(r => tbody.appendChild(r));
+}
+</script>
 {% endblock %}
