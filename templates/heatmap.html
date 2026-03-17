@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}KPI Heatmap{% endblock %}
+{% block title %}Heatmap{% endblock %}
 
 {% block head %}
 <style>
@@ -80,7 +80,7 @@
 .ktt-ctx.warn{background:var(--yellow-dim);color:var(--yellow)}
 
 /* ── Sector heatmap strip ── */
-.sec-hm-wrap{padding:12px 0 0;border-bottom:1px solid var(--border)}
+.sec-hm-wrap{padding:20px 0 0}
 .sec-hm-hdr{font-family:var(--mono);font-size:.80rem;font-weight:600;color:var(--text3);letter-spacing:.10em;margin-bottom:10px;display:flex;align-items:center;gap:10px}
 .sec-hm-hdr-line{flex:1;height:1px;background:var(--border)}
 .sec-view-toggle{display:flex;gap:3px;margin-left:6px;flex-shrink:0}
@@ -127,52 +127,44 @@
 
 {% block content %}
 
-<div class="page-header">
+<div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
   <div>
     <div class="page-title">KPI <strong>Heatmap</strong></div>
-    <div class="page-subtitle">All signals &amp; metrics at a glance · colour intensity = magnitude · as of {{ as_of_date or "—" }}</div>
+    <div class="page-subtitle">Signals &amp; metrics at a glance · colour intensity = magnitude · as of {{ as_of_date or "—" }}</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding-top:6px">
+    {% if dates %}
+    <select onchange="location='?date='+this.value" style="font-family:var(--mono);font-size:.73rem;padding:3px 7px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">
+      {% for d in dates %}<option value="{{ d }}" {% if d == as_of_date %}selected{% endif %}>{{ d }}</option>{% endfor %}
+    </select>
+    {% endif %}
+
   </div>
 </div>
 
 
-<!-- ── SECTOR HEATMAP STRIP ── -->
-<div class="sec-hm-wrap" id="sec-hm-wrap">
-  <div class="sec-hm-hdr">
-    SECTOR OVERVIEW
-    <div class="sec-hm-hdr-line"></div>
-    <div class="sec-view-toggle">
-      <button class="sec-vbtn active" id="sec-btn-all"  onclick="secView('all')">ALL ETFs</button>
-      <button class="sec-vbtn"        id="sec-btn-prox" onclick="secView('proxy')">PENSION PROXIES</button>
-    </div>
-  </div>
-  <div class="sec-hm-grid" id="sec-hm-grid"></div>
-</div>
-
-<!-- hidden legacy target — fund chips rendered inside .hm-controls instead -->
-<div class="hm-fund-bar" id="hm-fund-bar" style="display:none"></div>
-
-<!-- ── UNIFIED CONTROL BAND ── -->
+<!-- ── FILTER BAND: Signal + Legend only ── -->
 <div class="hm-controls">
-  <!-- Row 1: Pension fund filter -->
-  <div class="hm-ctrl-row" id="hm-fund-row">
-    <span class="ctrl-lbl">Fund Filter</span>
-    <div class="ctrl-chips" id="hm-fund-chips">
-      <span style="font-family:var(--mono);font-size:.73rem;color:var(--text3);padding:3px 0">—</span>
+  <!-- Row 1: Signal filter -->
+  <div class="hm-ctrl-row" id="hm-score-row">
+    <span class="ctrl-lbl">Signal</span>
+    <div class="ctrl-chips" id="hm-score-chips">
+      <button class="hm-fchip on" data-sig="ALL"        onclick="scoreFilt('ALL',this)">ALL</button>
+      <button class="hm-fchip"    data-sig="STRONG BUY" onclick="scoreFilt('STRONG BUY',this)"><span id="sc-sb">0</span> STRONG BUY</button>
+      <button class="hm-fchip"    data-sig="ACCUM"      onclick="scoreFilt('ACCUM',this)"><span id="sc-ac">0</span> ACCUM</button>
+      <button class="hm-fchip"    data-sig="NEUTRAL"    onclick="scoreFilt('NEUTRAL',this)"><span id="sc-nt">0</span> NEUTRAL</button>
+      <button class="hm-fchip"    data-sig="EXIT"       onclick="scoreFilt('EXIT',this)"><span id="sc-ex">0</span> EXIT</button>
+      <button class="hm-fchip"    data-sig="CHANGE"     onclick="scoreFilt('CHANGE',this)"><span id="sc-ch">0</span> CHANGES</button>
     </div>
   </div>
-  <!-- Row 2: Sort -->
-  <div class="hm-ctrl-row">
-    <span class="ctrl-lbl">Sort By</span>
-    <div class="ctrl-chips">
-      <button class="sb active" onclick="doSort('signal',this)">SIGNAL</button>
-      <button class="sb" onclick="doSort('rotation',this)">ROTATION</button>
-      <button class="sb" onclick="doSort('rs20va',this)">RS VOL-ADJ</button>
-      <button class="sb" onclick="doSort('rsaccel',this)">RS ACCEL</button>
-      <button class="sb" onclick="doSort('pressure',this)">PRESSURE</button>
-      <button class="sb" onclick="doSort('turnover',this)">TURNOVER</button>
-      <button class="sb" onclick="doSort('trend',this)">TREND</button>
-      <button class="sb" onclick="doSort('confidence',this)">CONFIDENCE</button>
-      <button class="sb" onclick="doSort('ticker',this)">TICKER</button>
+  <!-- Row 2: Provider filter -->
+  <div class="hm-ctrl-row" style="border-top:1px solid var(--border)">
+    <span class="ctrl-lbl">Provider</span>
+    <div class="ctrl-chips" id="hm-prov-chips">
+      <button class="hm-fchip on" onclick="provFilt('ALL',this)">ALL</button>
+      <button class="hm-fchip"    onclick="provFilt('LG',this)" style="color:#7ba4f0;border-color:rgba(100,149,237,.40)">L&amp;G</button>
+      <button class="hm-fchip"    onclick="provFilt('IL',this)" style="color:var(--sig-sb);border-color:rgba(0,200,130,.35)">Irish Life</button>
+      <button class="hm-fchip"    onclick="provFilt('NO',this)">Notable</button>
     </div>
   </div>
   <!-- Row 3: Legend -->
@@ -188,23 +180,27 @@
   </div>
 </div>
 
-<!-- ── ETF HEATMAP SECTION HEADER ── -->
+<!-- ── ETF TABLE ── -->
 <div class="etf-section-hdr">
-  ETF HEATMAP
+  ETF TABLE
   <span class="etf-section-meta" id="etf-section-count"></span>
   <div class="etf-section-hdr-line"></div>
 </div>
 
+<div id="no-data-banner" style="display:none;margin:16px 0;padding:12px 16px;background:var(--sig-ea-bg);border:1px solid var(--sig-ea-bd);border-radius:4px;font-family:var(--mono);font-size:.80rem;color:var(--sig-ea)">
+  ⚠ No signals found for this date. Go to <a href="/entry" style="color:var(--sig-ea);text-decoration:underline">Entry</a> and click <strong>Recompute</strong> to generate signals.
+</div>
+
 <div class="hm-outer">
-<div class="hm-wrap">
-<table class="hm-table" id="ht">
+<div class="hm-wrap" style="overflow-x:auto">
+<table class="hm-table" id="ht" style="min-width:1600px">
   <thead><tr>
-    <th class="thl"></th>
+    <th class="thl hth" onclick="doSort('provider',this)">PROVIDER ⇅</th>
+    <th class="thl hth" onclick="doSort('fund',this)">PENSION FUND ⇅</th>
     <th class="thl hth" onclick="doSort('ticker',this)">TICKER ⇅</th>
-    <th class="thl hth" onclick="doSort('name',this)">NAME ⇅</th>
-    <th class="thl hth" onclick="doSort('fund',this)">FUND ⇅</th>
+    <th class="thl hth" onclick="doSort('name',this)">ETF NAME ⇅</th>
     <th class="thl hth" onclick="doSort('sector',this)">SECTOR ⇅</th>
-    <th class="hth" onclick="doSort('signal',this)">SIGNAL ⇅</th>
+    <th class="hth" onclick="doSort('signal',this)" style="min-width:100px">SIGNAL ⇅</th>
     <th class="hth" onclick="doSort('rotation',this)">ROTATION ⇅</th>
     <th class="hth" onclick="doSort('confidence',this)">CONF ⇅</th>
     <th class="hth" onclick="doSort('trend',this)">TREND ⇅</th>
@@ -220,22 +216,34 @@
   </tr></thead>
   <tbody id="hb"></tbody>
 </table>
-</div><!-- /hm-wrap -->
-</div><!-- /hm-outer -->
-
-<div id="ktt" class="ktt">
-  <div class="ktt-hdr" id="ktt-hdr"></div>
-  <div class="ktt-sub" id="ktt-sub"></div>
-  <div class="ktt-def" id="ktt-def"></div>
-  <div class="ktt-ctx" id="ktt-ctx"></div>
 </div>
+</div>
+
+<!-- ── SECTOR OVERVIEW (below table) ── -->
+<div class="sec-hm-wrap" id="sec-hm-wrap" style="border-bottom:none;padding-bottom:60px">
+  <div class="sec-hm-hdr">
+    SECTOR OVERVIEW
+    <div class="sec-hm-hdr-line"></div>
+    <div class="sec-view-toggle">
+      <button class="sec-vbtn active" id="sec-btn-all"  onclick="secView('all')">ALL ETFs</button>
+      <button class="sec-vbtn"        id="sec-btn-prox" onclick="secView('proxy')">PENSION PROXIES</button>
+    </div>
+  </div>
+  <div class="sec-hm-grid" id="sec-hm-grid"></div>
+</div>
+
+<!-- Tooltip injected into body by JS to avoid stacking context issues -->
 
 <script>
 const DATA = {{ rows_js|safe }};
 const SL   = {{ sector_labels|tojson }};
 const PF   = {{ fund_map_js|safe }};
 const SO   = {'STRONG BUY':0,'EARLY ACCUMULATION':1,'ACCUMULATING/HOLD':2,'NEUTRAL':3,'EXIT/DISTRIBUTION':4};
-let curSort='signal', sortDir=1, hmFund=null, activeSector=null;
+let curSort='signal', sortDir=1, activeSector=null, activeScoreSig='ALL', activeProvider='ALL';
+
+// Build fund lookup: ticker -> {code, name, fid}
+const TICKER_FUND = {};
+Object.entries(PF).forEach(([fid,f])=>{ f.tickers.forEach(t=>{ if(!TICKER_FUND[t]) TICKER_FUND[t]=[]; TICKER_FUND[t].push({code:f.code,name:f.name,fid:parseInt(fid)}); }); });
 
 const HM_KPI = {
   signal:   {name:'SIGNAL',            def:'Composite signal from all KPI groups. Driven by rotation score, trend, pressure, RS. See Guide for exact conditions.'},
@@ -363,9 +371,11 @@ function hmCtx(key,val){
 }
 
 function _kttPos(e){var tt=document.getElementById('ktt'),pw=tt.offsetWidth||290,ph=tt.offsetHeight||120;var x=e.clientX+18,y=e.clientY-14;if(x+pw>window.innerWidth-8)x=e.clientX-pw-8;if(y+ph>window.innerHeight-8)y=window.innerHeight-ph-8;if(y<8)y=8;tt.style.left=x+'px';tt.style.top=y+'px';}
-function hideKtt(){document.getElementById('ktt').classList.remove('show');}
+function hideKtt(){var tt=document.getElementById('ktt');if(tt)tt.classList.remove('show');}
 function showHmTip(e,key,val,ticker){var info=HM_KPI[key]||{};var ctx=hmCtx(key,val)||{};if(!ctx||!ctx.t)return;document.getElementById('ktt-hdr').textContent=info.name||key;document.getElementById('ktt-sub').textContent=ticker||'';document.getElementById('ktt-def').textContent=info.def||'';var cd=document.getElementById('ktt-ctx');cd.textContent=ctx.t;cd.className='ktt-ctx '+(ctx.c||'neu');document.getElementById('ktt').classList.add('show');_kttPos(e);}
-document.addEventListener('mousemove',function(e){if(document.getElementById('ktt').classList.contains('show'))_kttPos(e);});
+document.addEventListener('mousemove',function(e){var tt=document.getElementById('ktt');if(tt&&tt.classList.contains('show'))_kttPos(e);});
+// Create tooltip div directly on body to avoid any stacking context trapping position:fixed
+(function(){var t=document.createElement('div');t.id='ktt';t.className='ktt';t.innerHTML='<div class="ktt-hdr" id="ktt-hdr"></div><div class="ktt-sub" id="ktt-sub"></div><div class="ktt-def" id="ktt-def"></div><div class="ktt-ctx" id="ktt-ctx"></div>';document.body.appendChild(t);})();
 
 function ic(v,t){if(v==null||isNaN(v))return'hi-0';if(v>=t[4])return'hi-5';if(v>=t[3])return'hi-4';if(v>=t[2])return'hi-3';if(v>=t[1])return'hi-2';if(v>=t[0])return'hi-1';if(v>=-t[0])return'hi-0';if(v>=-t[1])return'lo-1';if(v>=-t[2])return'lo-2';if(v>=-t[3])return'lo-3';if(v>=-t[4])return'lo-4';return'lo-5';}
 function pctCls(v){if(v==null||isNaN(v))return'hi-0';if(v>=80)return'hi-5';if(v>=65)return'hi-3';if(v>=50)return'hi-1';if(v>=35)return'hi-0';if(v>=20)return'lo-2';return'lo-4';}
@@ -381,18 +391,37 @@ function mkRow(e){
   const t=e.ticker;
   const ts=e.trend_score_raw!=null?e.trend_score_raw:(e.trend||0);
   const dots=[0,1,2,3].map(i=>`<div style="background:${ts>i?'var(--green)':'var(--border2)'};width:7px;height:7px;border-radius:2px"></div>`).join('');
-  const fTags=(e.funds||[]).map(fid=>PF[fid]?`<span class="fund-tag-hm" title="${PF[fid].name}">${PF[fid].code}</span>`:'').join('');
   const avg=e.avg_turn_20w||0, lat=e.turn_latest||0;
   const r=(avg&&lat)?lat/avg:null;
   const tlBadge=r?` <span class="${r>=1.4?'tl-hi':r>=1.1?'tl-mid':r>=0.85?'tl-neu':'tl-lo'} tl-badge">${r.toFixed(2)}×</span>`:'';
   const rs20r=e.rs20_raw!=null?e.rs20_raw:(e.rs20_pct!=null?e.rs20_pct:null);
   const trendVal=`${ts}|${e.close||0}|${e.ma20||0}|${e.ma100||0}`;
-  return `<td class="ct-link"><a href="/dashboard?open=${encodeURIComponent(t)}" class="dash-link" title="Open in dashboard">↗</a></td>`+
-    `<td class="ct">${t}</td>`+
-    `<td class="cn" title="${e.name||''}">${e.name||'—'}</td>`+
-    `<td class="cat">${fTags||'—'}</td>`+
-    `<td class="cat">${SL[e.sector]||e.sector||'—'}</td>`+
-    `<td class="hc sc ${scls(e.signal)}" onmouseenter="showHmTip(event,'signal','${e.signal}','${t}')" onmouseleave="hideKtt()"><span class="v">${e.signal||'—'}</span></td>`+
+  // Fund display
+  const funds=TICKER_FUND[t]||[];
+  const fundStr=funds.length?funds.map(f=>`<span class="fund-tag-hm" title="${f.name}">${f.code}</span>`).join(' '):'<span style="color:var(--text3);font-size:.67rem">—</span>';
+  const fundSort=funds.length?funds[0].code:'zzz';
+  // Provider pill
+  const isLG=funds.some(f=>f.code.startsWith('LG'));
+  const isIL=funds.some(f=>f.code.startsWith('IL'));
+  const provLabel=isLG?'L&G':isIL?'Irish Life':'Notable';
+  const provCls=isLG?'background:rgba(100,149,237,.15);color:#7ba4f0;border:1px solid rgba(100,149,237,.30)':isIL?'background:rgba(0,200,130,.12);color:var(--sig-sb);border:1px solid rgba(0,200,130,.28)':'background:var(--surface2);color:var(--text3);border:1px solid var(--border)';
+  const provSort=isLG?'0':isIL?'1':'2';
+  // Sector
+  const secLabel=SL[e.sector]||e.sector||'—';
+  // Signal pill with prev
+  const sigCss=scls(e.signal);
+  const prevSig=e.prev_signal?`<span style="font-family:var(--mono);font-size:.60rem;color:var(--text3);text-decoration:line-through;margin-right:2px">${e.prev_signal.replace('ACCUMULATING/HOLD','ACC').replace('EXIT/DISTRIBUTION','EXIT').replace('STRONG BUY','SB').replace('EARLY ACCUMULATION','EA')}</span><span style="color:var(--text3)">→</span>`:'';
+  const sigLabel=e.signal?e.signal.replace('ACCUMULATING/HOLD','ACCUM').replace('EXIT/DISTRIBUTION','EXIT').replace('EARLY ACCUMULATION','EARLY ACC'):'-';
+  // data attrs for filtering
+  const sigKey=e.signal==='STRONG BUY'?'STRONG BUY':e.signal==='EARLY ACCUMULATION'||e.signal==='ACCUMULATING/HOLD'?'ACCUM':e.signal==='EXIT/DISTRIBUTION'?'EXIT':'NEUTRAL';
+  const hasChange=e.prev_signal?'yes':'no';
+  return `<tr data-sig="${sigKey}" data-conf="${e.confidence_bucket||''}" data-change="${hasChange}" data-fund="${fundSort}" data-sector="${e.sector||''}" data-provider="${provSort}">`+
+    `<td class="cat"><span style="font-family:var(--mono);font-size:.67rem;font-weight:700;padding:2px 7px;border-radius:2px;white-space:nowrap;${provCls}">${provLabel}</span></td>`+
+    `<td class="thl" style="min-width:160px">${fundStr}</td>`+
+    `<td class="ct"><a href="/dashboard?open=${encodeURIComponent(t)}" class="dash-link" title="Open in dashboard" style="font-weight:700">↗ ${t}</a></td>`+
+    `<td class="cn" title="${e.name||''}" style="min-width:150px">${e.name||'—'}</td>`+
+    `<td class="cat" style="font-size:.73rem">${secLabel}</td>`+
+    `<td class="hc sc ${sigCss}" onmouseenter="showHmTip(event,'signal','${e.signal}','${t}')" onmouseleave="hideKtt()" style="min-width:95px">${prevSig}<span class="v" style="font-size:.67rem">${sigLabel}</span></td>`+
     `<td class="hc ${rotCls(e.rotation_score)}" onmouseenter="showHmTip(event,'rotation',${e.rotation_score||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rotation_score,1)}</span></td>`+
     `<td class="hc ${confCls(e.confidence_bucket)}" onmouseenter="showHmTip(event,'conf','${e.confidence_bucket||''}','${t}')" onmouseleave="hideKtt()"><span class="v" style="font-size:.73rem">${e.confidence_bucket||'—'}</span></td>`+
     `<td class="hc ${ts===4?'hi-4':ts===3?'hi-2':ts===2?'hi-0':ts===1?'lo-2':'lo-4'}" onmouseenter="showHmTip(event,'trend','${trendVal}','${t}')" onmouseleave="hideKtt()"><div class="md">${dots}</div><span class="s">${ts!=null?ts+'/4':'—'}</span></td>`+
@@ -404,7 +433,8 @@ function mkRow(e){
     `<td class="hc ${ic((e.turnover_ratio_20_100||1)-1,[0.05,0.1,0.2,0.35,0.5])}" onmouseenter="showHmTip(event,'turnratio',${e.turnover_ratio_20_100||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_ratio_20_100,2)}×</span></td>`+
     `<td class="hc ${ic(e.turnover_z_20,[0.25,0.5,1,2,3])}" onmouseenter="showHmTip(event,'turnz',${e.turnover_z_20||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_z_20,2)}σ</span></td>`+
     `<td class="hc ${lqCls(avg)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(avg)}</span><span class="s">/ wk</span></td>`+
-    `<td class="hc ${lqCls(lat)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(lat)}</span><span class="s">/ wk${tlBadge}</span></td>`;
+    `<td class="hc ${lqCls(lat)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(lat)}</span><span class="s">/ wk${tlBadge}</span></td>`+
+    `</tr>`;
 }
 
 function getSorted(){
@@ -412,10 +442,13 @@ function getSorted(){
     let v;
     const ts=x=>x.trend_score_raw!=null?x.trend_score_raw:(x.trend||0);
     const rs20r=x=>x.rs20_raw!=null?x.rs20_raw:(x.rs20_pct||0);
+    const fundA=(a.funds||[]).map(id=>PF[id]?.code||'').join(',');
+    const fundB=(b.funds||[]).map(id=>PF[id]?.code||'').join(',');
     if(curSort==='signal'){const oa=SO[a.signal]??5,ob=SO[b.signal]??5;v=oa!==ob?oa-ob:(b.rotation_score||0)-(a.rotation_score||0);}
     else if(curSort==='ticker')v=a.ticker.localeCompare(b.ticker);
     else if(curSort==='name')v=(a.name||'').localeCompare(b.name||'');
-    else if(curSort==='fund'){const fa=(a.funds||[]).map(id=>PF[id]?.code||'').join(','),fb=(b.funds||[]).map(id=>PF[id]?.code||'').join(',');v=fa.localeCompare(fb);}
+    else if(curSort==='provider'){const pa=(a.funds||[]).some(id=>PF[id]?.code?.startsWith('LG'))?'0':(a.funds||[]).some(id=>PF[id]?.code?.startsWith('IL'))?'1':'2',pb=(b.funds||[]).some(id=>PF[id]?.code?.startsWith('LG'))?'0':(b.funds||[]).some(id=>PF[id]?.code?.startsWith('IL'))?'1':'2';v=pa.localeCompare(pb)||(a.rotation_score||0)-(b.rotation_score||0);}
+    else if(curSort==='fund')v=fundA.localeCompare(fundB);
     else if(curSort==='sector')v=(a.sector||'').localeCompare(b.sector||'');
     else if(curSort==='rotation')v=(b.rotation_score||0)-(a.rotation_score||0);
     else if(curSort==='confidence')v=(b.confidence_score||0)-(a.confidence_score||0);
@@ -433,17 +466,49 @@ function getSorted(){
     return v;
   });
 }
+
 function render(){
   let sorted=getSorted();
-  if(hmFund!=null){const tks=PF[hmFund]?.tickers||[];sorted=sorted.filter(e=>tks.includes(e.ticker));}
   if(activeSector!=null){sorted=sorted.filter(e=>(e.sector||'OTHER')===activeSector);}
+  if(activeProvider!=='ALL'){
+    sorted=sorted.filter(e=>{
+      const funds=TICKER_FUND[e.ticker]||[];
+      if(activeProvider==='LG') return funds.some(f=>f.code.startsWith('LG'));
+      if(activeProvider==='IL') return funds.some(f=>f.code.startsWith('IL'));
+      if(activeProvider==='NO') return funds.length===0;
+      return true;
+    });
+  }
+  if(activeScoreSig!=='ALL'){
+    sorted=sorted.filter(e=>{
+      const sk=e.signal==='STRONG BUY'?'STRONG BUY':e.signal==='EARLY ACCUMULATION'||e.signal==='ACCUMULATING/HOLD'?'ACCUM':e.signal==='EXIT/DISTRIBUTION'?'EXIT':'NEUTRAL';
+      if(activeScoreSig==='ACCUM') return sk==='ACCUM';
+      if(activeScoreSig==='CHANGE') return e.prev_signal;
+      return sk===activeScoreSig;
+    });
+  }
   let html='';
-  sorted.forEach(e=>{html+=`<tr class="etf-row">${mkRow(e)}</tr>`;});
-  document.getElementById('hb').innerHTML=html||'<tr><td colspan="18" style="text-align:center;padding:32px;color:var(--text3)">No data — run a recompute first.</td></tr>';
-  // Update section count badge
+  sorted.forEach(e=>{html+=mkRow(e);});
+  document.getElementById('hb').innerHTML=html||'<tr><td colspan="17" style="text-align:center;padding:32px;color:var(--text3)">No data — run a recompute or adjust filters.</td></tr>';
   const cntEl=document.getElementById('etf-section-count');
   if(cntEl){const n=sorted.length,tot=DATA.length;cntEl.textContent=n<tot?n+' of '+tot+' ETFs':n+' ETFs';}
+  // Update scorecard counts
+  const counts={SB:0,AC:0,NT:0,EX:0,CH:0};
+  DATA.forEach(e=>{
+    if(e.signal==='STRONG BUY')counts.SB++;
+    else if(e.signal==='EARLY ACCUMULATION'||e.signal==='ACCUMULATING/HOLD')counts.AC++;
+    else if(e.signal==='EXIT/DISTRIBUTION')counts.EX++;
+    else counts.NT++;
+    if(e.prev_signal)counts.CH++;
+  });
+  const se=id=>document.getElementById(id);
+  if(se('sc-sb'))se('sc-sb').textContent=counts.SB;
+  if(se('sc-ac'))se('sc-ac').textContent=counts.AC;
+  if(se('sc-nt'))se('sc-nt').textContent=counts.NT;
+  if(se('sc-ex'))se('sc-ex').textContent=counts.EX;
+  if(se('sc-ch'))se('sc-ch').textContent=counts.CH;
 }
+
 function doSort(by,btn){
   if(curSort===by)sortDir*=-1; else{curSort=by;sortDir=1;}
   document.querySelectorAll('.sb,.hth').forEach(b=>b.classList.remove('active'));
@@ -451,88 +516,54 @@ function doSort(by,btn){
   render();
 }
 
-// Pension fund filter chips — rendered into unified control band
-(function(){
-  const container=document.getElementById('hm-fund-chips');
-  if(!container)return;
-  const fids=Object.keys(PF);
-  if(!fids.length)return;
-  container.innerHTML=''; // clear placeholder
-  const allBtn=document.createElement('button');allBtn.className='hm-fchip on';allBtn.textContent='ALL';
-  allBtn.title='Show all ETFs';
-  allBtn.onclick=function(){hmFund=null;document.querySelectorAll('.hm-fchip').forEach(c=>c.classList.remove('on'));this.classList.add('on');render();};
-  container.appendChild(allBtn);
-  fids.forEach(fid=>{
-    const f=PF[fid];
-    const btn=document.createElement('button');btn.className='hm-fchip';
-    btn.textContent=f.code+' ('+f.tickers.length+')';btn.title=f.name;
-    btn.onclick=function(){hmFund=parseInt(fid);document.querySelectorAll('.hm-fchip').forEach(c=>c.classList.remove('on'));this.classList.add('on');render();};
-    container.appendChild(btn);
-  });
-})();
+function provFilt(prov,el){
+  activeProvider=prov;
+  document.querySelectorAll('#hm-prov-chips .hm-fchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  render();
+}
+function scoreFilt(sig,el){
+  activeScoreSig=sig;
+  document.querySelectorAll('#hm-score-chips .hm-fchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  render();
+}
 
+// Fund filter chips removed — filter via Provider column sorting
 
 // Sector heatmap
-let secViewMode = 'all'; // 'all' | 'proxy'
-
+let secViewMode='all';
 function secView(mode){
-  secViewMode = mode;
-  document.getElementById('sec-btn-all').classList.toggle('active', mode==='all');
-  document.getElementById('sec-btn-prox').classList.toggle('active', mode==='proxy');
+  secViewMode=mode;
+  document.getElementById('sec-btn-all').classList.toggle('active',mode==='all');
+  document.getElementById('sec-btn-prox').classList.toggle('active',mode==='proxy');
   renderSecGrid();
 }
-
-// Pre-group all ETFs by sector (static — DATA never changes)
-const _setfs = {};
-DATA.forEach(e => { const sec=e.sector||'OTHER'; if(!_setfs[sec])_setfs[sec]=[]; _setfs[sec].push(e); });
-
-// Pension proxy set — tickers with at least one fund mapping
-const PROXY_TICKERS = new Set(DATA.filter(e=>(e.funds||[]).length>0).map(e=>e.ticker));
-
-const _sigCls = {'STRONG BUY':'ssb','EARLY ACCUMULATION':'sea',
-                 'ACCUMULATING/HOLD':'sah','EXIT/DISTRIBUTION':'sex'};
-
-function _rotCl(v){
-  if(v>=70)return'srot-5';if(v>=60)return'srot-4';if(v>=50)return'srot-3';
-  if(v>=40)return'srot-2';if(v>=30)return'srot-1';return'srot-0';
-}
-
+const _setfs={};
+DATA.forEach(e=>{const sec=e.sector||'OTHER';if(!_setfs[sec])_setfs[sec]=[];_setfs[sec].push(e);});
+const PROXY_TICKERS=new Set(DATA.filter(e=>(e.funds||[]).length>0).map(e=>e.ticker));
+const _sigCls={'STRONG BUY':'ssb','EARLY ACCUMULATION':'sea','ACCUMULATING/HOLD':'sah','EXIT/DISTRIBUTION':'sex'};
+function _rotCl(v){if(v>=70)return'srot-5';if(v>=60)return'srot-4';if(v>=50)return'srot-3';if(v>=40)return'srot-2';if(v>=30)return'srot-1';return'srot-0';}
 function renderSecGrid(){
-  const grid=document.getElementById('sec-hm-grid');
-  if(!grid)return;
-  const proxyOnly=secViewMode==='proxy';
-  const prevActive=activeSector;
-  grid.innerHTML='';
-
-  // Aggregate per sector for current view
+  const grid=document.getElementById('sec-hm-grid');if(!grid)return;
+  const proxyOnly=secViewMode==='proxy';const prevActive=activeSector;grid.innerHTML='';
   const smap={};
   Object.entries(_setfs).forEach(([sec,etfs])=>{
     const viewEtfs=proxyOnly?etfs.filter(e=>PROXY_TICKERS.has(e.ticker)):etfs;
     if(!viewEtfs.length)return;
     const agg={sb:0,ea:0,ah:0,nt:0,ex:0,rotSum:0,rotN:0,etfs:viewEtfs};
     viewEtfs.forEach(e=>{
-      if(e.signal==='STRONG BUY')              agg.sb++;
-      else if(e.signal==='EARLY ACCUMULATION') agg.ea++;
-      else if(e.signal==='ACCUMULATING/HOLD')  agg.ah++;
-      else if(e.signal==='EXIT/DISTRIBUTION')  agg.ex++;
-      else                                     agg.nt++;
+      if(e.signal==='STRONG BUY')agg.sb++;else if(e.signal==='EARLY ACCUMULATION')agg.ea++;
+      else if(e.signal==='ACCUMULATING/HOLD')agg.ah++;else if(e.signal==='EXIT/DISTRIBUTION')agg.ex++;else agg.nt++;
       if(e.rotation_score!=null){agg.rotSum+=e.rotation_score;agg.rotN++;}
     });
     smap[sec]=agg;
   });
-
-  // Sort by avg rotation desc
-  const secs=Object.keys(smap).sort((a,b)=>{
-    const ra=smap[a].rotN?smap[a].rotSum/smap[a].rotN:0;
-    const rb=smap[b].rotN?smap[b].rotSum/smap[b].rotN:0;
-    return rb-ra;
-  });
-
+  const secs=Object.keys(smap).sort((a,b)=>{const ra=smap[a].rotN?smap[a].rotSum/smap[a].rotN:0,rb=smap[b].rotN?smap[b].rotSum/smap[b].rotN:0;return rb-ra;});
   secs.forEach(sec=>{
     const agg=smap[sec],avgRot=agg.rotN?agg.rotSum/agg.rotN:0,rc=_rotCl(avgRot),label=SL[sec]||sec;
     const barParts=[{cls:'bsb',n:agg.sb},{cls:'bea',n:agg.ea},{cls:'bah',n:agg.ah},{cls:'bnt',n:agg.nt},{cls:'bex',n:agg.ex}].filter(p=>p.n>0);
     const barHtml=barParts.map(p=>`<div class="${p.cls}" style="flex:${p.n}"></div>`).join('');
-
     const etfsSorted=[...agg.etfs].sort((a,b)=>(b.rotation_score||0)-(a.rotation_score||0));
     const etfHtml=etfsSorted.map(e=>{
       const sc=_sigCls[e.signal]||'snt';
@@ -540,15 +571,9 @@ function renderSecGrid(){
       const fundsHtml=fundTags?`<div class="sec-etf-funds">${fundTags}</div>`:'';
       return `<div class="sec-etf-row"><div class="sec-etf-sig ${sc}"></div><div class="sec-etf-body"><div class="sec-etf-ticker">${e.ticker}</div><div class="sec-etf-name">${e.name||'&mdash;'}</div>${fundsHtml}</div></div>`;
     }).join('');
-
-    const tile=document.createElement('div');
-    tile.className=`sec-tile ${rc}`;
+    const tile=document.createElement('div');tile.className=`sec-tile ${rc}`;
     if(prevActive===sec){tile.dataset.active='1';tile.classList.add('sec-active');}
-    tile.innerHTML=
-      `<div class="sec-head-row"><div class="sec-name">${label}</div><div class="sec-rot ${rc}">${avgRot.toFixed(1)}</div></div>`+
-      `<div class="sec-sig-bar">${barHtml}</div>`+
-      `<div class="sec-etf-list">${etfHtml}</div>`;
-
+    tile.innerHTML=`<div class="sec-head-row"><div class="sec-name">${label}</div><div class="sec-rot ${rc}">${avgRot.toFixed(1)}</div></div><div class="sec-sig-bar">${barHtml}</div><div class="sec-etf-list">${etfHtml}</div>`;
     tile.addEventListener('click',()=>{
       if(tile.dataset.active==='1'){tile.dataset.active='0';tile.classList.remove('sec-active');activeSector=null;}
       else{document.querySelectorAll('.sec-tile').forEach(t=>{t.dataset.active='0';t.classList.remove('sec-active');});tile.dataset.active='1';tile.classList.add('sec-active');activeSector=sec;}
@@ -558,8 +583,13 @@ function renderSecGrid(){
   });
 }
 
-renderSecGrid();
+function _kttPos(e){var tt=document.getElementById('ktt'),pw=tt.offsetWidth||290,ph=tt.offsetHeight||120;var x=e.clientX+18,y=e.clientY-14;if(x+pw>window.innerWidth-8)x=e.clientX-pw-8;if(y+ph>window.innerHeight-8)y=window.innerHeight-ph-8;if(y<8)y=8;tt.style.left=x+'px';tt.style.top=y+'px';}
+function hideKtt(){var tt=document.getElementById('ktt');if(tt)tt.classList.remove('show');}
+function showHmTip(e,key,val,ticker){var info=HM_KPI[key]||{};var ctx=hmCtx(key,val)||{};if(!ctx||!ctx.t)return;document.getElementById('ktt-hdr').textContent=info.name||key;document.getElementById('ktt-sub').textContent=ticker||'';document.getElementById('ktt-def').textContent=info.def||'';var cd=document.getElementById('ktt-ctx');cd.textContent=ctx.t;cd.className='ktt-ctx '+(ctx.c||'neu');document.getElementById('ktt').classList.add('show');_kttPos(e);}
+document.addEventListener('mousemove',function(e){var tt=document.getElementById('ktt');if(tt&&tt.classList.contains('show'))_kttPos(e);});
+(function(){var t=document.createElement('div');t.id='ktt';t.className='ktt';t.innerHTML='<div class="ktt-hdr" id="ktt-hdr"></div><div class="ktt-sub" id="ktt-sub"></div><div class="ktt-def" id="ktt-def"></div><div class="ktt-ctx" id="ktt-ctx"></div>';document.body.appendChild(t);})();
 
+renderSecGrid();
 render();
 </script>
 {% endblock %}
