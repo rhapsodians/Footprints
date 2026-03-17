@@ -3,132 +3,130 @@
 
 {% block head %}
 <style>
-.sum-page { max-width: 1100px; }
+.sum-page { max-width: 1060px; }
 
-/* ── Print bar ── */
-.print-bar {
+/* ── Date / print bar ── */
+.sum-bar {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 22px;
+  padding: 8px 0 14px; margin-bottom: 20px; border-bottom: 1px solid var(--border);
 }
-.print-btn {
-  font-family: var(--mono); font-size: .80rem; padding: 4px 12px;
+.sum-btn {
+  font-family: var(--mono); font-size: .73rem; padding: 4px 11px;
   border: 1px solid var(--border); border-radius: 3px;
   background: var(--surface2); color: var(--text2); cursor: pointer; transition: all .15s;
 }
-.print-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sum-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-/* ── Scorecard ── */
+/* ── Scorecard strip ── */
 .scorecard {
-  display: flex; margin-bottom: 26px;
-  border: 1px solid var(--border); border-radius: 5px; overflow: hidden;
+  display: flex; margin-bottom: 22px;
+  border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
 }
-.sc-cell { flex: 1; padding: 12px 6px 10px; text-align: center; border-right: 1px solid var(--border); background: var(--surface); }
-.sc-cell:last-child { border-right: none; }
-.sc-val { font-family: var(--mono); font-size: 1.40rem; font-weight: 700; line-height: 1; margin-bottom: 4px; }
-.sc-lbl { font-family: var(--mono); font-size: .67rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); }
-.sc-cell.c-buy  .sc-val { color: var(--sig-sb); }
-.sc-cell.c-exit .sc-val { color: var(--sig-ex); }
-.sc-cell.c-neu  .sc-val { color: var(--text2); }
-.sc-cell.c-chg  .sc-val { color: var(--sig-ea, #c8a000); }
+.sc { flex: 1; padding: 10px 6px 8px; text-align: center; border-right: 1px solid var(--border); background: var(--surface); }
+.sc:last-child { border-right: none; }
+.sc-v { font-family: var(--mono); font-size: 1.27rem; font-weight: 700; line-height: 1; margin-bottom: 3px; }
+.sc-l { font-family: var(--mono); font-size: .60rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); }
+.sc.buy  .sc-v { color: var(--sig-sb); }
+.sc.exit .sc-v { color: var(--sig-ex); }
+.sc.chg  .sc-v { color: var(--sig-ea, #c8a000); }
+.sc.neu  .sc-v { color: var(--text2); }
 
-/* ── Provider section header ── */
-.provider-hdr {
-  font-family: var(--mono); font-size: .73rem; font-weight: 700;
+/* ── Section header ── */
+.sec-hdr {
+  font-family: var(--mono); font-size: .67rem; font-weight: 700;
   letter-spacing: .12em; text-transform: uppercase; color: var(--text3);
-  display: flex; align-items: center; gap: 10px; margin: 0 0 10px;
+  display: flex; align-items: center; gap: 8px; margin: 20px 0 6px;
 }
-.provider-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-.provider-hdr + .provider-hdr { margin-top: 28px; }
+.sec-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-/* ── Fund table ── */
-.fund-table {
+/* ── Main table ── */
+.sum-table {
   width: 100%; border-collapse: collapse;
-  border: 1px solid var(--border); border-radius: 5px; overflow: hidden;
-  margin-bottom: 28px; font-family: var(--mono);
+  border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+  margin-bottom: 6px; font-family: var(--mono);
 }
-.fund-table thead tr { background: var(--surface2); }
-.fund-table th {
-  font-size: .67rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--text3); padding: 7px 10px; border-bottom: 1px solid var(--border);
-  text-align: left; white-space: nowrap;
+.sum-table thead tr { background: var(--surface2); }
+.sum-table th {
+  font-size: .60rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text3); padding: 6px 8px; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
-.fund-table th.r { text-align: right; }
-.fund-table th.c { text-align: center; }
+.sum-table th.r { text-align: right; }
+.sum-table th.c { text-align: center; }
 
-/* Fund name row */
-.fund-table tr.fund-row { background: var(--surface); }
-.fund-table tr.fund-row td {
-  padding: 9px 10px 8px; border-bottom: 1px solid var(--border);
-  vertical-align: middle;
+.sum-table td {
+  padding: 6px 8px; border-bottom: 1px solid var(--border);
+  font-size: .73rem; color: var(--text2); vertical-align: middle;
 }
-/* Proxy rows */
-.fund-table tr.proxy-row { background: transparent; }
-.fund-table tr.proxy-row:last-of-type td { border-bottom: 2px solid var(--border); }
-.fund-table tr.proxy-row td {
-  padding: 7px 10px; border-bottom: 1px solid var(--border);
-  font-size: .80rem; color: var(--text2); vertical-align: middle;
-}
-.fund-table tr.proxy-row td.r { text-align: right; }
-.fund-table tr.proxy-row td.c { text-align: center; }
+.sum-table tr:last-child td { border-bottom: none; }
+.sum-table td.r { text-align: right; }
+.sum-table td.c { text-align: center; }
 
-/* Stance cell — heatmap colour block */
-.stance-cell {
-  font-size: .67rem; font-weight: 700; letter-spacing: .06em;
-  padding: 3px 8px !important; border-radius: 3px; white-space: nowrap;
-  display: inline-block;
+/* Provider tag — LG vs IL */
+.prov-tag {
+  display: inline-block; font-size: .60rem; font-weight: 700; letter-spacing: .06em;
+  padding: 2px 5px; border-radius: 2px; white-space: nowrap;
 }
-.s-POSITIVE  { background: rgba(0,200,130,.18); color: var(--sig-sb); }
-.s-MILDPOS   { background: rgba(0,200,130,.09); color: var(--sig-sb); }
-.s-MIXED     { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
-.s-CAUTIOUS  { background: rgba(255,77,106,.10); color: var(--sig-ex); }
-.s-MILDNEG   { background: rgba(255,77,106,.07); color: var(--sig-ex); }
-.s-NEGATIVE  { background: rgba(255,77,106,.22); color: var(--sig-ex); }
+.prov-LG { background: rgba(100,149,237,.15); color: #7ba4f0; border: 1px solid rgba(100,149,237,.30); }
+.prov-IL { background: rgba(0,200,130,.12); color: var(--sig-sb); border: 1px solid rgba(0,200,130,.28); }
+
+/* Stance block */
+.stance {
+  display: inline-block; font-size: .60rem; font-weight: 700; letter-spacing: .05em;
+  padding: 2px 6px; border-radius: 2px; white-space: nowrap;
+}
+.st-POSITIVE { background: rgba(0,200,130,.18); color: var(--sig-sb); }
+.st-MILDPOS  { background: rgba(0,200,130,.09); color: var(--sig-sb); }
+.st-MIXED    { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.st-CAUTIOUS { background: rgba(255,77,106,.10); color: var(--sig-ex); }
+.st-MILDNEG  { background: rgba(255,77,106,.07); color: var(--sig-ex); }
+.st-NEGATIVE { background: rgba(255,77,106,.22); color: var(--sig-ex); }
 
 /* Fund name */
-.fund-name-cell { font-size: .80rem; font-weight: 600; color: var(--text); line-height: 1.3; }
-.fund-code-sm { font-size: .67rem; color: var(--text3); font-weight: 400; margin-top: 1px; }
+.fund-nm  { font-size: .73rem; color: var(--text); font-weight: 600; line-height: 1.25; }
+.fund-cd  { font-size: .60rem; color: var(--text3); margin-top: 1px; }
+
+/* Ticker + ETF name */
+.etf-tk   { font-weight: 700; color: var(--text); font-size: .80rem; }
+.etf-nm   { font-size: .67rem; color: var(--text3); margin-top: 1px; }
 
 /* Signal pill */
-.sig-pill {
-  display: inline-block; font-family: var(--mono); font-size: .67rem; font-weight: 700;
-  padding: 2px 7px; border-radius: 3px; white-space: nowrap;
+.sp {
+  display: inline-block; font-size: .60rem; font-weight: 700;
+  padding: 2px 6px; border-radius: 2px; white-space: nowrap;
 }
-.sig-pill.sb { background: var(--sig-sb-bg); color: var(--sig-sb); border: 1px solid var(--sig-sb-bd); }
-.sig-pill.ea { background: var(--sig-ea-bg); color: var(--sig-ea); border: 1px solid var(--sig-ea-bd); }
-.sig-pill.ah { background: var(--sig-ah-bg); color: var(--sig-ah); border: 1px solid var(--sig-ah-bd); }
-.sig-pill.nt { background: var(--neutral-dim); color: var(--text3); border: 1px solid var(--border2); }
-.sig-pill.ex { background: var(--sig-ex-bg); color: var(--sig-ex); border: 1px solid var(--sig-ex-bd); }
+.sp.sb { background: var(--sig-sb-bg); color: var(--sig-sb); border: 1px solid var(--sig-sb-bd); }
+.sp.ea { background: var(--sig-ea-bg); color: var(--sig-ea); border: 1px solid var(--sig-ea-bd); }
+.sp.ah { background: var(--sig-ah-bg); color: var(--sig-ah); border: 1px solid var(--sig-ah-bd); }
+.sp.nt { background: var(--neutral-dim); color: var(--text3); border: 1px solid var(--border2); }
+.sp.ex { background: var(--sig-ex-bg); color: var(--sig-ex); border: 1px solid var(--sig-ex-bd); }
 
-/* KPI value colouring */
-.kv { font-family: var(--mono); font-size: .80rem; font-weight: 700; }
-.kv-pos  { color: var(--sig-sb); }
-.kv-neg  { color: var(--sig-ex); }
-.kv-warn { color: var(--sig-ea, #c8a000); }
-.kv-neu  { color: var(--text2); }
+/* Signal change */
+.prev-s { font-size: .60rem; color: var(--text3); text-decoration: line-through; margin-right: 2px; }
+.chg-arrow { color: var(--text3); font-size: .67rem; margin: 0 1px; }
+
+/* KPI values */
+.kv { font-weight: 700; }
+.pos { color: var(--sig-sb); }
+.neg { color: var(--sig-ex); }
+.warn { color: var(--sig-ea, #c8a000); }
+.muted { color: var(--text3); }
 
 /* Trend dots */
-.tdots { letter-spacing: 1px; font-size: .73rem; }
+.td { letter-spacing: .5px; font-size: .73rem; }
 
-/* Transition arrow */
-.prev-sig { font-size: .67rem; color: var(--text3); text-decoration: line-through; margin-right: 2px; }
-.arr { color: var(--text3); margin: 0 2px; }
+/* Row accent — left border colour by stance */
+.sum-table tr.r-POSITIVE td:first-child { border-left: 3px solid rgba(0,200,130,.5); }
+.sum-table tr.r-MILDPOS  td:first-child { border-left: 3px solid rgba(0,200,130,.25); }
+.sum-table tr.r-MIXED    td:first-child { border-left: 3px solid var(--border2); }
+.sum-table tr.r-CAUTIOUS td:first-child { border-left: 3px solid rgba(255,77,106,.35); }
+.sum-table tr.r-MILDNEG  td:first-child { border-left: 3px solid rgba(255,77,106,.25); }
+.sum-table tr.r-NEGATIVE td:first-child { border-left: 3px solid rgba(255,77,106,.6); }
 
-/* Ticker */
-.ticker { font-weight: 700; color: var(--text); font-size: .80rem; }
-
-/* Change flag */
-.chg-flag {
-  display: inline-block; font-size: .60rem; font-weight: 700;
-  background: rgba(200,160,0,.15); color: var(--sig-ea,#c8a000);
-  border: 1px solid rgba(200,160,0,.30); border-radius: 2px;
-  padding: 1px 4px; margin-left: 4px; vertical-align: middle;
-}
-
-/* ── Print ── */
 @media print {
-  .nav, .print-bar { display: none !important; }
+  .nav, .sum-bar { display: none !important; }
   body { background: white !important; }
-  .fund-table { page-break-inside: avoid; }
+  .sum-table { page-break-inside: avoid; }
 }
 </style>
 {% endblock %}
@@ -141,49 +139,50 @@
   <div class="page-subtitle">Pension fund rotation signals · L&G &amp; Irish Life · as of {{ as_of }}</div>
 </div>
 
-<div class="print-bar">
+<div class="sum-bar">
   {% if dates %}
   <select onchange="location='?date='+this.value"
-    style="font-family:var(--mono);font-size:.80rem;padding:4px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">
+    style="font-family:var(--mono);font-size:.73rem;padding:3px 7px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">
     {% for d in dates %}<option value="{{ d }}" {% if d == as_of %}selected{% endif %}>{{ d }}</option>{% endfor %}
   </select>
   {% endif %}
-  <button class="print-btn" onclick="window.print()">⎙ Print / Save PDF</button>
+  <button class="sum-btn" onclick="window.print()">⎙ Print</button>
 </div>
 
 <!-- Scorecard -->
 <div class="scorecard">
-  <div class="sc-cell c-buy"><div class="sc-val">{{ portfolio.strong_buy }}</div><div class="sc-lbl">Strong Buy</div></div>
-  <div class="sc-cell c-buy"><div class="sc-val">{{ portfolio.early_acc + portfolio.accum }}</div><div class="sc-lbl">Accumulating</div></div>
-  <div class="sc-cell c-neu"><div class="sc-val">{{ portfolio.neutral }}</div><div class="sc-lbl">Neutral</div></div>
-  <div class="sc-cell c-exit"><div class="sc-val">{{ portfolio.exit }}</div><div class="sc-lbl">Exit</div></div>
-  <div class="sc-cell c-neu"><div class="sc-val">{{ portfolio.high_conf }}</div><div class="sc-lbl">High Conf</div></div>
-  <div class="sc-cell c-chg"><div class="sc-val">{{ portfolio.transitions }}</div><div class="sc-lbl">Changes</div></div>
-  <div class="sc-cell c-neu"><div class="sc-val">{{ portfolio.total }}</div><div class="sc-lbl">Total ETFs</div></div>
+  <div class="sc buy"><div class="sc-v">{{ portfolio.strong_buy }}</div><div class="sc-l">Strong Buy</div></div>
+  <div class="sc buy"><div class="sc-v">{{ portfolio.early_acc + portfolio.accum }}</div><div class="sc-l">Accumulating</div></div>
+  <div class="sc neu"><div class="sc-v">{{ portfolio.neutral }}</div><div class="sc-l">Neutral</div></div>
+  <div class="sc exit"><div class="sc-v">{{ portfolio.exit }}</div><div class="sc-l">Exit</div></div>
+  <div class="sc neu"><div class="sc-v">{{ portfolio.high_conf }}</div><div class="sc-l">High Conf</div></div>
+  <div class="sc chg"><div class="sc-v">{{ portfolio.transitions }}</div><div class="sc-l">Changes</div></div>
+  <div class="sc neu"><div class="sc-v">{{ portfolio.total }}</div><div class="sc-l">Total ETFs</div></div>
 </div>
 
-{# ── Macro to render a provider table ── #}
-{% macro fund_table(rows, label) %}
+{# ── Helper macro: render one table of fund rows ── #}
+{% macro render_table(rows, provider_label, prov_cls) %}
 {% if rows %}
-<div class="provider-hdr">{{ label }}</div>
-<table class="fund-table">
+<div class="sec-hdr">{{ provider_label }}</div>
+<table class="sum-table">
   <thead>
     <tr>
-      <th style="width:22px"></th>
+      <th style="width:34px">Source</th>
       <th>Pension Fund</th>
       <th>Proxy ETF</th>
+      <th style="width:52px">Stance</th>
       <th>Signal</th>
-      <th class="r">Rotation</th>
-      <th class="r">RS 20w</th>
-      <th class="c">Conf</th>
-      <th class="c">Trend</th>
-      <th class="r">Pressure%</th>
+      <th class="r" style="width:54px">Rotation</th>
+      <th class="r" style="width:54px">RS 20w</th>
+      <th class="c" style="width:62px">Confidence</th>
+      <th class="c" style="width:56px">Trend</th>
+      <th class="r" style="width:58px">Pressure</th>
     </tr>
   </thead>
   <tbody>
   {% for fs in rows %}
-  {% set sc = fs.stance | replace(' ','') | replace('MILDPOS','MILDPOS') %}
-  {% set sc2 = 's-' + fs.stance | replace(' POS','POS') | replace(' NEG','NEG') | replace(' ','') %}
+  {% set sc = 'st-' + fs.stance | replace(' POS','POS') | replace(' NEG','NEG') | replace(' ','') %}
+  {% set rc = 'r-' + fs.stance | replace(' POS','POS') | replace(' NEG','NEG') | replace(' ','') %}
   {% for r in fs.sigs %}
   {% set sig = r.signal %}
   {% if sig == sig_strong_buy %}{% set css = 'sb' %}
@@ -194,33 +193,29 @@
   {% set rot = r.rotation_score | default(0) | round(1) %}
   {% set rs  = r.rs20_pct | default(0) | round(1) %}
   {% set prs = r.pressure_pos_weeks_pct | default(0) | round(0) | int %}
-  {% set trend_dots = '●' * (r.trend | default(0)) + '○' * (4 - (r.trend | default(0))) %}
-  <tr class="proxy-row">
-    {# Stance colour block — only on first proxy row of each fund #}
-    {% if loop.first %}
-    <td rowspan="{{ fs.sigs | length }}" style="padding:0!important;width:6px;background:{% if fs.stance=='POSITIVE' %}rgba(0,200,130,.35){% elif fs.stance=='MILD POS' %}rgba(0,200,130,.15){% elif fs.stance=='NEGATIVE' %}rgba(255,77,106,.35){% elif fs.stance in ('CAUTIOUS','MILD NEG') %}rgba(255,77,106,.15){% else %}var(--border){% endif %}"></td>
-    <td rowspan="{{ fs.sigs | length }}" style="vertical-align:top;padding-top:10px!important;border-right:1px solid var(--border)">
-      <div class="fund-name-cell">{{ fs.name }}</div>
-      <div class="fund-code-sm">{{ fs.code }}</div>
-      <div style="margin-top:5px"><span class="stance-cell {{ sc2 }}">{{ fs.stance }}</span></div>
-    </td>
-    {% endif %}
+  {% set td  = '●' * (r.trend | default(0)) + '○' * (4 - (r.trend | default(0))) %}
+  <tr class="{{ rc }}">
+    <td><span class="prov-tag prov-{{ prov_cls }}">{{ prov_cls }}</span></td>
     <td>
-      <span class="ticker">{{ r.ticker }}</span>
-      {% if r.prev_signal %}<span class="chg-flag">↑ CHANGE</span>{% endif %}
-      <div style="font-size:.67rem;color:var(--text3);margin-top:1px">{{ r.name | truncate(38, true, '…') }}</div>
+      <div class="fund-nm">{{ fs.name }}</div>
+      <div class="fund-cd">{{ fs.code }}</div>
     </td>
+    <td>
+      <div class="etf-tk">{{ r.ticker }}</div>
+      <div class="etf-nm">{{ r.name | truncate(36, true, '…') }}</div>
+    </td>
+    <td><span class="stance {{ sc }}">{{ fs.stance }}</span></td>
     <td>
       {% if r.prev_signal %}
-      <span class="prev-sig">{{ r.prev_signal | replace('ACCUMULATING/HOLD','ACC') | replace('EXIT/DISTRIBUTION','EXIT') | replace('STRONG BUY','S.BUY') | replace('EARLY ACCUMULATION','E.ACC') }}</span><span class="arr">→</span>
+        <span class="prev-s">{{ r.prev_signal | replace('ACCUMULATING/HOLD','ACC') | replace('EXIT/DISTRIBUTION','EXIT') | replace('STRONG BUY','SB') | replace('EARLY ACCUMULATION','EA') }}</span><span class="chg-arrow">→</span>
       {% endif %}
-      <span class="sig-pill {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span>
+      <span class="sp {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span>
     </td>
-    <td class="r"><span class="kv {% if rot >= 65 %}kv-pos{% elif rot < 45 %}kv-neg{% elif rot < 52 %}kv-warn{% else %}kv-neu{% endif %}">{{ rot }}</span></td>
-    <td class="r"><span class="kv {% if rs > 0 %}kv-pos{% elif rs < 0 %}kv-neg{% else %}kv-neu{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
-    <td class="c"><span class="kv {% if r.confidence_bucket == 'HIGH' %}kv-pos{% elif r.confidence_bucket == 'LOW' %}kv-neg{% else %}kv-neu{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
-    <td class="c"><span class="tdots">{{ trend_dots }}</span></td>
-    <td class="r"><span class="kv {% if prs >= 60 %}kv-pos{% elif prs <= 35 %}kv-neg{% else %}kv-neu{% endif %}">{{ prs }}%</span></td>
+    <td class="r"><span class="kv {% if rot >= 65 %}pos{% elif rot < 45 %}neg{% elif rot < 52 %}warn{% else %}muted{% endif %}">{{ rot }}</span></td>
+    <td class="r"><span class="kv {% if rs > 1 %}pos{% elif rs < -1 %}neg{% else %}muted{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
+    <td class="c"><span class="kv {% if r.confidence_bucket == 'HIGH' %}pos{% elif r.confidence_bucket == 'LOW' %}neg{% else %}muted{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
+    <td class="c"><span class="td">{{ td }}</span></td>
+    <td class="r"><span class="kv {% if prs >= 60 %}pos{% elif prs <= 35 %}neg{% else %}muted{% endif %}">{{ prs }}%</span></td>
   </tr>
   {% endfor %}
   {% endfor %}
@@ -229,24 +224,24 @@
 {% endif %}
 {% endmacro %}
 
-{{ fund_table(lg_rows, "L&G WorkSave Pension") }}
-{{ fund_table(il_rows, "Irish Life") }}
+{{ render_table(lg_rows, "L&G WorkSave Pension", "LG") }}
+{{ render_table(il_rows, "Irish Life", "IL") }}
 
-<!-- Notable unproxied signals -->
+<!-- Notable: no fund proxy -->
 {% if notable %}
-<div class="provider-hdr" style="margin-top:4px">Notable — No Fund Proxy</div>
-<table class="fund-table">
+<div class="sec-hdr" style="margin-top:16px">Notable — No Fund Proxy</div>
+<table class="sum-table">
   <thead>
     <tr>
       <th>Ticker</th>
-      <th>Name</th>
+      <th>ETF Name</th>
       <th>Sector</th>
       <th>Signal</th>
       <th class="r">Rotation</th>
       <th class="r">RS 20w</th>
-      <th class="c">Conf</th>
+      <th class="c">Confidence</th>
       <th class="c">Trend</th>
-      <th class="r">Pressure%</th>
+      <th class="r">Pressure</th>
     </tr>
   </thead>
   <tbody>
@@ -260,17 +255,17 @@
   {% set rot = r.rotation_score | default(0) | round(1) %}
   {% set rs  = r.rs20_pct | default(0) | round(1) %}
   {% set prs = r.pressure_pos_weeks_pct | default(0) | round(0) | int %}
-  {% set trend_dots = '●' * (r.trend | default(0)) + '○' * (4 - (r.trend | default(0))) %}
-  <tr class="proxy-row">
-    <td><span class="ticker">{{ r.ticker }}</span></td>
-    <td style="font-size:.73rem;color:var(--text2)">{{ r.name | truncate(42, true, '…') }}</td>
-    <td><span style="font-family:var(--mono);font-size:.67rem;color:var(--text3);border:1px solid var(--border);border-radius:2px;padding:1px 5px">{{ r.sector }}</span></td>
-    <td><span class="sig-pill {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span></td>
-    <td class="r"><span class="kv {% if rot >= 65 %}kv-pos{% elif rot < 45 %}kv-neg{% elif rot < 52 %}kv-warn{% else %}kv-neu{% endif %}">{{ rot }}</span></td>
-    <td class="r"><span class="kv {% if rs > 0 %}kv-pos{% elif rs < 0 %}kv-neg{% else %}kv-neu{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
-    <td class="c"><span class="kv {% if r.confidence_bucket == 'HIGH' %}kv-pos{% elif r.confidence_bucket == 'LOW' %}kv-neg{% else %}kv-neu{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
-    <td class="c"><span class="tdots">{{ trend_dots }}</span></td>
-    <td class="r"><span class="kv {% if prs >= 60 %}kv-pos{% elif prs <= 35 %}kv-neg{% else %}kv-neu{% endif %}">{{ prs }}%</span></td>
+  {% set td  = '●' * (r.trend | default(0)) + '○' * (4 - (r.trend | default(0))) %}
+  <tr>
+    <td><span class="etf-tk">{{ r.ticker }}</span></td>
+    <td><span class="etf-nm" style="color:var(--text2)">{{ r.name | truncate(42, true, '…') }}</span></td>
+    <td><span style="font-size:.60rem;color:var(--text3);border:1px solid var(--border);border-radius:2px;padding:1px 5px">{{ r.sector }}</span></td>
+    <td><span class="sp {{ css }}">{{ sig | replace('ACCUMULATING/HOLD','ACCUM') | replace('EXIT/DISTRIBUTION','EXIT') | replace('EARLY ACCUMULATION','EARLY ACC') }}</span></td>
+    <td class="r"><span class="kv {% if rot >= 65 %}pos{% elif rot < 45 %}neg{% elif rot < 52 %}warn{% else %}muted{% endif %}">{{ rot }}</span></td>
+    <td class="r"><span class="kv {% if rs > 1 %}pos{% elif rs < -1 %}neg{% else %}muted{% endif %}">{% if rs > 0 %}+{% endif %}{{ rs }}%</span></td>
+    <td class="c"><span class="kv {% if r.confidence_bucket == 'HIGH' %}pos{% elif r.confidence_bucket == 'LOW' %}neg{% else %}muted{% endif %}">{{ r.confidence_bucket | default('—') }}</span></td>
+    <td class="c"><span class="td">{{ td }}</span></td>
+    <td class="r"><span class="kv {% if prs >= 60 %}pos{% elif prs <= 35 %}neg{% else %}muted{% endif %}">{{ prs }}%</span></td>
   </tr>
   {% endfor %}
   </tbody>
