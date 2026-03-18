@@ -200,12 +200,11 @@ Option A is simpler.
 **Note:** Prior documentation incorrectly stated STRONG BUY was checked first.
 **Status:** Active. Confirmed from both `engine.py` and `guide.html` logic table.
 
-### [OPEN] — Admin route discrepancy: template vs server.py
+### [RESOLVED] — Admin route discrepancy: template vs server.py
 
-**Issue:** `admin.html` submits to `/admin/suspend`, `/admin/unsuspend`, `/admin/deactivate`, `/admin/activate` as individual routes. But the GitHub version of `server.py` only defines `/admin/toggle-etf` with an `action` parameter.
-**Possible explanations:** (a) `server.py` was updated on PythonAnywhere after the last GitHub push, adding these routes; (b) The template is wrong and the admin suspend/activate functionality is broken; (c) `server.py` on PythonAnywhere differs from the GitHub version.
-**Action:** SSH into PythonAnywhere, run `grep "admin/suspend\|admin/unsuspend\|admin/deactivate\|admin/activate\|toggle-etf" ~/footprints2/server.py` to confirm which routes actually exist.
-**Status:** Open — verify before relying on admin ETF status changes.
+**Issue:** `admin.html` was submitting to `/admin/suspend`, `/admin/unsuspend`, `/admin/deactivate`, `/admin/activate` as individual routes that did not exist in `server.py`.
+**Resolution:** `admin.html` updated to use `/admin/toggle-etf` with a hidden `action` field (`suspend`/`resume`/`exclude`/`include`) matching the live server route. All four status buttons now work correctly.
+**Status:** ✅ Resolved.
 
 **Decision:** The heatmap uses a custom 11-level bipolar colour class system (`hi-5` → `hi-0` → `lo-5`) plus a 6-level liquidity scale (`lq-0` to `lq-5`). Thresholds are hardcoded per KPI.
 **Rationale:** Hardcoded thresholds give consistent visual meaning across weeks. Percentile colouring would make every week look equally distributed regardless of absolute levels — masking market extremes.
@@ -229,18 +228,53 @@ Option A is simpler.
 **Rationale:** Fund list grew too large for per-fund chips. Provider-level is sufficient for the primary use case.
 **Status:** Active.
 
-### [OPEN] — `summary.html` and other templates not committed to GitHub repo
+### [RESOLVED] — Templates committed; summary.html removed (merged into heatmap)
 
-**Decision:** OPEN — `summary.html` (and possibly other templates) exist on PythonAnywhere but have not been pushed to GitHub.
-**Risk:** If PythonAnywhere is reset or the file is accidentally deleted, the Summary page cannot be recovered from the repo.
-**Action:** `git add templates/ && git commit -m "templates: add all Jinja2 HTML templates" && git push`
-**Status:** Open — high priority.
+**Resolution:** All templates committed to GitHub. `summary.html` no longer exists — the `/summary` route was removed and pension summary data merged into the `/heatmap` route and `heatmap.html` template.
+**Status:** ✅ Resolved.
 
-### [OPEN] — Git tags not created for version milestones
+### [RESOLVED] — Git tag v2.0.0 created
 
-**Decision:** No `git tag` commands have been run.
-**Recommendation:** `git tag v2.0.0 -m "Stable baseline" && git push origin v2.0.0`
-**Status:** Open. Low effort, high value for future restoration.
+**Decision:** `git tag v2.0.0 -m "Stable baseline March 2026 — post documentation audit"` created and pushed.
+**Status:** ✅ Resolved.
+
+
+### [v2.0] — Heatmap ETF name column widened
+
+**Decision:** `.cn` class `max-width` increased from `165px` to `260px`, `min-width` set to `220px`. Table `min-width` increased from `1600px` to `1700px`.
+**Rationale:** ETF names were heavily truncated at 165px, making many names unreadable (e.g. "iShares Physical Si..."). 260px allows most names to display in full.
+**Status:** Active.
+
+### [v2.0] — Heatmap Trend column: dots only, score text removed
+
+**Decision:** The `/4` score text (e.g. "3/4") below the trend dots was removed. Four coloured dots are sufficient.
+**Rationale:** The numeric score adds no information the dots don't already convey, and its removal reduces row height making the table more compact.
+**Status:** Active.
+
+### [v2.0] — Heatmap turnover columns: /wk in header, not in cell
+
+**Decision:** `/wk` unit label moved from each cell's sub-span into the column headers (`AVG TURN /wk`, `LATEST TURN /wk`). The ratio badge on LATEST TURN moved inline with the value on the same line.
+**Rationale:** Showing `/wk` in every cell created double-height rows. Stating the unit once in the header is sufficient. The inline badge further reduces row height.
+**Status:** Active.
+
+### [v2.0] — LATEST TURN column made sortable
+
+**Decision:** LATEST TURN header now has `onclick="doSort('latest',this)"` and `⇅`. Sort case `curSort==='latest'` added to `getSorted()`.
+**Rationale:** Sorting by latest week's turnover is useful for spotting unusual volume spikes — previously the only unsortable data column in the table.
+**Status:** Active.
+
+### [v2.0] — Admin ETF tiles: inline sector editor
+
+**Decision:** The static sector tag on each ETF tile in Admin was replaced with an inline `<select>` dropdown pre-set to the current sector, with a `✓` submit button. Saves via POST `/admin/set-sector`.
+**Rationale:** Previously there was no way to change an ETF's sector after it was added. The sector drives heatmap grouping, sector filter chips, and sector breadth calculations — incorrect sectors silently corrupt the signal model.
+**Implementation:** `admin.html` — `sector-form` / `sector-sel` CSS + form markup. `server.py` — `/admin/set-sector` route with validation against `config.SECTOR_LABEL`. `db.py` — `set_etf_sector(ticker, sector)` function.
+**Status:** Active.
+
+### [v2.0] — Admin ETF tiles: Ord N display removed
+
+**Decision:** The `Ord {{ e.display_order }}` tag was removed from ETF tiles.
+**Rationale:** Display order is relevant when adding ETFs but not useful as a persistent label on every tile. Its removal declutters the tile.
+**Status:** Active.
 
 ### [OPEN] — `footprints.db` not in the repo (correctly gitignored)
 

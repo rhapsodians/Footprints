@@ -77,6 +77,7 @@ Sticky top nav (44px height). Contains:
 | `/admin/remove-fund` POST | `admin_remove_fund()` | redirect | — |
 | `/admin/add-proxy` POST | `admin_add_proxy()` | redirect | — |
 | `/admin/remove-proxy` POST | `admin_remove_proxy()` | redirect | — |
+| `/admin/set-sector` POST | `admin_set_sector()` | redirect | — |
 | `/api/prices/<ticker>` | `api_prices()` | JSON | — |
 | `/api/signals` | `api_signals()` | JSON | — |
 
@@ -235,12 +236,12 @@ Five swatches with labels: Strong + | Mild + | Neutral | Mild − | Strong −
 | 1 | PROVIDER | `provider` | Fund code prefix | Pill: L&G=blue, Irish Life=green, Notable=grey |
 | 2 | PENSION FUND | `fund` | Fund code chips | Fund code tags from `TICKER_FUND` lookup |
 | 3 | TICKER | `ticker` | `e.ticker` | Link `↗ TICKER` → `/dashboard?open=TICKER` |
-| 4 | ETF NAME | `name` | `e.name` | Text, truncated with ellipsis |
+| 4 | ETF NAME | `name` | `e.name` | Text, truncated with ellipsis; `min-width:220px; max-width:260px` |
 | 5 | SECTOR | `sector` | `SL[e.sector]` | Text label from sector_labels map |
 | 6 | SIGNAL | `signal` | `e.signal` | Signal pill class `.s-SB/.s-EA/.s-AH/.s-NT/.s-EX`; shows prev signal with strikethrough if changed |
 | 7 | ROTATION | `rotation` | `e.rotation_score` | `rotCls()` → hi-5 to lo-4 |
 | 8 | CONF | `confidence` | `e.confidence_bucket` | `confCls()` → hi-3/hi-1/lo-2 |
-| 9 | TREND | `trend` | `trend_score_raw` | 4 coloured dots (green/grey); score badge `/4` |
+| 9 | TREND | `trend` | `trend_score_raw` | 4 coloured dots only (green/grey); score text removed |
 | 10 | RS20 V-ADJ | `rs20va` | `rs20_vol_adj_rank_pct` | `pctCls()` percentile colouring |
 | 11 | RS ACCEL | `rsaccel` | `rs_accel_vol_adj_rank_pct` | `pctCls()` |
 | 12 | RS20% | `rs20raw` | `rs20_raw` (×100 for display) | `ic()` symmetric ±thresholds [0.5,2,5,10,15]% |
@@ -248,8 +249,8 @@ Five swatches with labels: Strong + | Mild + | Neutral | Mild − | Strong −
 | 14 | PRESS WKS% | `ppw` | `pressure_pos_weeks_pct` | `ic()` centred at 50% |
 | 15 | TURN RATIO | `turnover` | `turnover_ratio_20_100` | `ic()` centred at 1.0 |
 | 16 | TURN Z | `turnz` | `turnover_z_20` | `ic()` z-score bands |
-| 17 | AVG TURN | `size` | `avg_turn_20w` | `lqCls()` — liquidity grade |
-| 18 | LATEST TURN | — | `turn_latest` | `lqCls()` + ratio badge vs avg (×N) |
+| 17 | AVG TURN /wk | `size` | `avg_turn_20w` | `lqCls()` — liquidity grade; `/wk` in header not cell |
+| 18 | LATEST TURN /wk | `latest` | `turn_latest` | `lqCls()` + ratio badge inline with value on same line; `/wk` in header not cell; sortable |
 
 ### Colour Class System
 
@@ -320,6 +321,8 @@ Tooltip also shows `HM_KPI[key].def` — a plain-English definition of the metri
 ### Sorting
 
 All 18 columns are sortable. Click header → sort by that column; click again → reverse. Active sort column highlighted with `.active` class. Sort function: `doSort(key, btn)` → sets `curSort`, flips `sortDir`, calls `render()`.
+
+Sort keys: `provider`, `fund`, `ticker`, `name`, `sector`, `signal`, `rotation`, `confidence`, `trend`, `rs20va`, `rsaccel`, `rs20raw`, `pressure`, `ppw`, `turnover`, `turnz`, `size` (AVG TURN), `latest` (LATEST TURN).
 
 Default sort: `signal` (by `SO` signal order dict: SB=0, EA=1, AH=2, NT=3, EX=4), then by `rotation_score` descending within each signal group.
 

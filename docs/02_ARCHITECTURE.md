@@ -7,7 +7,7 @@
 ```
 Footprints/                      # Repository root
 │
-├── server.py                    # Flask app: all routes, helpers, LSEG parser (752 lines)
+├── server.py                    # Flask app: all routes, helpers, LSEG parser (642 lines)
 ├── engine.py                    # Signal computation pipeline — no Flask imports (722 lines)
 ├── db.py                        # All SQLite I/O — no Flask, no business logic (678 lines)
 ├── config.py                    # All constants, weights, thresholds, sector labels (180 lines)
@@ -42,7 +42,7 @@ Footprints/                      # Repository root
 
 ### `server.py` — Flask Application (Routes + Helpers)
 
-> **Version note:** The live PythonAnywhere `server.py` is **627 lines** and differs from the GitHub version (752 lines). The GitHub version is stale. Key differences documented below. The live version is the authority.
+> **Version note:** The live PythonAnywhere `server.py` is **642 lines** (post sector-editor addition) and differs from the GitHub version (752 lines). The GitHub version is stale. Key differences documented below. The live version is the authority.
 
 The sole Flask file. Contains:
 
@@ -98,6 +98,7 @@ All SQLite interaction. No analytics, no Flask imports. Uses `contextlib.context
 | `upsert_signals()` | int | INSERT OR REPLACE into signals table |
 | `import_lseg_rows()` | (inserted, replaced) | Bulk upsert from LSEG export |
 | `get_prev_signals()` | dict[str,str] | Previous signal per ticker for transition badge display |
+| `set_etf_sector(ticker, sector)` | None | Update sector code for an ETF; propagates to all views |
 
 ### `config.py` — Central Configuration
 

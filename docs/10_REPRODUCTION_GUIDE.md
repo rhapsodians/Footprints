@@ -222,7 +222,7 @@ I'm working on Footprints v2.0 — a Python Flask ETF signal dashboard deployed 
 GitHub: https://github.com/rhapsodians/Footprints
 
 Architecture (confirmed from code):
-- server.py: Flask app, all routes, LSEG parser (752 lines)
+- server.py: Flask app, all routes, LSEG parser (~642 lines)
 - engine.py: 10-step cross-sectional signal pipeline (722 lines)
 - db.py: SQLite layer, footprints.db (678 lines)
 - config.py: all constants and weights (180 lines)
@@ -237,6 +237,7 @@ Key facts:
 - Rotation score: weighted percentile rank composite (0–100)
 - Pension: two providers (LG = L&G WorkSave, IL = Irish Life) in same DB
 - No RSI in v2; CLV-based Pressure replaces it
+- Admin: inline sector editor on ETF tiles → POST /admin/set-sector → db.set_etf_sector()
 - No macro regime filter; all signals are cross-sectional/quantitative
 - Requirements: flask>=3.0, numpy>=1.26, pandas>=2.1, openpyxl>=3.1
 
@@ -294,8 +295,10 @@ The following items were not fully resolvable during the audit and represent the
 
 | Gap | Impact | Status |
 |-----|--------|--------|
-| **ETF universe list** | HIGH | ✅ Resolved — see `03_DATA_MODEL.md` Appendix A (43 ETFs from live DB) |
-| **Pension fund + proxy list** | HIGH | ✅ Resolved — see `05_PENSION_PROXY_METHODOLOGY.md` Appendix B (20 funds from live DB) |
-| **HTML templates** (`templates/*.html`) | MEDIUM | ⚠️ Open — functional spec in `06_DASHBOARD_PAGES.md`; templates not committed to docs |
-| **`scripts/` folder contents** | LOW | ⚠️ Open — inspect on PythonAnywhere; document any scripts used regularly |
+| **ETF universe list** | HIGH | ✅ Resolved — `03_DATA_MODEL.md` Appendix A (43 ETFs from live DB) |
+| **Pension fund + proxy list** | HIGH | ✅ Resolved — `05_PENSION_PROXY_METHODOLOGY.md` Appendix B (20 funds from live DB) |
+| **HTML templates** | MEDIUM | ✅ Resolved — all 8 committed templates documented in `06_DASHBOARD_PAGES.md` |
+| **Admin route bug** | HIGH | ✅ Resolved — toggle-etf fix deployed |
+| **Git tag** | LOW | ✅ Resolved — `v2.0.0` tagged and pushed |
+| **`scripts/` folder** | LOW | ⚠️ Open — inspect on PythonAnywhere; document any scripts used regularly |
 | **Exact `pip freeze` output** | LOW | ⚠️ Open — run `pip freeze > requirements_locked.txt` on PythonAnywhere and commit |
