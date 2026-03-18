@@ -82,6 +82,18 @@ table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font
     <button type="submit" class="btn-import btn-import-green" id="lseg-sub-w" disabled>IMPORT</button>
   </form>
   <span class="import-sep">&mdash; or &mdash;</span>
+  <form id="bulk-form" method="POST" action="/entry/import-lseg-bulk" enctype="multipart/form-data"
+        style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span class="import-label">&#8593; BULK IMPORT:</span>
+    <label class="import-file-lbl" id="bulk-lbl">
+      <input type="file" name="bulk_files" accept=".xlsx,.xls" multiple
+             class="import-file-native" id="bulk-file"
+             onchange="updateBulkLabel(this)">
+      <span id="bulk-txt">&#128194; Choose files&hellip; <span style="font-size:.67rem;opacity:.6">(named TICKER.xlsx)</span></span>
+    </label>
+    <button type="submit" class="btn-import btn-import-green" id="bulk-sub" disabled>IMPORT ALL</button>
+  </form>
+  <span class="import-sep">&mdash; or &mdash;</span>
   <form id="tmpl-form" method="POST" action="/entry/import-template" enctype="multipart/form-data"
         style="display:flex;align-items:center;gap:8px">
     <span class="import-label">&#8593; TEMPLATE:</span>
@@ -209,6 +221,19 @@ const TOTAL=TICKERS.length;
     document.getElementById('tmpl-txt').textContent=nm?'📄 '+nm:'📂 Choose file\u2026';
   });}
 })();
+
+function updateBulkLabel(input){
+  const n=input.files.length;
+  const lbl=document.getElementById('bulk-txt');
+  const btn=document.getElementById('bulk-sub');
+  if(n===0){
+    lbl.innerHTML='📂 Choose files\u2026 <span style="font-size:.67rem;opacity:.6">(named TICKER.xlsx)</span>';
+    btn.disabled=true;
+  } else {
+    lbl.textContent='📄 '+n+' file'+(n>1?'s':'')+' selected';
+    btn.disabled=false;
+  }
+}
 
 function updateProgress(){
   let n=0;

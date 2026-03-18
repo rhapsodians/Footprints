@@ -244,6 +244,56 @@ def entry_import_lseg():
     flash(f"{ticker}: {ins} new rows" + (f", {rep} updated." if rep else "."),"ok")
     return redirect(url_for("entry"))
 
+@app.route("/entry/import-lseg-bulk", methods=["POST"])
+def entry_import_lseg_bulk():
+    import os as _os
+    files = request.files.getlist("bulk_files")
+    if not files or all(f.filename == "" for f in files):
+        flash("No files selected.", "err"); return redirect(url_for("entry"))
+
+    known = set(db.get_active_tickers())
+    results, errors = [], []
+
+    for f in files:
+        fname = f.filename or ""
+        # Strip extension(s): AGHG.L.xlsx -> AGHG.L, BOTZ.L.xls -> BOTZ.L
+        base = _os.path.splitext(fname)[0]
+        ticker = base.upper().strip()
+
+        if not ticker:
+            errors.append(f"Unnamed file skipped")
+            continue
+
+        if ticker not in known:
+            errors.append(f"{fname} — '{ticker}' not in universe")
+            continue
+
+        try:
+            rows = _parse_lseg(f.read())
+        except Exception as e:
+            errors.append(f"{ticker} — parse error: {e}")
+            continue
+
+        if not rows:
+            errors.append(f"{ticker} — no valid rows in file")
+            continue
+
+        try:
+            ins, rep = db.import_lseg_rows(ticker, rows)
+            results.append(f"{ticker}: +{ins} new, {rep} updated")
+        except Exception as e:
+            errors.append(f"{ticker} — DB error: {e}")
+
+    if results:
+        flash(f"Bulk import: {len(results)} ETF(s) — " + " · ".join(results), "ok")
+    for err in errors:
+        flash(f"⚠ {err}", "err")
+    if not results and not errors:
+        flash("No files processed.", "err")
+
+    return redirect(url_for("entry"))
+
+
 @app.route("/entry/import-template", methods=["POST"])
 def import_template():
     f = request.files.get("template_file")
@@ -558,21 +608,6 @@ def admin_toggle_etf():
     elif action == "resume":  db.set_etf_suspended(t, False); flash(f"{t} reinstated.","ok")
     elif action == "exclude": db.set_etf_active(t, False);    flash(f"{t} excluded.","ok")
     elif action == "include": db.set_etf_active(t, True);     flash(f"{t} activated.","ok")
-    return redirect(url_for("admin"))
-
-
-@app.route("/admin/set-sector", methods=["POST"])
-def admin_set_sector():
-    t      = request.form.get("ticker", "").strip().upper()
-    sector = request.form.get("sector", "").strip().upper()
-    if not t or not sector:
-        flash("Ticker and sector required.", "err")
-        return redirect(url_for("admin"))
-    if sector not in config.SECTOR_LABEL:
-        flash(f"Unknown sector code: {sector}", "err")
-        return redirect(url_for("admin"))
-    db.set_etf_sector(t, sector)
-    flash(f"{t} sector set to {config.SECTOR_LABEL.get(sector, sector)}.", "ok")
     return redirect(url_for("admin"))
 
 @app.route("/admin/import-gap", methods=["POST"])
