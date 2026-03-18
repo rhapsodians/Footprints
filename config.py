@@ -24,7 +24,7 @@ BASE_TICKER = "VWRP.L"   # Default benchmark for all RS calculations.
 # ── Sectors ───────────────────────────────────────────────────────────────────
 
 SECTOR_LABEL: dict[str, str] = {
-    "BASE":   "Global Base",
+    "BASE":   "Global Benchmark",
     "US":     "United States",
     "NAM":    "North America",
     "UK":     "United Kingdom",
@@ -35,11 +35,11 @@ SECTOR_LABEL: dict[str, str] = {
     "TECH":   "Technology",
     "HEALTH": "Healthcare",
     "DEF":    "Defence",
-    "PROP":   "Property",
+    "PROP":   "Real Estate",
     "COMM":   "Commodities",
     "MINING": "Mining",
-    "BOND":   "Bonds",
-    "GLOBAL": "Global Factor",
+    "BOND":   "Fixed Income",
+    "GLOBAL": "Global Thematic",
     "OTHER":  "Other",
 }
 SECTORS = sorted(SECTOR_LABEL.keys())
