@@ -560,6 +560,21 @@ def admin_toggle_etf():
     elif action == "include": db.set_etf_active(t, True);     flash(f"{t} activated.","ok")
     return redirect(url_for("admin"))
 
+
+@app.route("/admin/set-sector", methods=["POST"])
+def admin_set_sector():
+    t      = request.form.get("ticker", "").strip().upper()
+    sector = request.form.get("sector", "").strip().upper()
+    if not t or not sector:
+        flash("Ticker and sector required.", "err")
+        return redirect(url_for("admin"))
+    if sector not in config.SECTOR_LABEL:
+        flash(f"Unknown sector code: {sector}", "err")
+        return redirect(url_for("admin"))
+    db.set_etf_sector(t, sector)
+    flash(f"{t} sector set to {config.SECTOR_LABEL.get(sector, sector)}.", "ok")
+    return redirect(url_for("admin"))
+
 @app.route("/admin/import-gap", methods=["POST"])
 def admin_import_gap():
     t = request.form.get("ticker","").upper()
