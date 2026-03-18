@@ -264,9 +264,34 @@ The sum of weights is asserted equal to 1.0 in `config.py`. An ETF with all inpu
 
 ## Step 9 — Signal Classification
 
-Signal hierarchy is checked in order. First match wins.
+Signal hierarchy is checked in **priority order**. First match wins.
 
-### STRONG BUY
+> **Important:** The priority order confirmed from both `engine.py` and `guide.html` is:
+> 1. EARLY ACCUMULATION
+> 2. STRONG BUY
+> 3. ACCUMULATING/HOLD
+> 4. EXIT/DISTRIBUTION
+> 5. NEUTRAL
+>
+> This means an ETF meeting EARLY ACCUMULATION conditions will receive that signal even if it also meets STRONG BUY conditions — because EARLY ACCUMULATION is checked first. In practice, the two rarely overlap since EARLY ACCUMULATION requires `close < MA100` (price still below long-term average) while STRONG BUY requires trend ≥ 3 (which implies price above MA100 in most cases).
+
+### Priority 1 — EARLY ACCUMULATION
+
+An inflection-point signal. Pressure has just flipped from non-positive to positive, with acceleration and volume confirmation. Checked **before** STRONG BUY.
+
+```python
+pressure_flipped = (pressure_prev_20w <= 0 AND pressure_20w > 0)   # PRESSURE_LAG = 5 weeks ago
+
+pressure_flipped
+AND rs_accel_raw > 0       # short-term RS accelerating vs medium-term
+AND rs4_raw > 0            # currently outperforming benchmark
+AND turnover_z_20 > 0      # volume above long-run average this week
+AND close < MA100          # price still below structural average (early stage)
+```
+
+**Note on `close < MA100`:** In `engine.py` this condition is used in the reason string generation (not as a hard gate on the signal). The `guide.html` logic table shows it as a condition. In ambiguous cases where `close >= MA100`, the engine still fires EARLY ACCUMULATION — the MA100 comparison is used to determine whether to say "early stage" or "recovery confirmed" in the reason string. Treat the `close < MA100` as a typical but not absolute condition.
+
+### Priority 2 — STRONG BUY
 
 ```python
 rotation_score >= 72.0          # SIGNAL_STRONG_BUY["rotation_score_min"]
@@ -276,7 +301,7 @@ AND rs20_raw > 0
 AND confidence_score >= 50.0    # SIGNAL_STRONG_BUY["confidence_min"]
 ```
 
-### ACCUMULATING/HOLD
+### Priority 3 — ACCUMULATING/HOLD
 
 ```python
 rotation_score >= 60.0          # SIGNAL_ACCUM_HOLD["rotation_score_min"]
@@ -285,31 +310,16 @@ AND pressure_20w > 0
 AND rs20_raw > 0
 ```
 
-### EARLY ACCUMULATION
-
-A transitional signal: pressure has recently flipped from non-positive to positive, with supporting momentum and volume signals.
+### Priority 4 — EXIT/DISTRIBUTION
 
 ```python
-pressure_flipped = (pressure_prev_20w <= 0 AND pressure_20w > 0)   # PRESSURE_LAG = 5 weeks ago
-
-pressure_flipped
-AND rs_accel_raw > 0
-AND rs4_raw > 0
-AND turnover_z_20 > 0
-```
-
-Note: EARLY ACCUMULATION does **not** require `rotation_score >= 60` or `trend_score_raw >= 3`. It is a separate early-detection path for assets starting to accumulate before they would qualify for ACCUMULATING/HOLD.
-
-### EXIT/DISTRIBUTION
-
-```python
-rotation_score <= 35.0          # SIGNAL_EXIT["rotation_score_max"]
+rotation_score <= 35.0          # SIGNAL_EXIT["rotation_score_max"]  (note: < not ≤ in engine)
 AND trend_score_raw <= 2        # SIGNAL_EXIT["trend_score_raw_max"]
 AND pressure_20w < 0
 AND rs20_raw < 0
 ```
 
-### NEUTRAL
+### Priority 5 — NEUTRAL
 
 Default — none of the above conditions met.
 

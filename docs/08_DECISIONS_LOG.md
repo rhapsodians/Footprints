@@ -175,10 +175,71 @@
 **Mitigation options:** Basic HTTP auth via PythonAnywhere `.htpasswd`; Flask-Login if multi-user ever needed.
 **Status:** Open. Acceptable risk for current use case.
 
+### [v2.0 — live] — Pension Summary merged into /heatmap (no separate /summary route)
+
+**Decision:** The `/summary` route was removed. The pension fund summary data (LG/IL fund stances, notable signals, portfolio counts) is now computed inside the `/heatmap` route handler and passed to `heatmap.html` alongside the heatmap data.
+**Rationale:** Reduces navigation — users get the ETF heatmap and pension fund summary in one page rather than switching between two.
+**Impact on code:** `_proxy_narrative()` (5-sentence ETF narrative generator) and `_short_sig()` were removed as they were only used by the former `/summary` route.
+**Impact on docs:** `05_PENSION_PROXY_METHODOLOGY.md` summary page description remains valid — the data logic is unchanged; only the URL and template have changed.
+**GitHub sync needed:** The GitHub `server.py` still has the old `/summary` route. Push the live version.
+**Status:** Active (live). GitHub stale.
+
+### [OPEN] — Admin ETF suspend/activate buttons broken (route mismatch)
+
+**Issue:** `admin.html` submits ETF status changes to `/admin/suspend`, `/admin/unsuspend`, `/admin/deactivate`, `/admin/activate` as individual POST routes. The live `server.py` only defines `/admin/toggle-etf` with an `action` form parameter (`suspend`/`resume`/`exclude`/`include`). These four routes do not exist → clicking suspend/activate/deactivate in admin currently returns 404.
+**Fix options:**
+- Option A: Update `admin.html` to submit to `/admin/toggle-etf` with `<input type="hidden" name="action" value="suspend">` etc.
+- Option B: Add the four individual routes to `server.py` as thin wrappers around the toggle logic.
+Option A is simpler.
+**Status:** Open — bug confirmed. Admin ETF status changes non-functional until resolved.
+
+### [v2.0 — live] — Signal priority order corrected (EA is priority 1, not after SB)
+
+**Decision:** EARLY ACCUMULATION is checked before STRONG BUY in the signal classification hierarchy. Priority order: EA (1) → SB (2) → AH (3) → EXIT (4) → NEUTRAL (5).
+**Rationale:** An ETF beginning to accumulate (pressure just turned positive, price still below MA100) should be flagged as EA even if its rotation score happens to be high. The EA signal is an early-warning state — the MA100 condition (`close < MA100`) means it structurally cannot also be a full STRONG BUY (which requires trend ≥ 3, implying price above both MAs).
+**Note:** Prior documentation incorrectly stated STRONG BUY was checked first.
+**Status:** Active. Confirmed from both `engine.py` and `guide.html` logic table.
+
+### [OPEN] — Admin route discrepancy: template vs server.py
+
+**Issue:** `admin.html` submits to `/admin/suspend`, `/admin/unsuspend`, `/admin/deactivate`, `/admin/activate` as individual routes. But the GitHub version of `server.py` only defines `/admin/toggle-etf` with an `action` parameter.
+**Possible explanations:** (a) `server.py` was updated on PythonAnywhere after the last GitHub push, adding these routes; (b) The template is wrong and the admin suspend/activate functionality is broken; (c) `server.py` on PythonAnywhere differs from the GitHub version.
+**Action:** SSH into PythonAnywhere, run `grep "admin/suspend\|admin/unsuspend\|admin/deactivate\|admin/activate\|toggle-etf" ~/footprints2/server.py` to confirm which routes actually exist.
+**Status:** Open — verify before relying on admin ETF status changes.
+
+**Decision:** The heatmap uses a custom 11-level bipolar colour class system (`hi-5` → `hi-0` → `lo-5`) plus a 6-level liquidity scale (`lq-0` to `lq-5`). Thresholds are hardcoded per KPI.
+**Rationale:** Hardcoded thresholds give consistent visual meaning across weeks. Percentile colouring would make every week look equally distributed regardless of absolute levels — masking market extremes.
+**Note:** `_heat_class()` is still registered in Jinja globals but is not used by the current heatmap. The `heat-h/mh/m/ml/l` classes from prior documentation are obsolete.
+**Status:** Active.
+
+### [v2.0] — Heatmap tooltips: contextual interpretation, not static definitions
+
+**Decision:** Each heatmap cell tooltip dynamically generates a contextual interpretation of the specific value (e.g. "£2.4M — Moderately liquid."), shown alongside the static field definition.
+**Implementation:** `hmCtx(key, val)` function in `heatmap.html` — branching logic per KPI.
+**Status:** Active.
+
+### [v2.0] — Heatmap Sector Overview: clickable tiles filter the ETF table
+
+**Decision:** Sector tiles below the ETF table are clickable — selecting one filters the table to that sector. Toggle between ALL ETFs and PENSION PROXIES views.
+**Status:** Active.
+
+### [v2.0] — Heatmap Provider filter replaces individual fund chips
+
+**Decision:** Filter band has Provider row (ALL / L&G / Irish Life / Notable) rather than individual fund chips.
+**Rationale:** Fund list grew too large for per-fund chips. Provider-level is sufficient for the primary use case.
+**Status:** Active.
+
+### [OPEN] — `summary.html` and other templates not committed to GitHub repo
+
+**Decision:** OPEN — `summary.html` (and possibly other templates) exist on PythonAnywhere but have not been pushed to GitHub.
+**Risk:** If PythonAnywhere is reset or the file is accidentally deleted, the Summary page cannot be recovered from the repo.
+**Action:** `git add templates/ && git commit -m "templates: add all Jinja2 HTML templates" && git push`
+**Status:** Open — high priority.
+
 ### [OPEN] — Git tags not created for version milestones
 
-**Decision:** No `git tag` commands have been run. There are 14 commits with no tagged releases.
-**Recommendation:** Tag the current stable commit as `v2.0.0`: `git tag v2.0.0 -m "Stable baseline" && git push origin v2.0.0`
+**Decision:** No `git tag` commands have been run.
+**Recommendation:** `git tag v2.0.0 -m "Stable baseline" && git push origin v2.0.0`
 **Status:** Open. Low effort, high value for future restoration.
 
 ### [OPEN] — `footprints.db` not in the repo (correctly gitignored)

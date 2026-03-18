@@ -109,19 +109,17 @@ SIG_ORDER = {
 POSITIVE → MILD POS → MIXED → CAUTIOUS → MILD NEG → NEGATIVE
 ```
 
-### Summary Page Structure
+### Summary Page — Now Part of `/heatmap`
 
-The `/summary` route renders three sections:
+> **The `/summary` route no longer exists.** The pension fund summary was merged into the `/heatmap` route in the live server. `heatmap.html` now renders both the ETF heatmap and the pension fund summary on the same page.
 
-1. **LG Funds** — L&G WorkSave funds sorted by stance (positive first)
-2. **IL Funds** — Irish Life funds sorted by stance (positive first)
-3. **Notable Signals** — ETFs NOT mapped to any pension fund that have STRONG BUY, EARLY ACCUMULATION, or EXIT signals
+The live `/heatmap` route passes all pension summary data to `heatmap.html`:
+- `lg_rows` — L&G WorkSave funds sorted by stance
+- `il_rows` — Irish Life funds sorted by stance
+- `notable` — non-pension ETFs with STRONG BUY, EARLY ACCUMULATION, or EXIT signals
+- `portfolio` — `{total, strong_buy, early_acc, accum, neutral, exit, high_conf, transitions}`
 
-Each fund card shows:
-- Stance badge
-- Buy/Neutral/Exit counts across proxy ETFs
-- Any signal transitions this week (e.g. "VWRP.L: NEUTRAL → ACCUMULATING/HOLD")
-- Individual proxy ETF rows sorted by signal rank then rotation score
+The underlying pension logic (`_build_fund_rows`, `_stance`) remains unchanged — only the delivery mechanism moved from a separate page to the heatmap page.
 
 ---
 

@@ -81,8 +81,12 @@ The two data blockers are now resolved from the live DB. One medium gap and two 
 
 | Priority | Action | Where |
 |----------|--------|-------|
-| ✅ Done | ETF universe (43 ETFs) | `03_DATA_MODEL.md` Appendix A |
-| ✅ Done | Pension fund + proxy mappings (20 funds) | `05_PENSION_PROXY_METHODOLOGY.md` Appendix B |
-| 🟡 **Medium** | Commit `templates/*.html` to repo; confirm JS library used for sparklines/filtering | `06_DASHBOARD_PAGES.md` |
+| ✅ Done | ETF universe (43 ETFs) from live DB | `03_DATA_MODEL.md` Appendix A |
+| ✅ Done | Pension fund + proxy mappings (20 funds) from live DB | `05_PENSION_PROXY_METHODOLOGY.md` Appendix B |
+| ✅ Done | All 8 committed templates fully documented | `06_DASHBOARD_PAGES.md` |
+| ✅ Done | Signal priority order corrected (EA is priority 1) | `04_SIGNAL_LOGIC.md` |
+| ✅ Done | Live server.py divergence from GitHub documented | `02_ARCHITECTURE.md`, `06_DASHBOARD_PAGES.md` |
+| 🔴 **Bug** | Admin suspend/activate buttons broken — route mismatch between admin.html and server.py | Fix `admin.html` to use `/admin/toggle-etf` |
+| 🔴 **Sync** | GitHub `server.py` is stale (752 lines vs live 627 lines) — push live version | `git add server.py && git push` on PythonAnywhere |
 | 🟢 Low | Run `pip freeze > requirements_locked.txt` on PythonAnywhere and commit | repo root |
 | 🟢 Low | `git tag v2.0.0 && git push origin v2.0.0` | `09_BASELINES.md` |

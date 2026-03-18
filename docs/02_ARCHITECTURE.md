@@ -42,18 +42,25 @@ Footprints/                      # Repository root
 
 ### `server.py` — Flask Application (Routes + Helpers)
 
+> **Version note:** The live PythonAnywhere `server.py` is **627 lines** and differs from the GitHub version (752 lines). The GitHub version is stale. Key differences documented below. The live version is the authority.
+
 The sole Flask file. Contains:
 
 - Flask app instantiation and `secret_key` setup
-- All route handlers (`@app.route`)
+- All route handlers (`@app.route`) — **19 routes** in the live version
 - Jinja2 helper functions registered via `app.jinja_env.globals`
 - LSEG Excel parser (`_parse_lseg()`)
-- Dashboard data enrichment (`_enrich_signals()`) — bridges v2 engine field names to v1-compatible display names used in templates
-- Pension narrative generator (`_proxy_narrative()`) — generates plain-English signal summaries for each proxy ETF on the Summary page
-- Excel template generator for weekly data entry (`export_template()`)
-- Context builder helper (`_ctx()`) — assembles the standard template context dict
+- Dashboard data enrichment (`_enrich_signals()`)
+- Pension fund row builder (`_build_fund_rows()`) and stance calculator (`_stance()`) — used by `/heatmap` route
+- Excel template generator (`export_template()`)
+- Context builder helper (`_ctx()`)
 
-**Import pattern:** `server.py` imports `config`, `db`, `engine` directly. It never reaches into `engine.py` internals — it only calls `engine.run_engine()`.
+**What was removed from the GitHub version in the live version:**
+- `/summary` route — pension fund summary merged directly into `/heatmap`
+- `_proxy_narrative()` — the 5-sentence plain-English ETF narrative generator (removed with summary page)
+- `_short_sig()` — signal label shortener helper
+
+**Import pattern:** `server.py` imports `config`, `db`, `engine` directly. Only calls `engine.run_engine()` as the public API.
 
 ### `engine.py` — Signal Computation Pipeline
 
