@@ -19,7 +19,6 @@ get_weekly_entry_data()     → dict for the data-entry form
 upsert_price_row(row)       → insert / replace one weekly OHLCV row
 add_etf(meta)               → insert new ETF into etf_meta
 set_etf_active(ticker, val) → toggle active flag
-set_etf_sector(ticker, val) → update sector code
 """
 
 import sqlite3
@@ -441,20 +440,14 @@ def set_etf_active(ticker: str, active: bool) -> None:
         )
 
 
-def set_etf_suspended(ticker: str, suspended: bool) -> None:
+def delete_etf(ticker: str) -> None:
+    """Permanently remove an ETF and all its data from the database."""
     with db_conn() as conn:
-        conn.execute(
-            "UPDATE etf_meta SET suspended=? WHERE ticker=?",
-            (1 if suspended else 0, ticker),
-        )
-
-
-def set_etf_sector(ticker: str, sector: str) -> None:
-    with db_conn() as conn:
-        conn.execute(
-            "UPDATE etf_meta SET sector=? WHERE ticker=?",
-            (sector.upper(), ticker.upper()),
-        )
+        conn.execute("DELETE FROM pension_etf_map WHERE ticker=?", (ticker,))
+        conn.execute("DELETE FROM signals WHERE ticker=?", (ticker,))
+        conn.execute("DELETE FROM signal_log WHERE ticker=?", (ticker,))
+        conn.execute("DELETE FROM prices WHERE ticker=?", (ticker,))
+        conn.execute("DELETE FROM etf_meta WHERE ticker=?", (ticker,))
 
 
 def get_weekly_entry_data() -> dict:

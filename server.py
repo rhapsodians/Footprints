@@ -115,8 +115,8 @@ def _enrich_signals(signals):
 def index():
     signals_df = db.get_signals_df()
     signals    = _dicts(signals_df)
-    latest_p   = db.get_latest_prices()
-    as_of = max((v["date"] for v in latest_p.values()), default="—") if latest_p else "—"
+    dates      = db.get_available_dates()
+    as_of      = dates[0] if dates else "—"
     counts = Counter(r.get("signal") or "NO DATA" for r in signals)
     ctx = _ctx("home", as_of)
     ctx.update(sig_counts=dict(counts), n_active=len(signals), as_of=as_of)
@@ -254,9 +254,12 @@ def recompute():
         flash(msg,"ok")
     except Exception as e:
         flash(f"Recompute failed: {e}","err"); raise
-    # Redirect back to the target date
+    # Redirect to the recomputed date (never a future date)
+    today_str = date.today().isoformat()
+    target = as_of_date or selected_date or ""
+    if target > today_str:
+        target = ""
     dest = url_for("dashboard")
-    target = as_of_date or selected_date
     if target:
         dest += f"?date={target}"
     return redirect(dest)
@@ -265,7 +268,8 @@ def recompute():
 @app.route("/dashboard")
 def dashboard():
     as_of     = request.args.get("date","")
-    dates     = db.get_available_dates()
+    today_str = date.today().isoformat()
+    dates     = [d for d in db.get_available_dates() if d <= today_str]
     if not as_of and dates: as_of = dates[0]
     sigs_df   = db.get_signals_df(as_of_date=as_of if as_of else None)
     signals   = _dicts(sigs_df)
@@ -336,7 +340,8 @@ def dashboard():
 @app.route("/heatmap")
 def heatmap():
     as_of = request.args.get("date","")
-    dates = db.get_available_dates()
+    today_str = date.today().isoformat()
+    dates = [d for d in db.get_available_dates() if d <= today_str]
     if not as_of and dates: as_of = dates[0]
     sigs  = _dicts(db.get_signals_df(as_of_date=as_of if as_of else None))
     sigs  = _enrich_signals(sigs)
@@ -515,14 +520,16 @@ def admin_add_etf():
         flash(f"Added {meta['ticker']}.","ok")
     return redirect(url_for("admin"))
 
-@app.route("/admin/toggle-etf", methods=["POST"])
-def admin_toggle_etf():
-    t = request.form.get("ticker","").upper()
-    action = request.form.get("action","")
-    if action == "suspend":   db.set_etf_suspended(t, True);  flash(f"{t} suspended.","ok")
-    elif action == "resume":  db.set_etf_suspended(t, False); flash(f"{t} reinstated.","ok")
-    elif action == "exclude": db.set_etf_active(t, False);    flash(f"{t} excluded.","ok")
-    elif action == "include": db.set_etf_active(t, True);     flash(f"{t} activated.","ok")
+@app.route("/admin/delete-etf", methods=["POST"])
+def admin_delete_etf():
+    t = request.form.get("ticker","").strip().upper()
+    if not t:
+        flash("No ticker provided.","err"); return redirect(url_for("admin"))
+    try:
+        db.delete_etf(t)
+        flash(f"{t} permanently deleted — all price and signal data removed.","ok")
+    except Exception as e:
+        flash(f"Delete failed: {e}","err")
     return redirect(url_for("admin"))
 
 @app.route("/admin/import-gap", methods=["POST"])

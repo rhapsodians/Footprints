@@ -198,23 +198,6 @@
     font-family: var(--mono); font-size: .73rem; padding: 5px 14px;
     border-radius: 3px; cursor: pointer; border: 1px solid transparent; }
   .btn-green:hover { opacity: .85; }
-
-  /* ── Inline sector editor ── */
-  .sector-form { display:inline-flex; align-items:center; gap:4px; margin:1px 0; }
-  .sector-sel {
-    font-family:var(--mono); font-size:.73rem; color:var(--text2);
-    background:var(--surface2); border:1px solid var(--border2);
-    border-radius:2px; padding:1px 4px; cursor:pointer; outline:none;
-    transition:border-color .12s;
-  }
-  .sector-sel:hover, .sector-sel:focus { border-color:var(--accent); color:var(--text); }
-  .sector-save {
-    font-family:var(--mono); font-size:.67rem; letter-spacing:.06em;
-    color:var(--accent); background:none; border:1px solid var(--accent);
-    border-radius:2px; padding:1px 6px; cursor:pointer; transition:all .12s;
-    white-space:nowrap;
-  }
-  .sector-save:hover { background:var(--blue-dim); }
 </style>
 {% endblock %}
 
@@ -298,19 +281,17 @@
       </div>
       <div id="etf-grid" class="tile-grid">
     {% for e in etfs %}
-    {% set st = 'suspended' if e.suspended else ('active' if e.active else 'inactive') %}
+    {% set st = 'active' if e.active else 'inactive' %}
     <div class="admin-tile tile-{{ st }}"
          data-ticker="{{ e.ticker }}"
          data-sector="{{ sector_labels.get(e.sector, e.sector or '') }}"
-         data-status="{{ '1' if e.suspended else ('0' if e.active else '2') }}"
+         data-status="{{ '0' if e.active else '2' }}"
          data-order="{{ e.display_order or 0 }}">
 
       <div class="tile-hd">
         <div class="tile-hd-left">
           <div class="tile-primary">
-            {% if e.suspended %}
-              <span class="status-dot dot-suspended"></span>
-            {% elif e.active %}
+            {% if e.active %}
               <span class="status-dot dot-active"></span>
             {% else %}
               <span class="status-dot dot-inactive"></span>
@@ -322,50 +303,19 @@
       </div>
 
       <div class="tile-meta">
-        <form class="sector-form" method="post" action="/admin/set-sector">
-          <input type="hidden" name="ticker" value="{{ e.ticker }}">
-          <select class="sector-sel" name="sector">
-            {% for sc in sectors %}
-            <option value="{{ sc }}" {% if sc == e.sector %}selected{% endif %}>{{ sector_labels.get(sc, sc) }}</option>
-            {% endfor %}
-          </select>
-          <button class="sector-save" type="submit">✓</button>
-        </form>
+        <span class="sector-tag">{{ sector_labels.get(e.sector, e.sector or '—') }}</span>
         <span class="tile-tag">{{ e.benchmark_ticker or base_ticker }}</span>
-        {% if e.suspended %}
-          <span class="tile-tag" style="color:var(--yellow);border-color:var(--sig-ea-bd)">SUSP</span>
-        {% elif not e.active %}
-          <span class="tile-tag" style="color:var(--text3)">EXCLUDED</span>
+        <span class="tile-tag">Ord {{ e.display_order }}</span>
+        {% if not e.active %}
+          <span class="tile-tag" style="color:var(--text3)">INACTIVE</span>
         {% endif %}
       </div>
 
       <div class="tile-actions">
-        {% if e.suspended %}
-        <form method="post" action="/admin/toggle-etf" style="margin:0">
-          <input type="hidden" name="ticker" value="{{ e.ticker }}">
-          <input type="hidden" name="action" value="resume">
-          <button class="btn btn-sm" style="color:var(--yellow);border-color:var(--sig-ea-bd)">Reinstate</button>
-        </form>
-        {% else %}
-        <form method="post" action="/admin/toggle-etf" style="margin:0">
-          <input type="hidden" name="ticker" value="{{ e.ticker }}">
-          <input type="hidden" name="action" value="suspend">
-          <button class="btn btn-sm btn-danger">Suspend</button>
-        </form>
-        {% endif %}
-        {% if e.active and not e.suspended %}
-        <form method="post" action="/admin/toggle-etf" style="margin:0">
-          <input type="hidden" name="ticker" value="{{ e.ticker }}">
-          <input type="hidden" name="action" value="exclude">
-          <button class="btn btn-sm">Exclude</button>
-        </form>
-        {% elif not e.active %}
-        <form method="post" action="/admin/toggle-etf" style="margin:0">
-          <input type="hidden" name="ticker" value="{{ e.ticker }}">
-          <input type="hidden" name="action" value="include">
-          <button class="btn btn-sm" style="color:var(--green);border-color:var(--sig-sb-bd)">Include</button>
-        </form>
-        {% endif %}
+        <button class="btn btn-sm btn-danger"
+                onclick="confirmDelete('{{ e.ticker }}', '{{ e.name|replace("'","\\'") }}')">
+          Delete
+        </button>
       </div>
 
     </div>
@@ -516,6 +466,19 @@
   initTileSort('etf-grid');
   initTileSort('pf-grid');
 })();
+
+function confirmDelete(ticker, name) {
+  if (confirm('Permanently delete ' + ticker + ' (' + name + ')?
+
+This will remove ALL price data, signals, and history for this ETF. This cannot be undone.')) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/admin/delete-etf';
+    const input = document.createElement('input');
+    input.type = 'hidden'; input.name = 'ticker'; input.value = ticker;
+    form.appendChild(input); document.body.appendChild(form); form.submit();
+  }
+}
 </script>
 
 {% endblock %}
