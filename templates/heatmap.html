@@ -211,8 +211,8 @@
     <th class="hth" onclick="doSort('ppw',this)">PRESS WKS% ⇅</th>
     <th class="hth" onclick="doSort('turnover',this)">TURN RATIO ⇅</th>
     <th class="hth" onclick="doSort('turnz',this)">TURN Z ⇅</th>
-    <th class="hth" onclick="doSort('size',this)">AVG TURN ⇅</th>
-    <th class="hth">LATEST TURN</th>
+    <th class="hth" onclick="doSort('size',this)">AVG TURN /wk ⇅</th>
+    <th class="hth">LATEST TURN /wk</th>
   </tr></thead>
   <tbody id="hb"></tbody>
 </table>
@@ -432,8 +432,8 @@ function mkRow(e){
     `<td class="hc ${ic((e.pressure_pos_weeks_pct||50)-50,[5,10,20,30,45])}" onmouseenter="showHmTip(event,'ppw',${e.pressure_pos_weeks_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.pressure_pos_weeks_pct,0)}%</span></td>`+
     `<td class="hc ${ic((e.turnover_ratio_20_100||1)-1,[0.05,0.1,0.2,0.35,0.5])}" onmouseenter="showHmTip(event,'turnratio',${e.turnover_ratio_20_100||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_ratio_20_100,2)}×</span></td>`+
     `<td class="hc ${ic(e.turnover_z_20,[0.25,0.5,1,2,3])}" onmouseenter="showHmTip(event,'turnz',${e.turnover_z_20||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_z_20,2)}σ</span></td>`+
-    `<td class="hc ${lqCls(avg)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(avg)}</span><span class="s">/ wk</span></td>`+
-    `<td class="hc ${lqCls(lat)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(lat)}</span><span class="s">/ wk${tlBadge}</span></td>`+
+    `<td class="hc ${lqCls(avg)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(avg)}</span></td>`+
+    `<td class="hc ${lqCls(lat)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(lat)}${tlBadge}</span></td>`+
     `</tr>`;
 }
 
