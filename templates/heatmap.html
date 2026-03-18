@@ -39,7 +39,7 @@
 .etf-row td{padding:2px 3px;border-bottom:1px solid var(--border);vertical-align:middle}
 .hm-table tbody tr:last-child td{border-bottom:none}
 .ct{font-family:var(--mono);font-size:.87rem;font-weight:600;color:var(--text);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap}
-.cn{font-family:var(--mono);font-size:.80rem;color:var(--text2);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap;max-width:165px;overflow:hidden;text-overflow:ellipsis}
+.cn{font-family:var(--mono);font-size:.80rem;color:var(--text2);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap;min-width:220px;max-width:260px;overflow:hidden;text-overflow:ellipsis}
 .cat{font-family:var(--mono);font-size:.73rem;color:var(--text3);background:var(--surface);border-radius:3px;padding:5px 7px;white-space:nowrap}
 .hc{padding:4px 3px;border-radius:3px;text-align:center;vertical-align:middle;font-family:var(--mono);font-size:.73rem;font-weight:500;min-width:48px;white-space:nowrap;cursor:help}
 .hc .v{display:block;line-height:1}.hc .s{display:block;font-size:.73rem;opacity:.65;margin-top:2px}
@@ -193,7 +193,7 @@
 
 <div class="hm-outer">
 <div class="hm-wrap" style="overflow-x:auto">
-<table class="hm-table" id="ht" style="min-width:1600px">
+<table class="hm-table" id="ht" style="min-width:1700px">
   <thead><tr>
     <th class="thl hth" onclick="doSort('provider',this)">PROVIDER ⇅</th>
     <th class="thl hth" onclick="doSort('fund',this)">PENSION FUND ⇅</th>
