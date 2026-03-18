@@ -86,5 +86,7 @@ The following were **wrong** in the pre-audit documentation and are now correcte
 | ✅ Done | Admin route bug fixed (toggle-etf) | `08_DECISIONS_LOG.md` |
 | ✅ Done | Git tag `v2.0.0` created | `09_BASELINES.md` |
 | ✅ Done | Inline sector editor on Admin tiles | `06_DASHBOARD_PAGES.md`, `08_DECISIONS_LOG.md` |
+| ✅ Done | Bulk LSEG import added; template import/export removed | `06_DASHBOARD_PAGES.md` |
+| ✅ Done | Footprints logo in nav and home hero | `06_DASHBOARD_PAGES.md` |
 | 🟢 Low | Run `pip freeze > requirements_locked.txt` on PythonAnywhere and commit | repo root |
 | 🟢 Low | `footprints.db` backup strategy — gitignored so not version controlled | Consider periodic manual backup |

@@ -60,9 +60,8 @@ Sticky top nav (44px height). Contains:
 | `/` | `index()` | `home.html` | home |
 | `/entry` GET | `entry()` | `entry.html` | entry |
 | `/entry` POST | `entry_post()` | redirect | — |
-| `/entry/export-template` | `export_template()` | xlsx download | — |
 | `/entry/import-lseg` POST | `entry_import_lseg()` | redirect | — |
-| `/entry/import-template` POST | `import_template()` | redirect | — |
+| `/entry/import-lseg-bulk` POST | `entry_import_lseg_bulk()` | redirect | — |
 | `/recompute` POST | `recompute()` | redirect | — |
 | `/dashboard` | `dashboard()` | `dashboard.html` | dashboard |
 | `/heatmap` | `heatmap()` | `heatmap.html` | heatmap |
@@ -86,6 +85,8 @@ Sticky top nav (44px height). Contains:
 ---
 
 ## Page: Home (`/`) — `home.html`
+
+> **v2.0 update:** Footprints logo added to the nav bar and home page hero section.
 
 Two-column layout (1fr + 268px sidebar). On mobile (≤860px) stacks to single column.
 
@@ -378,6 +379,40 @@ See `05_PENSION_PROXY_METHODOLOGY.md` for the pension stance logic (`_build_fund
 
 ---
 
+## Page: Data Entry (`/entry`) — `entry.html`
+
+Weekly OHLCV data entry form for all 43 active ETFs. Data sourced exclusively from LSEG Workspace Excel exports.
+
+### Import Bar (top of page)
+
+Two methods available side by side:
+
+| Method | Label | Action | Route |
+|--------|-------|--------|-------|
+| LSEG per-ticker | `↑ LSEG IMPORT:` | Ticker dropdown + single `.xlsx` → imports that ETF | POST `/entry/import-lseg` |
+| Bulk LSEG | `↑ BULK IMPORT:` | Multi-file `<input multiple>` → imports all at once | POST `/entry/import-lseg-bulk` |
+
+**Bulk import rules:** Files must be named exactly `TICKER.xlsx` (e.g. `VWRP.L.xlsx`). The server matches filename to ticker and processes each file in sequence. A progress bar shows file count selected.
+
+**Template import/export removed** — the former Method 2/3 (`/entry/export-template`, `/entry/import-template`) no longer exist in server.py.
+
+### Manual Entry Form
+
+- **Week ending date picker** — defaults to `default_date` from server
+- **Keyboard shortcuts:** `Tab` advance · `Shift+Tab` back · `Enter` save
+- **Columns:** TICKER / NAME | PREV CLOSE (read-only) | OPEN | HIGH | LOW | CLOSE ★ | VOLUME | SIGNAL (current, read-only badge)
+- **Field naming:** `TICKER__field` (e.g. `VWRP.L__close`) — double underscore separator
+- **Validation:** `validateRow(ticker)` — checks `low ≤ close ≤ high`; green border if ok, red if err
+- **Progress bar:** counts rows where both CLOSE and VOLUME are filled; `N/43 ETFs entered`
+
+### Submit
+
+- `POST /entry` with `source=LSEG` hidden field
+- Button disables and shows `COMPUTING…` while server processes
+- Only rows with a Close value are saved
+
+---
+
 ## Page: Signal History (`/history`) — `history.html` (88 lines)
 
 Simple server-rendered table. No client-side JS filtering. Columns:
@@ -490,7 +525,7 @@ Returns all current signals as JSON array. No date filtering — always returns 
 | `home.html` | ✅ | Fully documented — nav cards, signal summary |
 | `heatmap.html` | ✅ | Fully documented — 18-col table, sector grid, tooltips |
 | `dashboard.html` | ✅ | Fully documented — card grid, detail panel, Chart.js |
-| `entry.html` | ✅ | Documented — 3-method import bar, manual form |
+| `entry.html` | ✅ | Documented — 2-method import bar (LSEG per-ticker + Bulk LSEG); template import/export removed |
 | `history.html` | ✅ | Fully documented — simple server-rendered table |
 | `guide.html` | ✅ | Documented — KPI guide with signal logic table |
 | `admin.html` | ✅ | Documented — ETF tiles, fund tiles, route discrepancy noted |

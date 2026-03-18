@@ -276,6 +276,30 @@ Option A is simpler.
 **Rationale:** Display order is relevant when adding ETFs but not useful as a persistent label on every tile. Its removal declutters the tile.
 **Status:** Active.
 
+### [v2.0] — Entry page: template import/export removed
+
+**Decision:** `/entry/export-template` and `/entry/import-template` routes removed from `server.py`. The LSEG Excel template download/upload workflow is no longer supported.
+**Rationale:** All data now comes directly from LSEG Workspace exports via per-ticker or bulk import. A generic template added complexity without benefit since LSEG exports have a fixed format.
+**Status:** Active.
+
+### [v2.0] — Entry page: bulk LSEG import added
+
+**Decision:** A second import method added to the entry page — `BULK IMPORT` bar with a multi-file `<input multiple>` upload posting to `POST /entry/import-lseg-bulk`. Files must be named `TICKER.xlsx`.
+**Rationale:** Importing 43 ETFs one at a time is impractical for gap-filling or initial seeding. Bulk import allows all LSEG exports to be uploaded and processed in a single operation.
+**Implementation:** `entry.html` — `#bulk-form` + `updateBulkLabel()` JS. `server.py` — `entry_import_lseg_bulk()` route using `request.files.getlist("bulk_files")`.
+**Status:** Active.
+
+### [v2.0] — Footprints logo added to nav and home hero
+
+**Decision:** The Footprints branding logo is now displayed in the navigation bar and the home page hero section.
+**Status:** Active.
+
+### [v2.0] — SQL seed scripts added to reproduction guide
+
+**Decision:** `10_REPRODUCTION_GUIDE.md` now includes ready-to-run Python/SQLite seed scripts for all 43 ETFs and all 20 pension funds + mappings. A developer can rebuild `footprints.db` from zero without manual Admin UI clicks.
+**Also fixed:** Weekly workflow section updated to reflect bulk LSEG import (template download/upload removed).
+**Status:** Active.
+
 ### [OPEN] — `footprints.db` not in the repo (correctly gitignored)
 
 **Decision:** The database is gitignored. This is correct — it contains real price data.

@@ -7,7 +7,7 @@
 ```
 Footprints/                      # Repository root
 │
-├── server.py                    # Flask app: all routes, helpers, LSEG parser (642 lines)
+├── server.py                    # Flask app: all routes, helpers, LSEG parser (583 lines)
 ├── engine.py                    # Signal computation pipeline — no Flask imports (722 lines)
 ├── db.py                        # All SQLite I/O — no Flask, no business logic (678 lines)
 ├── config.py                    # All constants, weights, thresholds, sector labels (180 lines)
@@ -42,7 +42,7 @@ Footprints/                      # Repository root
 
 ### `server.py` — Flask Application (Routes + Helpers)
 
-> **Version note:** The live PythonAnywhere `server.py` is **642 lines** (post sector-editor addition) and differs from the GitHub version (752 lines). The GitHub version is stale. Key differences documented below. The live version is the authority.
+> **Version note:** The live PythonAnywhere `server.py` is **583 lines** (latest: bulk LSEG import added, template import/export removed). GitHub is now the authority — all changes are committed and in sync. The GitHub version is stale. Key differences documented below. The live version is the authority.
 
 The sole Flask file. Contains:
 
