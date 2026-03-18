@@ -39,7 +39,7 @@
 .etf-row td{padding:2px 3px;border-bottom:1px solid var(--border);vertical-align:middle}
 .hm-table tbody tr:last-child td{border-bottom:none}
 .ct{font-family:var(--mono);font-size:.87rem;font-weight:600;color:var(--text);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap}
-.cn{font-family:var(--mono);font-size:.80rem;color:var(--text2);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap;max-width:165px;overflow:hidden;text-overflow:ellipsis}
+.cn{font-family:var(--mono);font-size:.80rem;color:var(--text2);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cat{font-family:var(--mono);font-size:.73rem;color:var(--text3);background:var(--surface);border-radius:3px;padding:5px 7px;white-space:nowrap}
 .hc{padding:4px 3px;border-radius:3px;text-align:center;vertical-align:middle;font-family:var(--mono);font-size:.73rem;font-weight:500;min-width:48px;white-space:nowrap;cursor:help}
 .hc .v{display:block;line-height:1}.hc .s{display:block;font-size:.73rem;opacity:.65;margin-top:2px}
@@ -194,7 +194,27 @@
 
 <div class="hm-outer">
 <div class="hm-wrap" style="overflow-x:auto">
-<table class="hm-table" id="ht" style="min-width:1600px">
+<table class="hm-table" id="ht" style="min-width:1800px">
+<colgroup>
+  <col style="width:80px">   <!-- PROVIDER -->
+  <col style="width:160px">  <!-- PENSION FUND -->
+  <col style="width:90px">   <!-- TICKER -->
+  <col style="min-width:220px;width:auto"> <!-- ETF NAME — grows to fill -->
+  <col style="width:100px">  <!-- SECTOR -->
+  <col style="width:105px">  <!-- SIGNAL -->
+  <col style="width:75px">   <!-- ROTATION -->
+  <col style="width:65px">   <!-- CONF -->
+  <col style="width:60px">   <!-- TREND -->
+  <col style="width:72px">   <!-- RS20 V-ADJ -->
+  <col style="width:72px">   <!-- RS ACCEL -->
+  <col style="width:65px">   <!-- RS20% -->
+  <col style="width:72px">   <!-- PRESSURE -->
+  <col style="width:72px">   <!-- PRESS WKS% -->
+  <col style="width:72px">   <!-- TURN RATIO -->
+  <col style="width:65px">   <!-- TURN Z -->
+  <col style="width:80px">   <!-- AVG TURN -->
+  <col style="width:80px">   <!-- LATEST TURN -->
+</colgroup>
   <thead><tr>
     <th class="thl hth" onclick="doSort('provider',this)">PROVIDER ⇅</th>
     <th class="thl hth" onclick="doSort('fund',this)">PENSION FUND ⇅</th>
@@ -212,8 +232,8 @@
     <th class="hth" onclick="doSort('ppw',this)">PRESS WKS% ⇅</th>
     <th class="hth" onclick="doSort('turnover',this)">TURN RATIO ⇅</th>
     <th class="hth" onclick="doSort('turnz',this)">TURN Z ⇅</th>
-    <th class="hth" onclick="doSort('size',this)">AVG TURN ⇅</th>
-    <th class="hth">LATEST TURN</th>
+    <th class="hth" onclick="doSort('size',this)">AVG TURN /wk ⇅</th>
+    <th class="hth" onclick="doSort('latest',this)">LATEST TURN /wk ⇅</th>
   </tr></thead>
   <tbody id="hb"></tbody>
 </table>
@@ -420,12 +440,12 @@ function mkRow(e){
     `<td class="cat"><span style="font-family:var(--mono);font-size:.67rem;font-weight:700;padding:2px 7px;border-radius:2px;white-space:nowrap;${provCls}">${provLabel}</span></td>`+
     `<td class="thl" style="min-width:160px">${fundStr}</td>`+
     `<td class="ct"><a href="/dashboard?open=${encodeURIComponent(t)}" class="dash-link" title="Open in dashboard" style="font-weight:700">↗ ${t}</a></td>`+
-    `<td class="cn" title="${e.name||''}" style="min-width:150px">${e.name||'—'}</td>`+
+    `<td class="cn" title="${e.name||''}">${e.name||'—'}</td>`+
     `<td class="cat" style="font-size:.73rem">${secLabel}</td>`+
     `<td class="hc sc ${sigCss}" onmouseenter="showHmTip(event,'signal','${e.signal}','${t}')" onmouseleave="hideKtt()" style="min-width:95px">${prevSig}<span class="v" style="font-size:.67rem">${sigLabel}</span></td>`+
     `<td class="hc ${rotCls(e.rotation_score)}" onmouseenter="showHmTip(event,'rotation',${e.rotation_score||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rotation_score,1)}</span></td>`+
     `<td class="hc ${confCls(e.confidence_bucket)}" onmouseenter="showHmTip(event,'conf','${e.confidence_bucket||''}','${t}')" onmouseleave="hideKtt()"><span class="v" style="font-size:.73rem">${e.confidence_bucket||'—'}</span></td>`+
-    `<td class="hc ${ts===4?'hi-4':ts===3?'hi-2':ts===2?'hi-0':ts===1?'lo-2':'lo-4'}" onmouseenter="showHmTip(event,'trend','${trendVal}','${t}')" onmouseleave="hideKtt()"><div class="md">${dots}</div><span class="s">${ts!=null?ts+'/4':'—'}</span></td>`+
+    `<td class="hc ${ts===4?'hi-4':ts===3?'hi-2':ts===2?'hi-0':ts===1?'lo-2':'lo-4'}" onmouseenter="showHmTip(event,'trend','${trendVal}','${t}')" onmouseleave="hideKtt()"><div class="md">${dots}</div></td>`+
     `<td class="hc ${pctCls(e.rs20_vol_adj_rank_pct)}" onmouseenter="showHmTip(event,'rs20va',${e.rs20_vol_adj_rank_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rs20_vol_adj_rank_pct,0)}%</span></td>`+
     `<td class="hc ${pctCls(e.rs_accel_vol_adj_rank_pct)}" onmouseenter="showHmTip(event,'rsaccel',${e.rs_accel_vol_adj_rank_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rs_accel_vol_adj_rank_pct,0)}%</span></td>`+
     `<td class="hc ${ic(rs20r,[0.5,2,5,10,15])}" onmouseenter="showHmTip(event,'rs20raw',${rs20r||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${rs20r!=null?(rs20r>0?'+':'')+fc(rs20r,2)+'%':'—'}</span></td>`+
@@ -433,8 +453,8 @@ function mkRow(e){
     `<td class="hc ${ic((e.pressure_pos_weeks_pct||50)-50,[5,10,20,30,45])}" onmouseenter="showHmTip(event,'ppw',${e.pressure_pos_weeks_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.pressure_pos_weeks_pct,0)}%</span></td>`+
     `<td class="hc ${ic((e.turnover_ratio_20_100||1)-1,[0.05,0.1,0.2,0.35,0.5])}" onmouseenter="showHmTip(event,'turnratio',${e.turnover_ratio_20_100||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_ratio_20_100,2)}×</span></td>`+
     `<td class="hc ${ic(e.turnover_z_20,[0.25,0.5,1,2,3])}" onmouseenter="showHmTip(event,'turnz',${e.turnover_z_20||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_z_20,2)}σ</span></td>`+
-    `<td class="hc ${lqCls(avg)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(avg)}</span><span class="s">/ wk</span></td>`+
-    `<td class="hc ${lqCls(lat)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(lat)}</span><span class="s">/ wk${tlBadge}</span></td>`+
+    `<td class="hc ${lqCls(avg)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(avg)}</span></td>`+
+    `<td class="hc ${lqCls(lat)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(lat)}${tlBadge}</span></td>`+
     `</tr>`;
 }
 
@@ -462,6 +482,7 @@ function getSorted(){
     else if(curSort==='turnover')v=(b.turnover_ratio_20_100||0)-(a.turnover_ratio_20_100||0);
     else if(curSort==='turnz')v=(b.turnover_z_20||0)-(a.turnover_z_20||0);
     else if(curSort==='size')v=(b.avg_turn_20w||0)-(a.avg_turn_20w||0);
+    else if(curSort==='latest')v=(b.turn_latest||0)-(a.turn_latest||0);
     else v=0;
     if(curSort!=='signal')v*=sortDir;
     return v;
