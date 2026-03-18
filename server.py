@@ -4,7 +4,6 @@ All business logic in engine.py / db.py. This file = routes + helpers only.
 """
 import io, json, os
 from datetime import date, timedelta, datetime
-from urllib.parse import quote
 
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -131,10 +130,6 @@ def entry():
     sigs_df   = db.get_signals_df()
     signals   = {r["ticker"]: r for r in _dicts(sigs_df)}
     prefill   = {}
-    raw = request.args.get("prefill","")
-    if raw:
-        try: prefill = json.loads(raw)
-        except: pass
     ctx = _ctx("entry")
     ctx.update(tickers=data["tickers"], default_date=_next_friday(),
                latest_prices=latest_p, signals=signals, prefill=prefill)
@@ -173,61 +168,6 @@ def entry_post():
     else:
         flash("No rows saved — fill at least one Close.","err")
     return redirect(url_for("entry"))
-
-@app.route("/entry/export-template")
-def export_template():
-    meta_df  = db.get_etf_meta()
-    universe = sorted(_dicts(meta_df[meta_df["active"]==1]),
-                      key=lambda e:(e.get("display_order",99),e["ticker"]))
-    latest   = db.get_latest_prices()
-    friday   = _next_friday()
-    wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Weekly Entry"
-    hf = PatternFill("solid",fgColor="111418")
-    hfont = Font(name="Courier New",bold=True,color="C8D0DC",size=9)
-    ws.merge_cells("A1:H1"); ws["A1"] = "FOOTPRINTS v2 — WEEKLY DATA ENTRY"
-    ws["A1"].font = Font(name="Courier New",bold=True,color="5B8CF5",size=10)
-    ws["A1"].fill = PatternFill("solid",fgColor="0A0C0F")
-    ws["A1"].alignment = Alignment(horizontal="left",vertical="center",indent=1)
-    ws.row_dimensions[1].height = 20
-    ws.merge_cells("A2:H2"); ws["A2"] = f"Week ending: {friday}  |  Fill CLOSE and VOLUME minimum."
-    ws["A2"].font = Font(name="Courier New",color="3D4A5C",size=8)
-    ws["A2"].fill = PatternFill("solid",fgColor="0A0C0F")
-    ws.row_dimensions[2].height = 14
-    hdrs = ["TICKER","NAME","PREV CLOSE","OPEN","HIGH","LOW","CLOSE ★","VOLUME"]
-    wids = [10,28,12,10,10,10,12,14]
-    for col,(h,w) in enumerate(zip(hdrs,wids),1):
-        c = ws.cell(row=3,column=col,value=h); c.font=hfont; c.fill=hf
-        c.alignment=Alignment(horizontal="right" if col>2 else "left",vertical="center",indent=1 if col<=2 else 0)
-        ws.column_dimensions[get_column_letter(col)].width = w
-    ws.row_dimensions[3].height=16; ws.freeze_panes="A4"
-    cur_sec=""; data_row=4
-    for etf in universe:
-        if etf["sector"]!=cur_sec:
-            cur_sec=etf["sector"]; label=config.SECTOR_LABEL.get(cur_sec,cur_sec)
-            ws.merge_cells(f"A{data_row}:H{data_row}")
-            c=ws.cell(row=data_row,column=1,value=f"── {label}")
-            c.font=Font(name="Courier New",color="3D4A5C",size=7,italic=True)
-            c.fill=PatternFill("solid",fgColor="0D1117")
-            ws.row_dimensions[data_row].height=12; data_row+=1
-        t=etf["ticker"]; prev=latest.get(t,{}).get("close",""); r=data_row
-        for col,val,fmt_str,fg,bg in [
-            (1,t,None,"C8D0DC","0D1117"),(2,etf.get("name",""),None,"6B7A8F","0D1117"),
-            (3,prev if prev else "","0.00","5B8CF5","0D1117")]:
-            c=ws.cell(row=r,column=col,value=val)
-            c.font=Font(name="Courier New",color=fg,size=9 if col<3 else 8,bold=col==1)
-            c.fill=PatternFill("solid",fgColor=bg)
-            c.alignment=Alignment(horizontal="right" if col==3 else "left",vertical="center",indent=1 if col<3 else 0)
-            if fmt_str: c.number_format=fmt_str
-        for col in range(4,9):
-            c=ws.cell(row=r,column=col)
-            c.font=Font(name="Courier New",color="E8EDF5",size=10)
-            c.fill=PatternFill("solid",fgColor="0D1117")
-            c.number_format="0.0000" if col==7 else ("0" if col==8 else "0.00")
-            c.alignment=Alignment(horizontal="right",vertical="center")
-        ws.row_dimensions[r].height=15; data_row+=1
-    buf=io.BytesIO(); wb.save(buf); buf.seek(0)
-    return send_file(buf, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                     as_attachment=True, download_name=f"footprints_entry_{friday}.xlsx")
 
 @app.route("/entry/import-lseg", methods=["POST"])
 def entry_import_lseg():
@@ -293,41 +233,6 @@ def entry_import_lseg_bulk():
 
     return redirect(url_for("entry"))
 
-
-@app.route("/entry/import-template", methods=["POST"])
-def import_template():
-    f = request.files.get("template_file")
-    if not f:
-        flash("No file uploaded.","err"); return redirect(url_for("entry"))
-    try:
-        wb = openpyxl.load_workbook(io.BytesIO(f.read()), data_only=True)
-        ws = wb["Weekly Entry"]
-    except Exception as e:
-        flash(f"Could not read template: {e}","err"); return redirect(url_for("entry"))
-    tset = set(db.get_etf_meta()["ticker"])
-    parsed = {}
-    skipped = 0
-    for row in ws.iter_rows(min_row=4, values_only=True):
-        t = str(row[0]).strip().upper() if row[0] else ""
-        if not t or t not in tset: continue
-        try:
-            cl = float(row[6]) if row[6] not in (None, "") else None
-            if cl is None: continue                          # close is mandatory
-            vo = float(row[7]) if row[7] not in (None, "") else 0.0  # volume optional
-            parsed[t] = {"open":  float(row[3]) if row[3] not in (None, "") else cl,
-                         "high":  float(row[4]) if row[4] not in (None, "") else cl,
-                         "low":   float(row[5]) if row[5] not in (None, "") else cl,
-                         "close": cl, "volume": vo}
-        except (ValueError, TypeError):
-            skipped += 1
-            continue
-    if not parsed:
-        flash("No valid data in template.","err"); return redirect(url_for("entry"))
-    msg = f"Template loaded: {len(parsed)} ETFs ready. Review and submit."
-    if skipped:
-        msg += f" ({skipped} row(s) skipped — bad data)"
-    flash(msg,"ok")
-    return redirect(url_for("entry") + "?prefill=" + quote(json.dumps(parsed)))
 
 # ── Recompute ─────────────────────────────────────────────────────────────────
 @app.route("/recompute", methods=["POST"])

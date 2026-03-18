@@ -16,8 +16,6 @@
 .btn-import-green{background:var(--green);color:#000;border-color:var(--green)}
 .btn-import-green:hover{opacity:.85}
 .import-sep{font-family:var(--mono);font-size:.73rem;color:var(--text3);white-space:nowrap;padding:0 4px}
-.btn-export{font-family:var(--mono);font-size:.73rem;background:none;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:4px 14px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:all .15s}
-.btn-export:hover{background:var(--blue-dim)}
 /* ── Progress ────────────────────────────────────────────────────────────── */
 .prog-wrap{display:flex;flex-direction:column;gap:3px;min-width:160px}
 .prog-label{font-family:var(--mono);font-size:.73rem;color:var(--text2)}
@@ -93,18 +91,6 @@ table.entry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font
     </label>
     <button type="submit" class="btn-import btn-import-green" id="bulk-sub" disabled>IMPORT ALL</button>
   </form>
-  <span class="import-sep">&mdash; or &mdash;</span>
-  <form id="tmpl-form" method="POST" action="/entry/import-template" enctype="multipart/form-data"
-        style="display:flex;align-items:center;gap:8px">
-    <span class="import-label">&#8593; TEMPLATE:</span>
-    <label class="import-file-lbl">
-      <input type="file" name="template_file" accept=".xlsx" class="import-file-native" id="tmpl-file">
-      <span id="tmpl-txt">&#128194; Choose file&hellip;</span>
-    </label>
-    <button type="submit" class="btn-import">LOAD</button>
-  </form>
-  <span class="import-sep">&mdash; or &mdash;</span>
-  <a href="/entry/export-template" class="btn-export">&#8595; EXCEL TEMPLATE</a>
 </div>
 
 {# Main entry form #}
