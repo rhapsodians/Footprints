@@ -3,99 +3,103 @@
 
 {% block head %}
 <style>
-/* ── Import bar ─────────────────────────────────────────────────────────── */
-.import-bar{padding:8px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:14px}
-.import-label{font-family:var(--mono);font-size:.73rem;letter-spacing:.10em;text-transform:uppercase;color:var(--text3);white-space:nowrap}
-.import-sep{font-family:var(--mono);font-size:.73rem;color:var(--text3)}
-.lseg-sel{font-family:var(--mono);font-size:.73rem;color:var(--text);background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:4px 8px;cursor:pointer;max-width:260px}
-.import-file-lbl{display:inline-flex;align-items:center;font-family:var(--mono);font-size:.73rem;color:var(--text2);background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:4px 10px;cursor:pointer;gap:6px;white-space:nowrap}
-.import-file-lbl:hover{border-color:var(--accent);color:var(--text)}
-.import-file-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-.btn-import{font-family:var(--mono);font-size:.73rem;padding:4px 14px;border:1px solid var(--border2);border-radius:2px;background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap}
-.btn-import:hover{background:var(--surface);color:var(--text)}
-.btn-import:disabled{opacity:.4;cursor:default}
-.btn-import-green{border-color:var(--sig-sb-bd);color:var(--sig-sb)}
-.btn-import-green:hover{background:var(--sig-sb-bg)}
-
-/* ── Recompute section ──────────────────────────────────────────────────── */
-.recompute-section{margin-top:28px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:4px}
-.recompute-section h3{font-family:var(--mono);font-size:.73rem;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--text3);margin:0 0 14px}
-.recompute-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.entry-band{background:var(--surface2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.entry-row{display:flex;align-items:center;gap:10px;padding:10px 0;flex-wrap:wrap}
+.entry-row+.entry-row{border-top:1px solid var(--border)}
+.entry-lbl{font-family:var(--mono);font-size:.73rem;font-weight:600;letter-spacing:.08em;color:var(--text3);white-space:nowrap;width:130px;flex-shrink:0;text-transform:uppercase}
+.lseg-sel{font-family:var(--mono);font-size:.73rem;color:var(--text);background:var(--surface);border:1px solid var(--border2);border-radius:3px;padding:5px 9px;cursor:pointer;max-width:280px}
+.lseg-sel:focus{outline:none;border-color:var(--accent)}
+.file-btn{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.73rem;color:var(--text2);background:var(--surface);border:1px solid var(--border2);border-radius:3px;padding:5px 12px;cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s}
+.file-btn:hover{border-color:var(--border2);color:var(--text)}
+.file-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.act-btn{font-family:var(--mono);font-size:.73rem;font-weight:600;padding:5px 16px;border:1px solid var(--sig-sb-bd);border-radius:3px;background:none;color:var(--sig-sb);cursor:pointer;white-space:nowrap;transition:all .15s}
+.act-btn:hover{background:var(--sig-sb-bg)}
+.act-btn:disabled{opacity:.35;cursor:default}
+.act-btn.recompute{border-color:var(--accent);color:var(--accent)}
+.act-btn.recompute:hover{background:var(--blue-dim)}
+.hint{font-family:var(--mono);font-size:.67rem;color:var(--text3)}
 </style>
 {% endblock %}
 
 {% block content %}
-<div style="padding:28px 32px 60px;max-width:900px">
 
-<div style="font-family:var(--mono);font-size:.73rem;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--text3);margin-bottom:18px">Weekly Data Upload</div>
-
-{# LSEG import bar #}
-<div class="import-bar">
-  <form id="lseg-form-w" method="POST" action="/entry/import-lseg" enctype="multipart/form-data"
-        style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <span class="import-label">&#8593; Single ETF:</span>
-    <select class="lseg-sel" name="ticker" required>
-      {% for t in tickers %}
-      <option value="{{ t.ticker }}">{{ t.ticker }} &mdash; {{ (t.name or '')[:32] }}</option>
-      {% endfor %}
-    </select>
-    <label class="import-file-lbl" id="lseg-lbl-w">
-      <input type="file" name="lseg_file" accept=".xlsx,.xls" class="import-file-native" id="lseg-file-w" required>
-      <span id="lseg-txt-w">&#128194; Choose file&hellip;</span>
-    </label>
-    <button type="submit" class="btn-import btn-import-green" id="lseg-sub-w" disabled>IMPORT</button>
-  </form>
-  <span class="import-sep">&mdash; or &mdash;</span>
-  <form id="bulk-form" method="POST" action="/entry/import-lseg-bulk" enctype="multipart/form-data"
-        style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <span class="import-label">&#8593; Bulk (all ETFs):</span>
-    <label class="import-file-lbl" id="bulk-lbl">
-      <input type="file" name="bulk_files" accept=".xlsx,.xls" multiple
-             class="import-file-native" id="bulk-file"
-             onchange="updateBulkLabel(this)">
-      <span id="bulk-txt">&#128194; Choose files&hellip; <span style="font-size:.67rem;opacity:.6">(named TICKER.xlsx)</span></span>
-    </label>
-    <button type="submit" class="btn-import btn-import-green" id="bulk-sub" disabled>IMPORT ALL</button>
-  </form>
+<div class="page-header">
+  <div>
+    <div class="page-title">Weekly <strong>Data Entry</strong></div>
+    <div class="page-subtitle">Upload LSEG exports · then recompute signals for the target Friday</div>
+  </div>
 </div>
 
-{# Recompute section #}
-<div class="recompute-section">
-  <h3>Recompute Signals</h3>
-  <form method="post" action="/recompute">
-    <div class="recompute-row">
-      <label style="font-family:var(--mono);font-size:.73rem;color:var(--text3);white-space:nowrap">As of Friday</label>
+<!-- ── UPLOAD BAND ── -->
+<div class="entry-band">
+
+  <!-- Single ETF -->
+  <div class="entry-row">
+    <span class="entry-lbl">Single ETF</span>
+    <form method="POST" action="/entry/import-lseg" enctype="multipart/form-data"
+          style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <select class="lseg-sel" name="ticker" required>
+        {% for t in tickers %}
+        <option value="{{ t.ticker }}">{{ t.ticker }} — {{ (t.name or '')[:36] }}</option>
+        {% endfor %}
+      </select>
+      <label class="file-btn" id="single-lbl">
+        <input type="file" name="lseg_file" accept=".xlsx,.xls" class="file-native" id="single-file" required>
+        <span id="single-txt">📂 Choose file…</span>
+      </label>
+      <button type="submit" class="act-btn" id="single-sub" disabled>IMPORT</button>
+    </form>
+  </div>
+
+  <!-- Bulk -->
+  <div class="entry-row">
+    <span class="entry-lbl">Bulk Upload</span>
+    <form method="POST" action="/entry/import-lseg-bulk" enctype="multipart/form-data"
+          style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <label class="file-btn" id="bulk-lbl">
+        <input type="file" name="bulk_files" accept=".xlsx,.xls" multiple
+               class="file-native" id="bulk-file" onchange="onBulkChange(this)">
+        <span id="bulk-txt">📂 Choose files…</span>
+      </label>
+      <span class="hint">Files must be named TICKER.xlsx</span>
+      <button type="submit" class="act-btn" id="bulk-sub" disabled>IMPORT ALL</button>
+    </form>
+  </div>
+
+</div>
+
+<!-- ── RECOMPUTE BAND ── -->
+<div class="etf-section-hdr" style="margin-top:28px">
+  Recompute Signals
+  <div class="etf-section-hdr-line"></div>
+</div>
+
+<div class="entry-band" style="margin-top:0">
+  <div class="entry-row">
+    <span class="entry-lbl">As of Friday</span>
+    <form method="post" action="/recompute"
+          style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <input type="date" name="as_of_date"
-             style="font-family:var(--mono);font-size:.73rem;color:var(--text);background:var(--surface2);border:1px solid var(--border2);border-radius:2px;padding:5px 10px;outline:none">
-      <span style="font-family:var(--mono);font-size:.67rem;color:var(--text3)">Leave blank to use latest data</span>
-      <button type="submit" class="btn-import btn-import-green" style="margin-left:auto">&#8635; RECOMPUTE</button>
-    </div>
-  </form>
-</div>
-
+             style="font-family:var(--mono);font-size:.73rem;color:var(--text);background:var(--surface);border:1px solid var(--border2);border-radius:3px;padding:5px 10px;outline:none">
+      <span class="hint">Leave blank to use all available data</span>
+      <button type="submit" class="act-btn recompute">↻ RECOMPUTE</button>
+    </form>
+  </div>
 </div>
 
 <script>
-(function(){
-  const fi=document.getElementById('lseg-file-w');
-  if(fi){fi.addEventListener('change',function(){
-    const nm=this.files[0]?this.files[0].name:'';
-    document.getElementById('lseg-txt-w').textContent=nm?'📄 '+nm:'📂 Choose file\u2026';
-    document.getElementById('lseg-sub-w').disabled=!nm;
-  });}
-})();
+document.getElementById('single-file').addEventListener('change', function(){
+  const nm = this.files[0] ? this.files[0].name : '';
+  document.getElementById('single-txt').textContent = nm ? '📄 ' + nm : '📂 Choose file…';
+  document.getElementById('single-sub').disabled = !nm;
+});
 
-function updateBulkLabel(input){
-  const n=input.files.length;
-  const lbl=document.getElementById('bulk-txt');
-  const btn=document.getElementById('bulk-sub');
-  if(n===0){
-    lbl.innerHTML='📂 Choose files\u2026 <span style="font-size:.67rem;opacity:.6">(named TICKER.xlsx)</span>';
-    btn.disabled=true;
-  } else {
-    lbl.textContent='📄 '+n+' file'+(n>1?'s':'')+' selected';
-    btn.disabled=false;
-  }
+function onBulkChange(input){
+  const n = input.files.length;
+  document.getElementById('bulk-txt').textContent = n
+    ? '📄 ' + n + ' file' + (n > 1 ? 's' : '') + ' selected'
+    : '📂 Choose files…';
+  document.getElementById('bulk-sub').disabled = n === 0;
 }
 </script>
 {% endblock %}
