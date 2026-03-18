@@ -199,6 +199,20 @@ python3 -c "
 import sqlite3
 conn = sqlite3.connect('footprints.db')
 
+# Create pension tables if they don't exist (not created by init_schema)
+conn.execute('''CREATE TABLE IF NOT EXISTS pension_funds (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    code          TEXT UNIQUE,
+    name          TEXT,
+    display_order INTEGER DEFAULT 99
+)''')
+conn.execute('''CREATE TABLE IF NOT EXISTS pension_etf_map (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    fund_id INTEGER REFERENCES pension_funds(id),
+    ticker  TEXT
+)''')
+conn.commit()
+
 funds = [
     ('LG-ACTIVE_GLOBAL',   'L&G MT Active Global Equity'),
     ('LG-APAC-EXJP',       'PMC Future World AsiaPacific(ex Japan)Eq Ind 3'),
@@ -330,7 +344,7 @@ Each week (Sunday evening or Monday morning):
 
 4. Navigate to /dashboard — verify signals updated, check as_of date is this week's Friday
 
-5. Navigate to /heatmap — review pension fund stances (LG and IL sections); check any Notable signals
+5. Navigate to /heatmap — review pension fund stances (LG and IL sections in the Pension Summary); check any Notable signals
 
 6. Navigate to /history — confirm signal changes are logged if any occurred
 

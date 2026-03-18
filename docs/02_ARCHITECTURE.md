@@ -8,8 +8,8 @@
 Footprints/                      # Repository root
 │
 ├── server.py                    # Flask app: all routes, helpers, LSEG parser (583 lines)
-├── engine.py                    # Signal computation pipeline — no Flask imports (722 lines)
-├── db.py                        # All SQLite I/O — no Flask, no business logic (678 lines)
+├── engine.py                    # Signal computation pipeline — no Flask imports (723 lines)
+├── db.py                        # All SQLite I/O — no Flask, no business logic (688 lines)
 ├── config.py                    # All constants, weights, thresholds, sector labels (180 lines)
 ├── wsgi.py                      # PythonAnywhere WSGI entry point
 ├── start_footprints.sh          # Shell script: local dev startup
@@ -35,6 +35,8 @@ Footprints/                      # Repository root
 ```
 
 > **Note:** There is no `logic/` subdirectory, no `data/` folder in the repo, no `static/css/style.css` or `static/js/filters.js` committed to the public repo. The SQLite database `footprints.db` is created at runtime by `db.init_schema()` and is gitignored (contains real price data).
+>
+> ⚠️ `pension_funds` and `pension_etf_map` tables are **not created by `init_schema()`** — they must be seeded manually via the Admin UI or SQL seed scripts in `10_REPRODUCTION_GUIDE.md`.
 
 ---
 
@@ -47,7 +49,7 @@ Footprints/                      # Repository root
 The sole Flask file. Contains:
 
 - Flask app instantiation and `secret_key` setup
-- All route handlers (`@app.route`) — **19 routes** in the live version
+- All route handlers (`@app.route`) — **22 routes** in the live version (including `/recompute` POST, `/entry/import-lseg-bulk` POST, `/admin/set-sector` POST)
 - Jinja2 helper functions registered via `app.jinja_env.globals`
 - LSEG Excel parser (`_parse_lseg()`)
 - Dashboard data enrichment (`_enrich_signals()`)
@@ -98,6 +100,10 @@ All SQLite interaction. No analytics, no Flask imports. Uses `contextlib.context
 | `upsert_signals()` | int | INSERT OR REPLACE into signals table |
 | `import_lseg_rows()` | (inserted, replaced) | Bulk upsert from LSEG export |
 | `get_prev_signals()` | dict[str,str] | Previous signal per ticker for transition badge display |
+| `get_latest_prices()` | dict[str,dict] | Most recent price row per ticker; used for entry form prev-close |
+| `get_price_series(ticker)` | list[dict] | Recent OHLCV for one ticker ascending; used for charts |
+| `get_price_series_bulk()` | dict[str,list] | Price series for multiple tickers in one query; used for sparklines |
+| `import_lseg_rows(ticker, rows)` | (int, int) | Bulk upsert LSEG rows; returns (inserted, replaced) |
 | `set_etf_sector(ticker, sector)` | None | Update sector code for an ETF; propagates to all views |
 
 ### `config.py` — Central Configuration

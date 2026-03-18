@@ -112,6 +112,7 @@ Signal fields are written to the `signals` table by `engine._serialise()` and re
 |-------|------|-------|-------------|
 | `trend_score_raw` | REAL | 0–4 (int as float) | Sum of 4 binary conditions — see engine Step 2 |
 | `trend_score_pct` | REAL | 0–100 | `trend_score_raw × 25` |
+| `n_obs` | INTEGER | — | Weekly bar count for this ticker; used in confidence history component (`history = min(n_obs / 130, 1.0)`) |
 | `close` | REAL | Price | Latest weekly close (GBP) |
 | `ma20` | REAL | Price | 20-week SMA of close |
 | `ma100` | REAL | Price | 100-week SMA of close |
@@ -174,13 +175,34 @@ Attached to each ETF row from sector-level aggregation in engine Step 7.
 
 ### `pension_funds`
 
-Each row is a specific pension fund from a provider platform. The `code` field identifies the provider:
+Each row is a specific pension fund from a provider platform.
+
+```sql
+CREATE TABLE pension_funds (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    code           TEXT UNIQUE,        -- e.g. "LG-UKEQUITY", "IL-AMUNDI_GOLD"
+    name           TEXT,               -- full fund name
+    display_order  INTEGER DEFAULT 99  -- sort order in Admin UI
+)
+```
+
+> ⚠️ **Note:** `pension_funds` and `pension_etf_map` are **not created by `db.init_schema()`**. They must be created manually or seeded via the Admin UI before pension features work. See `10_REPRODUCTION_GUIDE.md` for SQL seed scripts.
+
+The `code` field identifies the provider:
 - `LG` prefix → L&G WorkSave
 - `IL` prefix → Irish Life
 
 ### `pension_etf_map`
 
-Links pension funds to their ETF proxies. A fund can have multiple proxies; an ETF can be a proxy for multiple funds. The signal for a pension fund is derived from the signals of all its mapped proxy ETFs in aggregate (see Summary page logic in `05_PENSION_PROXY_METHODOLOGY.md`).
+Links pension funds to their ETF proxies. A fund can have multiple proxies; an ETF can be a proxy for multiple funds.
+
+```sql
+CREATE TABLE pension_etf_map (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    fund_id    INTEGER REFERENCES pension_funds(id),
+    ticker     TEXT    -- ETF ticker from etf_meta
+)
+``` The signal for a pension fund is derived from the signals of all its mapped proxy ETFs in aggregate (see Summary page logic in `05_PENSION_PROXY_METHODOLOGY.md`).
 
 ---
 

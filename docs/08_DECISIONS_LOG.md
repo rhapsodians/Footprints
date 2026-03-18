@@ -193,12 +193,12 @@
 Option A is simpler.
 **Status:** Open — bug confirmed. Admin ETF status changes non-functional until resolved.
 
-### [v2.0 — live] — Signal priority order corrected (EA is priority 1, not after SB)
+### [v2.0 — live] — Signal priority order confirmed from engine.py source
 
-**Decision:** EARLY ACCUMULATION is checked before STRONG BUY in the signal classification hierarchy. Priority order: EA (1) → SB (2) → AH (3) → EXIT (4) → NEUTRAL (5).
-**Rationale:** An ETF beginning to accumulate (pressure just turned positive, price still below MA100) should be flagged as EA even if its rotation score happens to be high. The EA signal is an early-warning state — the MA100 condition (`close < MA100`) means it structurally cannot also be a full STRONG BUY (which requires trend ≥ 3, implying price above both MAs).
-**Note:** Prior documentation incorrectly stated STRONG BUY was checked first.
-**Status:** Active. Confirmed from both `engine.py` and `guide.html` logic table.
+**Decision:** Signal classification in `engine._classify()` checks conditions in this order: **SB (1) → AH (2) → EA (3) → EXIT (4) → NEUTRAL (5)**. First match wins.
+**Rationale:** STRONG BUY is the primary actionable signal and checked first. EARLY ACCUMULATION is a specialised inflection-point signal checked only after SB and AH fail to match — it requires pressure to have *just* flipped positive, which is structurally incompatible with SB (which needs sustained positive pressure and high rotation).
+**Note:** Prior documentation incorrectly stated EA was checked first (priority 1). This has been corrected in `04_SIGNAL_LOGIC.md`.
+**Status:** Active. Confirmed directly from `engine.py` `_classify()` function.
 
 ### [RESOLVED] — Admin route discrepancy: template vs server.py
 
@@ -299,6 +299,13 @@ Option A is simpler.
 **Decision:** `10_REPRODUCTION_GUIDE.md` now includes ready-to-run Python/SQLite seed scripts for all 43 ETFs and all 20 pension funds + mappings. A developer can rebuild `footprints.db` from zero without manual Admin UI clicks.
 **Also fixed:** Weekly workflow section updated to reflect bulk LSEG import (template download/upload removed).
 **Status:** Active.
+
+### [v2.0] — Pension tables not created by init_schema()
+
+**Finding:** `pension_funds` and `pension_etf_map` tables are **not** created by `db.init_schema()`. They must be created separately — either via the Admin UI (which uses INSERT OR IGNORE, implying the table must already exist) or via the SQL seed scripts in `10_REPRODUCTION_GUIDE.md` which now include explicit `CREATE TABLE IF NOT EXISTS` statements.
+**Risk:** A fresh deployment will 500 on any page that queries pension data if the tables don't exist.
+**Recommendation:** Add `pension_funds` and `pension_etf_map` CREATE TABLE statements to `db.init_schema()`.
+**Status:** Open — workaround documented in seed scripts.
 
 ### [OPEN] — `footprints.db` not in the repo (correctly gitignored)
 

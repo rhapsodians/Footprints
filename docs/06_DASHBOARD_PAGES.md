@@ -62,6 +62,7 @@ Sticky top nav (44px height). Contains:
 | `/entry` POST | `entry_post()` | redirect | — |
 | `/entry/import-lseg` POST | `entry_import_lseg()` | redirect | — |
 | `/entry/import-lseg-bulk` POST | `entry_import_lseg_bulk()` | redirect | — |
+| `/recompute` POST | `recompute()` | redirect | Dashboard |
 | `/recompute` POST | `recompute()` | redirect | — |
 | `/dashboard` | `dashboard()` | `dashboard.html` | dashboard |
 | `/heatmap` | `heatmap()` | `heatmap.html` | heatmap |
@@ -448,7 +449,7 @@ Two-column layout: sticky sidebar nav (left) + scrollable main content (right).
 - Vol-Adj RS (KPI 4)
 - Turnover Block (KPI 5)
 
-**Signal Logic Reference table** (priority order as implemented, confirmed from guide):
+**Signal Logic Reference table** (priority order as implemented in `engine._classify()`): **SB → AH → EA → EXIT → NEUTRAL**
 
 | Priority | Signal | Conditions |
 |----------|--------|-----------|
