@@ -59,7 +59,6 @@ Sticky top nav (44px height). Contains:
 |-----|----------|----------|-----|
 | `/` | `index()` | `home.html` | home |
 | `/entry` GET | `entry()` | `entry.html` | entry |
-| `/entry` POST | `entry_post()` | redirect | — |
 | `/entry/import-lseg` POST | `entry_import_lseg()` | redirect | — |
 | `/entry/import-lseg-bulk` POST | `entry_import_lseg_bulk()` | redirect | — |
 | `/recompute` POST | `recompute()` | redirect | Dashboard |
@@ -71,7 +70,7 @@ Sticky top nav (44px height). Contains:
 | `/guide` | `guide()` | `guide.html` | guide |
 | `/admin` | `admin()` | `admin.html` | admin |
 | `/admin/add_etf` POST | `admin_add_etf()` | redirect | — |
-| `/admin/toggle-etf` POST | `admin_toggle_etf()` | redirect | — |
+| `/admin/delete-etf` POST | `admin_delete_etf()` | redirect | — |
 | `/admin/import-gap` POST | `admin_import_gap()` | redirect | — |
 | `/admin/add-fund` POST | `admin_add_fund()` | redirect | — |
 | `/admin/remove-fund` POST | `admin_remove_fund()` | redirect | — |
@@ -382,35 +381,35 @@ See `05_PENSION_PROXY_METHODOLOGY.md` for the pension stance logic (`_build_fund
 
 ## Page: Data Entry (`/entry`) — `entry.html`
 
-Weekly OHLCV data entry form for all 43 active ETFs. Data sourced exclusively from LSEG Workspace Excel exports.
+Upload-only data entry page. The manual OHLCV entry form was removed — all data now comes exclusively from LSEG Workspace Excel uploads. 106 lines.
 
-### Import Bar (top of page)
+### Upload Band
 
-Two methods available side by side:
+Two upload methods:
 
-| Method | Label | Action | Route |
-|--------|-------|--------|-------|
-| LSEG per-ticker | `↑ LSEG IMPORT:` | Ticker dropdown + single `.xlsx` → imports that ETF | POST `/entry/import-lseg` |
-| Bulk LSEG | `↑ BULK IMPORT:` | Multi-file `<input multiple>` → imports all at once | POST `/entry/import-lseg-bulk` |
+| Row label | Action | Route |
+|-----------|--------|-------|
+| `SINGLE ETF` | Ticker dropdown + single `.xlsx` file → IMPORT button | POST `/entry/import-lseg` |
+| `BULK UPLOAD` | Multi-file `<input multiple>` (files named `TICKER.xlsx`) → IMPORT ALL button | POST `/entry/import-lseg-bulk` |
 
-**Bulk import rules:** Files must be named exactly `TICKER.xlsx` (e.g. `VWRP.L.xlsx`). The server matches filename to ticker and processes each file in sequence. A progress bar shows file count selected.
+**Bulk rules:** Files must be named exactly `TICKER.xlsx` (e.g. `VWRP.L.xlsx`). Ticker extracted by stripping extension, matched against active universe.
 
-**Template import/export removed** — the former Method 2/3 (`/entry/export-template`, `/entry/import-template`) no longer exist in server.py.
+### Recompute Band
 
-### Manual Entry Form
+Below the upload band, a dedicated recompute section:
 
-- **Week ending date picker** — defaults to `default_date` from server
-- **Keyboard shortcuts:** `Tab` advance · `Shift+Tab` back · `Enter` save
-- **Columns:** TICKER / NAME | PREV CLOSE (read-only) | OPEN | HIGH | LOW | CLOSE ★ | VOLUME | SIGNAL (current, read-only badge)
-- **Field naming:** `TICKER__field` (e.g. `VWRP.L__close`) — double underscore separator
-- **Validation:** `validateRow(ticker)` — checks `low ≤ close ≤ high`; green border if ok, red if err
-- **Progress bar:** counts rows where both CLOSE and VOLUME are filled; `N/43 ETFs entered`
+- **As of Friday** — optional date picker (`as_of_date`). Leave blank to use all available data, or pick a specific Friday to recompute signals for that week only.
+- **↻ RECOMPUTE** button — POSTs to `/recompute` with `as_of_date` field.
+- Useful for backfilling: import historical LSEG files first, then recompute for a specific past Friday.
 
-### Submit
+### What was removed
 
-- `POST /entry` with `source=LSEG` hidden field
-- Button disables and shows `COMPUTING…` while server processes
-- Only rows with a Close value are saved
+- Manual OHLCV entry table (all 43 ETF rows with OPEN/HIGH/LOW/CLOSE/VOLUME inputs)
+- Date picker for week-ending date
+- `POST /entry` route for manual submission
+- Progress bar (N/43 ETFs entered)
+- Previous close display column
+- Signal badge column
 
 ---
 
@@ -473,16 +472,15 @@ Two-column: Add ETF form (left) + ETF tile grid (right).
 
 **Add ETF form** (POST `/admin/add_etf`): Ticker, Name, Sector (dropdown from `config.SECTOR_LABEL`), Display Order, Benchmark Ticker (defaults to VWRP.L), optional LSEG file upload for immediate history import.
 
-**ETF tile grid**: One tile per ETF showing ticker, name, row count in prices table, status dot (active=green, suspended=yellow, inactive=grey). Action buttons per tile:
+**ETF tile grid**: One tile per ETF showing ticker, name, benchmark, price row count, and an inline sector editor (dropdown + ✓ save button → POST `/admin/set-sector`).
 
-| Action | Route | Condition shown |
-|--------|-------|----------------|
-| Unsuspend | POST `/admin/unsuspend` | If suspended |
-| Suspend | POST `/admin/suspend` | If active and not suspended |
-| Deactivate | POST `/admin/deactivate` | If active and not suspended |
-| Activate | POST `/admin/activate` | If not active |
+**Action button per tile:**
 
-> **Route confirmed from live server.py:** The live server uses `/admin/toggle-etf` with an `action` parameter (`suspend`/`resume`/`exclude`/`include`). The `admin.html` template uses `/admin/suspend`, `/admin/unsuspend`, `/admin/deactivate`, `/admin/activate` as individual routes — these **do not exist** in the live server. This means the admin suspend/activate buttons are currently broken (will 404). The template needs updating to use the `toggle-etf` route with the correct `action` value, OR new individual routes need to be added to `server.py`.
+| Button | Route | Effect |
+|--------|-------|--------|
+| Delete | POST `/admin/delete-etf` | Permanently deletes ETF and ALL its prices and signals from the DB |
+
+> ⚠️ **Delete is irreversible.** Suspend/exclude functionality has been removed. Deletion removes all `prices`, `signals`, and `etf_meta` rows for that ticker permanently. Re-importing from LSEG is required to restore.
 
 **DB stats panel**: Shows price_rows, date_min, date_max, signal_rows, model_version.
 
@@ -526,7 +524,7 @@ Returns all current signals as JSON array. No date filtering — always returns 
 | `home.html` | ✅ | Fully documented — nav cards, signal summary |
 | `heatmap.html` | ✅ | Fully documented — 18-col table, sector grid, tooltips |
 | `dashboard.html` | ✅ | Fully documented — card grid, detail panel, Chart.js |
-| `entry.html` | ✅ | Documented — 2-method import bar (LSEG per-ticker + Bulk LSEG); template import/export removed |
+| `entry.html` | ✅ | Documented — upload-only redesign (Single ETF + Bulk + Recompute band); manual OHLCV table removed |
 | `history.html` | ✅ | Fully documented — simple server-rendered table |
 | `guide.html` | ✅ | Documented — KPI guide with signal logic table |
 | `admin.html` | ✅ | Documented — ETF tiles, fund tiles, route discrepancy noted |

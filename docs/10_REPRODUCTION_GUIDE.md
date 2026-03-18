@@ -306,8 +306,7 @@ After price data is imported, trigger a recompute:
 
 ```bash
 # Option A — via UI:
-# Navigate to /entry → submit any date → auto-recompute triggers
-# Or: POST to /recompute (there may be a button on the dashboard)
+# Navigate to /entry → Recompute Band → click ↻ RECOMPUTE (leave date blank for all data)
 
 # Option B — direct Python (on PythonAnywhere console or locally):
 cd ~/Footprints

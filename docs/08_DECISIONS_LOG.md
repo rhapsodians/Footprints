@@ -203,7 +203,7 @@ Option A is simpler.
 ### [RESOLVED] — Admin route discrepancy: template vs server.py
 
 **Issue:** `admin.html` was submitting to `/admin/suspend`, `/admin/unsuspend`, `/admin/deactivate`, `/admin/activate` as individual routes that did not exist in `server.py`.
-**Resolution:** `admin.html` updated to use `/admin/toggle-etf` with a hidden `action` field (`suspend`/`resume`/`exclude`/`include`) matching the live server route. All four status buttons now work correctly.
+**Resolution:** `admin.html` updated to use `/admin/toggle-etf` then later simplified further — toggle-etf route removed entirely in favour of a single Delete button (`/admin/delete-etf`). Suspend/exclude no longer exist.
 **Status:** ✅ Resolved.
 
 **Decision:** The heatmap uses a custom 11-level bipolar colour class system (`hi-5` → `hi-0` → `lo-5`) plus a 6-level liquidity scale (`lq-0` to `lq-5`). Thresholds are hardcoded per KPI.
@@ -317,6 +317,32 @@ Option A is simpler.
 
 **Rationale:** Clearer, more institutional terminology — "Fixed Income" and "Real Estate" are standard asset class names; "Global Benchmark" clarifies that BASE ETFs (VWRP.L, SWDA.L, VHVG.L) serve as the reference universe; "Global Thematic" better describes IWFQ.L, ISWSML.L, MAGG.L.
 **Status:** Active. All docs updated to reflect new labels.
+
+### [v2.0] — Entry page: manual OHLCV table removed; upload-only redesign
+
+**Decision:** The manual OHLCV entry form (43-row table with OPEN/HIGH/LOW/CLOSE/VOLUME inputs, date picker, progress bar) was removed entirely. The entry page is now upload-only: Single ETF LSEG upload and Bulk upload, plus a dedicated Recompute band.
+**Rationale:** All data comes from LSEG exports. Manual entry was error-prone and redundant. The redesign reduces the template from ~500 lines to 106 lines.
+**Also removed:** `POST /entry` route (`entry_post()`) — manual form submission no longer exists.
+**Status:** Active.
+
+### [v2.0] — Engine: as_of_date parameter for targeted Friday recompute
+
+**Decision:** `engine.run_engine()` gains an optional `as_of_date` parameter (ISO date string, must be a Friday). When supplied, the engine restricts price data to `<= as_of_date`, producing signals for exactly that historical week even when newer data already exists in the DB.
+**Rationale:** Enables backfilling — import historical LSEG exports, then recompute signals for each past Friday in sequence. The `/recompute` route exposes this via a date picker on the entry page.
+**Status:** Active.
+
+### [v2.0] — Admin: Delete ETF replaces Suspend/Exclude
+
+**Decision:** The Suspend and Exclude (soft-deactivate) buttons on ETF tiles in Admin were replaced by a single **Delete** button (POST `/admin/delete-etf`). The `/admin/toggle-etf` route was removed.
+**Rationale:** Suspended/excluded ETFs still occupied DB rows and caused complexity. A hard delete is simpler — if an ETF needs to be re-added, re-import from LSEG.
+**Risk:** Irreversible — deletes all `prices`, `signals`, and `etf_meta` rows for that ticker.
+**Status:** Active.
+
+### [v2.0] — Home page: date filtering to prevent future dates
+
+**Decision:** The home route now filters `db.get_available_dates()` to dates `<= today` before selecting the most recent as `as_of`. Similarly for dashboard and heatmap routes.
+**Rationale:** Prevents showing signals for a future Friday if data was accidentally imported ahead of time.
+**Status:** Active.
 
 ### [OPEN] — `footprints.db` not in the repo (correctly gitignored)
 

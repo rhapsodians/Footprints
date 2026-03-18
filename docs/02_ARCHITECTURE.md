@@ -8,7 +8,7 @@
 Footprints/                      # Repository root
 │
 ├── server.py                    # Flask app: all routes, helpers, LSEG parser (583 lines)
-├── engine.py                    # Signal computation pipeline — no Flask imports (723 lines)
+├── engine.py                    # Signal computation pipeline — no Flask imports (733 lines)
 ├── db.py                        # All SQLite I/O — no Flask, no business logic (688 lines)
 ├── config.py                    # All constants, weights, thresholds, sector labels (180 lines)
 ├── wsgi.py                      # PythonAnywhere WSGI entry point
@@ -49,7 +49,7 @@ Footprints/                      # Repository root
 The sole Flask file. Contains:
 
 - Flask app instantiation and `secret_key` setup
-- All route handlers (`@app.route`) — **22 routes** in the live version (including `/recompute` POST, `/entry/import-lseg-bulk` POST, `/admin/set-sector` POST)
+- All route handlers (`@app.route`) — **21 routes** in the live version (`/admin/toggle-etf` removed; `/admin/delete-etf` added; `POST /entry` manual submit removed)
 - Jinja2 helper functions registered via `app.jinja_env.globals`
 - LSEG Excel parser (`_parse_lseg()`)
 - Dashboard data enrichment (`_enrich_signals()`)
