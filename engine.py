@@ -686,6 +686,7 @@ def run_engine(
     prices_df: pd.DataFrame,
     etf_meta_df: pd.DataFrame,
     existing_signals_df: pd.DataFrame | None = None,
+    as_of_date: str | None = None,
 ) -> tuple[list[dict], list[dict]]:
     """
     Run the full v2 signal engine.
@@ -695,6 +696,10 @@ def run_engine(
     prices_df           : raw daily OHLCV from db.get_prices_df()
     etf_meta_df         : etf universe from db.get_etf_meta()
     existing_signals_df : current signals from db.get_signals_df() for change detection
+    as_of_date          : if given (YYYY-MM-DD, must be a Friday), restrict prices
+                          to <= that date so the engine produces signals for exactly
+                          that week-end. Useful for backfilling or recomputing a
+                          specific historical Friday when newer data already exists.
 
     Returns
     -------
@@ -704,6 +709,11 @@ def run_engine(
     """
     if existing_signals_df is None:
         existing_signals_df = pd.DataFrame()
+
+    # If a target date is supplied, clip prices to that Friday
+    if as_of_date:
+        cutoff = pd.Timestamp(as_of_date)
+        prices_df = prices_df[prices_df["date"] <= cutoff].copy()
 
     # Pipeline
     weekly  = _resample_weekly(prices_df)

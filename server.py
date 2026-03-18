@@ -158,7 +158,10 @@ def entry_post():
     if saved:
         flash(f"Saved {saved} row(s) for {entry_date}.","ok")
         try:
-            s_rows, c_rows = engine.run_engine(db.get_prices_df(), db.get_etf_meta(), db.get_signals_df())
+            s_rows, c_rows = engine.run_engine(
+                db.get_prices_df(), db.get_etf_meta(), db.get_signals_df(),
+                as_of_date=entry_date,
+            )
             db.upsert_signals(s_rows); db.log_signal_changes(c_rows)
             if c_rows:
                 parts = " | ".join(f"{c['ticker']}: {c['old_signal']} → {c['new_signal']}" for c in c_rows)
@@ -238,18 +241,24 @@ def entry_import_lseg_bulk():
 @app.route("/recompute", methods=["POST"])
 def recompute():
     selected_date = request.form.get("date", "").strip()
+    as_of_date    = request.form.get("as_of_date", "").strip() or None
     try:
-        s_rows, c_rows = engine.run_engine(db.get_prices_df(), db.get_etf_meta(), db.get_signals_df())
+        s_rows, c_rows = engine.run_engine(
+            db.get_prices_df(), db.get_etf_meta(), db.get_signals_df(),
+            as_of_date=as_of_date,
+        )
         db.upsert_signals(s_rows); db.log_signal_changes(c_rows)
-        msg = f"Recomputed {len(s_rows)} signals."
+        date_label = f" for {as_of_date}" if as_of_date else ""
+        msg = f"Recomputed {len(s_rows)} signals{date_label}."
         if c_rows: msg += f" {len(c_rows)} change(s) logged."
         flash(msg,"ok")
     except Exception as e:
         flash(f"Recompute failed: {e}","err"); raise
-    # Redirect back to whichever date was selected; default to latest
+    # Redirect back to the target date
     dest = url_for("dashboard")
-    if selected_date:
-        dest += f"?date={selected_date}"
+    target = as_of_date or selected_date
+    if target:
+        dest += f"?date={target}"
     return redirect(dest)
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
