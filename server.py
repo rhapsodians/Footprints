@@ -113,13 +113,14 @@ def _enrich_signals(signals):
 
 @app.route("/")
 def index():
-    signals_df = db.get_signals_df()
+    today_str  = date.today().isoformat()
+    dates      = [d for d in db.get_available_dates() if d <= today_str]
+    as_of      = dates[0] if dates else None
+    signals_df = db.get_signals_df(as_of_date=as_of)
     signals    = _dicts(signals_df)
-    dates      = db.get_available_dates()
-    as_of      = dates[0] if dates else "—"
     counts = Counter(r.get("signal") or "NO DATA" for r in signals)
-    ctx = _ctx("home", as_of)
-    ctx.update(sig_counts=dict(counts), n_active=len(signals), as_of=as_of)
+    ctx = _ctx("home", as_of or "—")
+    ctx.update(sig_counts=dict(counts), n_active=len(signals), as_of=as_of or "—")
     return render_template("home.html", **ctx)
 
 # ── Entry ─────────────────────────────────────────────────────────────────────
