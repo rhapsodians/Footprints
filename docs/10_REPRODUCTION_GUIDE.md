@@ -157,7 +157,7 @@ etfs = [
     (17, 'IITU.L',   'iShares S&P500 Info Tech',                            'US',     'VWRP.L'),
     (18, 'IS15.L',   'iShares £ Corp Bond 0-5yr UCITS ETF GBP (Dist)',      'BOND',   'VWRP.L'),
     (19, 'ISWSML.L', 'iShares MSCI World Small Cap UCITS ETF USD (Acc)',    'GLOBAL', 'VWRP.L'),
-    (20, 'IWDP.L',   'iShares Dev Mkts Property',                           'PROP',   'VWRP.L'),
+    (20, 'IWDP.L',   'iShares Dev Mkts Real Estate',                           'PROP',   'VWRP.L'),
     (21, 'IWFQ.L',   'iShares MSCI World Quality',                          'GLOBAL', 'VWRP.L'),
     (22, 'LGAG.L',   'L&G Asia Pacific Ex Japan Equity UCITS ETF USD Acc',  'APAC',   'VWRP.L'),
     (23, 'MAGG.L',   'iShares Growth Portfolio UCITS ETF GBP Hedged Acc',   'GLOBAL', 'VWRP.L'),

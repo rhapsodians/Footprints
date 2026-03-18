@@ -66,7 +66,7 @@ Each ETF has:
 
 | Code | Display Label |
 |------|--------------|
-| `BASE` | Global Base |
+| `BASE` | Global Benchmark |
 | `US` | United States |
 | `NAM` | North America |
 | `UK` | United Kingdom |
@@ -77,11 +77,11 @@ Each ETF has:
 | `TECH` | Technology |
 | `HEALTH` | Healthcare |
 | `DEF` | Defence |
-| `PROP` | Property |
+| `PROP` | Real Estate |
 | `COMM` | Commodities |
 | `MINING` | Mining |
-| `BOND` | Bonds |
-| `GLOBAL` | Global Factor |
+| `BOND` | Fixed Income |
+| `GLOBAL` | Global Thematic |
 | `OTHER` | Other |
 
 ### Benchmark
@@ -254,7 +254,7 @@ These fields exist as NULL columns in the DB schema for legacy row compatibility
 | 17 | IITU.L | iShares S&P500 Info Tech | US |
 | 18 | IS15.L | iShares £ Corp Bond 0-5yr UCITS ETF GBP (Dist) | BOND |
 | 19 | ISWSML.L | iShares MSCI World Small Cap UCITS ETF USD (Acc) | GLOBAL |
-| 20 | IWDP.L | iShares Dev Mkts Property | PROP |
+| 20 | IWDP.L | iShares Dev Mkts Real Estate | PROP |
 | 21 | IWFQ.L | iShares MSCI World Quality | GLOBAL |
 | 22 | LGAG.L | L&G Asia Pacific Ex Japan Equity UCITS ETF USD Acc | APAC |
 | 23 | MAGG.L | iShares Growth Portfolio UCITS ETF GBP Hedged Acc | GLOBAL |

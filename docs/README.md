@@ -88,6 +88,7 @@ The following were **wrong** in the pre-audit documentation and are now correcte
 | ✅ Done | Inline sector editor on Admin tiles | `06_DASHBOARD_PAGES.md`, `08_DECISIONS_LOG.md` |
 | ✅ Done | Bulk LSEG import added; template import/export removed | `06_DASHBOARD_PAGES.md` |
 | ✅ Done | Footprints logo in nav and home hero | `06_DASHBOARD_PAGES.md` |
+| ✅ Done | Sector labels updated (Global Benchmark, Real Estate, Fixed Income, Global Thematic) | `03_DATA_MODEL.md`, `08_DECISIONS_LOG.md` |
 | 🟢 Low | Run `pip freeze > requirements_locked.txt` on PythonAnywhere and commit | repo root |
 | 🔴 High | `pension_funds` + `pension_etf_map` not in `init_schema()` — fresh deploy will 500 | Add to `db.init_schema()`; workaround in `10_REPRODUCTION_GUIDE.md` |
 | 🟢 Low | `footprints.db` backup strategy — gitignored so not version controlled | Consider periodic manual backup |

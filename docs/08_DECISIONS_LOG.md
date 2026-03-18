@@ -307,6 +307,17 @@ Option A is simpler.
 **Recommendation:** Add `pension_funds` and `pension_etf_map` CREATE TABLE statements to `db.init_schema()`.
 **Status:** Open — workaround documented in seed scripts.
 
+### [v2.0] — Sector labels updated to clearer institutional naming
+
+**Decision:** Four `SECTOR_LABEL` display names updated in `config.py`:
+- `BASE`: "Global Base" → "Global Benchmark"
+- `PROP`: "Property" → "Real Estate"
+- `BOND`: "Bonds" → "Fixed Income"
+- `GLOBAL`: "Global Factor" → "Global Thematic"
+
+**Rationale:** Clearer, more institutional terminology — "Fixed Income" and "Real Estate" are standard asset class names; "Global Benchmark" clarifies that BASE ETFs (VWRP.L, SWDA.L, VHVG.L) serve as the reference universe; "Global Thematic" better describes IWFQ.L, ISWSML.L, MAGG.L.
+**Status:** Active. All docs updated to reflect new labels.
+
 ### [OPEN] — `footprints.db` not in the repo (correctly gitignored)
 
 **Decision:** The database is gitignored. This is correct — it contains real price data.
