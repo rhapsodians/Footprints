@@ -198,6 +198,23 @@
     font-family: var(--mono); font-size: .73rem; padding: 5px 14px;
     border-radius: 3px; cursor: pointer; border: 1px solid transparent; }
   .btn-green:hover { opacity: .85; }
+
+  /* ── Inline sector editor ── */
+  .sector-form { display:inline-flex; align-items:center; gap:4px; margin:1px 0; }
+  .sector-sel {
+    font-family:var(--mono); font-size:.73rem; color:var(--text2);
+    background:var(--surface2); border:1px solid var(--border2);
+    border-radius:2px; padding:1px 4px; cursor:pointer; outline:none;
+    transition:border-color .12s;
+  }
+  .sector-sel:hover, .sector-sel:focus { border-color:var(--accent); color:var(--text); }
+  .sector-save {
+    font-family:var(--mono); font-size:.67rem; letter-spacing:.06em;
+    color:var(--accent); background:none; border:1px solid var(--accent);
+    border-radius:2px; padding:1px 6px; cursor:pointer; transition:all .12s;
+    white-space:nowrap;
+  }
+  .sector-save:hover { background:var(--blue-dim); }
 </style>
 {% endblock %}
 
@@ -305,9 +322,16 @@
       </div>
 
       <div class="tile-meta">
-        <span class="sector-tag">{{ sector_labels.get(e.sector, e.sector or '—') }}</span>
+        <form class="sector-form" method="post" action="/admin/set-sector">
+          <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <select class="sector-sel" name="sector">
+            {% for sc in sectors %}
+            <option value="{{ sc }}" {% if sc == e.sector %}selected{% endif %}>{{ sector_labels.get(sc, sc) }}</option>
+            {% endfor %}
+          </select>
+          <button class="sector-save" type="submit">✓</button>
+        </form>
         <span class="tile-tag">{{ e.benchmark_ticker or base_ticker }}</span>
-        <span class="tile-tag">Ord {{ e.display_order }}</span>
         {% if e.suspended %}
           <span class="tile-tag" style="color:var(--yellow);border-color:var(--sig-ea-bd)">SUSP</span>
         {% elif not e.active %}
