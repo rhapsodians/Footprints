@@ -249,21 +249,21 @@
         <div class="sp-meta">{{ n_active }} active ETFs &middot; {{ as_of }}</div>
 
         {% set sig_cfg = [
-          ('STRONG BUY',        'var(--sig-sb-bg)', 'var(--sig-sb)', 'var(--sig-sb-bd)'),
-          ('EARLY ACCUMULATION','var(--sig-ea-bg)', 'var(--sig-ea)', 'var(--sig-ea-bd)'),
-          ('ACCUMULATING/HOLD', 'var(--sig-ah-bg)', 'var(--sig-ah)', 'var(--sig-ah-bd)'),
-          ('NEUTRAL',           'transparent',      'var(--text2)',  'var(--border)'),
-          ('EXIT/DISTRIBUTION', 'var(--sig-ex-bg)', 'var(--sig-ex)', 'var(--sig-ex-bd)'),
+          ('STRONG BUY',        'Strong Buy',        'var(--sig-sb-bg)', 'var(--sig-sb)', 'var(--sig-sb-bd)'),
+          ('EARLY ACCUMULATION','Early Acc',         'var(--sig-ea-bg)', 'var(--sig-ea)', 'var(--sig-ea-bd)'),
+          ('ACCUMULATING/HOLD', 'Accumulating',      'var(--sig-ah-bg)', 'var(--sig-ah)', 'var(--sig-ah-bd)'),
+          ('NEUTRAL',           'Neutral',           'transparent',      'var(--text2)',  'var(--border)'),
+          ('EXIT/DISTRIBUTION', 'Exit / Distribute', 'var(--sig-ex-bg)', 'var(--sig-ex)', 'var(--sig-ex-bd)'),
         ] %}
 
         {% set ns = namespace(has=false) %}
-        {% for label, bg, fg, bd in sig_cfg %}
-          {% if sig_counts.get(label, 0) > 0 %}{% set ns.has = true %}{% endif %}
+        {% for signal, label, bg, fg, bd in sig_cfg %}
+          {% if sig_counts.get(signal, 0) > 0 %}{% set ns.has = true %}{% endif %}
         {% endfor %}
 
         {% if ns.has %}
-          {% for label, bg, fg, bd in sig_cfg %}
-            {% set cnt = sig_counts.get(label, 0) %}
+          {% for signal, label, bg, fg, bd in sig_cfg %}
+            {% set cnt = sig_counts.get(signal, 0) %}
             {% if cnt > 0 %}
             <div class="sp-row" style="background:{{ bg }};border-color:{{ bd }}">
               <span class="sp-lbl" style="color:{{ fg }}">{{ label }}</span>
