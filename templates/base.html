@@ -104,20 +104,18 @@
     }
 
     .nav-brand {
-      font-family: var(--mono);
-      font-size: .80rem;
-      font-weight: 600;
-      letter-spacing: .12em;
-      color: var(--text);
       text-decoration: none;
-      text-transform: uppercase;
+      color: var(--text);
       padding-right: 16px;
       border-right: 1px solid var(--border2);
       margin-right: 8px;
       white-space: nowrap;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      line-height: 1;
     }
-
-    .nav-brand span { color: var(--accent); }
 
     .nav-link {
       font-family: var(--mono);
@@ -460,7 +458,7 @@
 <body>
 
 <nav class="topnav">
-  <a class="nav-brand" href="/"><span>F</span>OOTPRINTS <span style="font-weight:300;opacity:.45;margin-left:2px">·</span> <span style="font-weight:400;font-size:.80em;opacity:.7;letter-spacing:.04em">{% if active_nav == 'dashboard' %}Dashboard{% elif active_nav == 'heatmap' %}Heatmap{% elif active_nav == 'history' %}History{% elif active_nav == 'guide' %}Guide{% elif active_nav == 'entry' %}Entry{% elif active_nav == 'admin' %}Admin{% endif %}</span></a>
+  <a class="nav-brand" href="/"><svg width="180" height="28" viewBox="0 0 180 28" style="display:inline-block;vertical-align:middle" aria-label="Footprints"><circle cx="10" cy="18" r="3.5" fill="#e84545"/><circle cx="20" cy="12" r="3.5" fill="#f5a623"/><circle cx="31" cy="8"  r="3.5" fill="#27ae60"/><circle cx="42" cy="12" r="3.5" fill="#2d7dd2"/><text x="50" y="20" font-family="-apple-system,'Helvetica Neue',sans-serif" font-size="14" font-weight="700" fill="currentColor" letter-spacing="-0.3">FOOTPRINTS</text></svg><span style="font-family:var(--mono);font-size:.73rem;font-weight:400;opacity:.55;letter-spacing:.04em;border-left:1px solid var(--border2);padding-left:10px">{% if active_nav == 'dashboard' %}Dashboard{% elif active_nav == 'heatmap' %}Heatmap{% elif active_nav == 'history' %}History{% elif active_nav == 'guide' %}Guide{% elif active_nav == 'entry' %}Entry{% elif active_nav == 'admin' %}Admin{% endif %}</span></a>
   <a class="nav-link {% if active_nav == 'home' %}active{% endif %}"      href="/">Home</a>
   <a class="nav-link {% if active_nav == 'entry' %}active{% endif %}"     href="/entry">Entry</a>
   <a class="nav-link {% if active_nav == 'dashboard' %}active{% endif %}" href="/dashboard">Dashboard</a>
