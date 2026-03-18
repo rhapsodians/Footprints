@@ -308,6 +308,7 @@ def dashboard():
     stats = dict(
         total=len(signals),
         strong_buy=sum(1 for r in signals if r.get("signal")==SIG_STRONG_BUY),
+        early_acc=sum(1 for r in signals if r.get("signal")==SIG_EARLY_ACCUM),
         accum=sum(1 for r in signals if r.get("signal")==SIG_ACCUM),
         neutral=sum(1 for r in signals if r.get("signal")=="NEUTRAL"),
         exit=sum(1 for r in signals if r.get("signal")==SIG_EXIT),

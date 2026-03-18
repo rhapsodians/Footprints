@@ -39,7 +39,7 @@
 .etf-row td{padding:2px 3px;border-bottom:1px solid var(--border);vertical-align:middle}
 .hm-table tbody tr:last-child td{border-bottom:none}
 .ct{font-family:var(--mono);font-size:.87rem;font-weight:600;color:var(--text);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap}
-.cn{font-family:var(--mono);font-size:.80rem;color:var(--text2);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap;min-width:220px;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.cn{font-family:var(--mono);font-size:.80rem;color:var(--text2);padding:5px 8px;background:var(--surface);border-radius:3px;white-space:nowrap;max-width:165px;overflow:hidden;text-overflow:ellipsis}
 .cat{font-family:var(--mono);font-size:.73rem;color:var(--text3);background:var(--surface);border-radius:3px;padding:5px 7px;white-space:nowrap}
 .hc{padding:4px 3px;border-radius:3px;text-align:center;vertical-align:middle;font-family:var(--mono);font-size:.73rem;font-weight:500;min-width:48px;white-space:nowrap;cursor:help}
 .hc .v{display:block;line-height:1}.hc .s{display:block;font-size:.73rem;opacity:.65;margin-top:2px}
@@ -151,7 +151,8 @@
     <div class="ctrl-chips" id="hm-score-chips">
       <button class="hm-fchip on" data-sig="ALL"        onclick="scoreFilt('ALL',this)">ALL</button>
       <button class="hm-fchip"    data-sig="STRONG BUY" onclick="scoreFilt('STRONG BUY',this)"><span id="sc-sb">0</span> STRONG BUY</button>
-      <button class="hm-fchip"    data-sig="ACCUM"      onclick="scoreFilt('ACCUM',this)"><span id="sc-ac">0</span> ACCUM</button>
+      <button class="hm-fchip"    data-sig="EARLY ACCUMULATION" onclick="scoreFilt('EARLY ACCUMULATION',this)"><span id="sc-ea">0</span> EARLY ACC</button>
+      <button class="hm-fchip"    data-sig="ACCUMULATING/HOLD"   onclick="scoreFilt('ACCUMULATING/HOLD',this)"><span id="sc-ac">0</span> ACCUMULATING</button>
       <button class="hm-fchip"    data-sig="NEUTRAL"    onclick="scoreFilt('NEUTRAL',this)"><span id="sc-nt">0</span> NEUTRAL</button>
       <button class="hm-fchip"    data-sig="EXIT"       onclick="scoreFilt('EXIT',this)"><span id="sc-ex">0</span> EXIT</button>
       <button class="hm-fchip"    data-sig="CHANGE"     onclick="scoreFilt('CHANGE',this)"><span id="sc-ch">0</span> CHANGES</button>
@@ -193,7 +194,7 @@
 
 <div class="hm-outer">
 <div class="hm-wrap" style="overflow-x:auto">
-<table class="hm-table" id="ht" style="min-width:1700px">
+<table class="hm-table" id="ht" style="min-width:1600px">
   <thead><tr>
     <th class="thl hth" onclick="doSort('provider',this)">PROVIDER ⇅</th>
     <th class="thl hth" onclick="doSort('fund',this)">PENSION FUND ⇅</th>
@@ -211,8 +212,8 @@
     <th class="hth" onclick="doSort('ppw',this)">PRESS WKS% ⇅</th>
     <th class="hth" onclick="doSort('turnover',this)">TURN RATIO ⇅</th>
     <th class="hth" onclick="doSort('turnz',this)">TURN Z ⇅</th>
-    <th class="hth" onclick="doSort('size',this)">AVG TURN /wk ⇅</th>
-    <th class="hth" onclick="doSort('latest',this)">LATEST TURN /wk ⇅</th>
+    <th class="hth" onclick="doSort('size',this)">AVG TURN ⇅</th>
+    <th class="hth">LATEST TURN</th>
   </tr></thead>
   <tbody id="hb"></tbody>
 </table>
@@ -413,7 +414,7 @@ function mkRow(e){
   const prevSig=e.prev_signal?`<span style="font-family:var(--mono);font-size:.60rem;color:var(--text3);text-decoration:line-through;margin-right:2px">${e.prev_signal.replace('ACCUMULATING/HOLD','ACC').replace('EXIT/DISTRIBUTION','EXIT').replace('STRONG BUY','SB').replace('EARLY ACCUMULATION','EA')}</span><span style="color:var(--text3)">→</span>`:'';
   const sigLabel=e.signal?e.signal.replace('ACCUMULATING/HOLD','ACCUM').replace('EXIT/DISTRIBUTION','EXIT').replace('EARLY ACCUMULATION','EARLY ACC'):'-';
   // data attrs for filtering
-  const sigKey=e.signal==='STRONG BUY'?'STRONG BUY':e.signal==='EARLY ACCUMULATION'||e.signal==='ACCUMULATING/HOLD'?'ACCUM':e.signal==='EXIT/DISTRIBUTION'?'EXIT':'NEUTRAL';
+  const sigKey=e.signal==='STRONG BUY'?'STRONG BUY':e.signal==='EARLY ACCUMULATION'?'EARLY ACCUMULATION':e.signal==='ACCUMULATING/HOLD'?'ACCUMULATING/HOLD':e.signal==='EXIT/DISTRIBUTION'?'EXIT':'NEUTRAL';
   const hasChange=e.prev_signal?'yes':'no';
   return `<tr data-sig="${sigKey}" data-conf="${e.confidence_bucket||''}" data-change="${hasChange}" data-fund="${fundSort}" data-sector="${e.sector||''}" data-provider="${provSort}">`+
     `<td class="cat"><span style="font-family:var(--mono);font-size:.67rem;font-weight:700;padding:2px 7px;border-radius:2px;white-space:nowrap;${provCls}">${provLabel}</span></td>`+
@@ -424,7 +425,7 @@ function mkRow(e){
     `<td class="hc sc ${sigCss}" onmouseenter="showHmTip(event,'signal','${e.signal}','${t}')" onmouseleave="hideKtt()" style="min-width:95px">${prevSig}<span class="v" style="font-size:.67rem">${sigLabel}</span></td>`+
     `<td class="hc ${rotCls(e.rotation_score)}" onmouseenter="showHmTip(event,'rotation',${e.rotation_score||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rotation_score,1)}</span></td>`+
     `<td class="hc ${confCls(e.confidence_bucket)}" onmouseenter="showHmTip(event,'conf','${e.confidence_bucket||''}','${t}')" onmouseleave="hideKtt()"><span class="v" style="font-size:.73rem">${e.confidence_bucket||'—'}</span></td>`+
-    `<td class="hc ${ts===4?'hi-4':ts===3?'hi-2':ts===2?'hi-0':ts===1?'lo-2':'lo-4'}" onmouseenter="showHmTip(event,'trend','${trendVal}','${t}')" onmouseleave="hideKtt()"><div class="md">${dots}</div></td>`+
+    `<td class="hc ${ts===4?'hi-4':ts===3?'hi-2':ts===2?'hi-0':ts===1?'lo-2':'lo-4'}" onmouseenter="showHmTip(event,'trend','${trendVal}','${t}')" onmouseleave="hideKtt()"><div class="md">${dots}</div><span class="s">${ts!=null?ts+'/4':'—'}</span></td>`+
     `<td class="hc ${pctCls(e.rs20_vol_adj_rank_pct)}" onmouseenter="showHmTip(event,'rs20va',${e.rs20_vol_adj_rank_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rs20_vol_adj_rank_pct,0)}%</span></td>`+
     `<td class="hc ${pctCls(e.rs_accel_vol_adj_rank_pct)}" onmouseenter="showHmTip(event,'rsaccel',${e.rs_accel_vol_adj_rank_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.rs_accel_vol_adj_rank_pct,0)}%</span></td>`+
     `<td class="hc ${ic(rs20r,[0.5,2,5,10,15])}" onmouseenter="showHmTip(event,'rs20raw',${rs20r||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${rs20r!=null?(rs20r>0?'+':'')+fc(rs20r,2)+'%':'—'}</span></td>`+
@@ -432,8 +433,8 @@ function mkRow(e){
     `<td class="hc ${ic((e.pressure_pos_weeks_pct||50)-50,[5,10,20,30,45])}" onmouseenter="showHmTip(event,'ppw',${e.pressure_pos_weeks_pct||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.pressure_pos_weeks_pct,0)}%</span></td>`+
     `<td class="hc ${ic((e.turnover_ratio_20_100||1)-1,[0.05,0.1,0.2,0.35,0.5])}" onmouseenter="showHmTip(event,'turnratio',${e.turnover_ratio_20_100||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_ratio_20_100,2)}×</span></td>`+
     `<td class="hc ${ic(e.turnover_z_20,[0.25,0.5,1,2,3])}" onmouseenter="showHmTip(event,'turnz',${e.turnover_z_20||0},'${t}')" onmouseleave="hideKtt()"><span class="v">${fc(e.turnover_z_20,2)}σ</span></td>`+
-    `<td class="hc ${lqCls(avg)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(avg)}</span></td>`+
-    `<td class="hc ${lqCls(lat)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(lat)}${tlBadge}</span></td>`+
+    `<td class="hc ${lqCls(avg)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(avg)}</span><span class="s">/ wk</span></td>`+
+    `<td class="hc ${lqCls(lat)}" onmouseenter="showHmTip(event,'turn','${avg}|${lat}','${t}')" onmouseleave="hideKtt()"><span class="v">${turnStr(lat)}</span><span class="s">/ wk${tlBadge}</span></td>`+
     `</tr>`;
 }
 
@@ -461,7 +462,6 @@ function getSorted(){
     else if(curSort==='turnover')v=(b.turnover_ratio_20_100||0)-(a.turnover_ratio_20_100||0);
     else if(curSort==='turnz')v=(b.turnover_z_20||0)-(a.turnover_z_20||0);
     else if(curSort==='size')v=(b.avg_turn_20w||0)-(a.avg_turn_20w||0);
-    else if(curSort==='latest')v=(b.turn_latest||0)-(a.turn_latest||0);
     else v=0;
     if(curSort!=='signal')v*=sortDir;
     return v;
@@ -482,8 +482,8 @@ function render(){
   }
   if(activeScoreSig!=='ALL'){
     sorted=sorted.filter(e=>{
-      const sk=e.signal==='STRONG BUY'?'STRONG BUY':e.signal==='EARLY ACCUMULATION'||e.signal==='ACCUMULATING/HOLD'?'ACCUM':e.signal==='EXIT/DISTRIBUTION'?'EXIT':'NEUTRAL';
-      if(activeScoreSig==='ACCUM') return sk==='ACCUM';
+      if(activeScoreSig==='EARLY ACCUMULATION') return e.signal==='EARLY ACCUMULATION';
+      if(activeScoreSig==='ACCUMULATING/HOLD') return e.signal==='ACCUMULATING/HOLD';
       if(activeScoreSig==='CHANGE') return e.prev_signal;
       return sk===activeScoreSig;
     });
@@ -494,16 +494,18 @@ function render(){
   const cntEl=document.getElementById('etf-section-count');
   if(cntEl){const n=sorted.length,tot=DATA.length;cntEl.textContent=n<tot?n+' of '+tot+' ETFs':n+' ETFs';}
   // Update scorecard counts
-  const counts={SB:0,AC:0,NT:0,EX:0,CH:0};
+  const counts={SB:0,EA:0,AC:0,NT:0,EX:0,CH:0};
   DATA.forEach(e=>{
     if(e.signal==='STRONG BUY')counts.SB++;
-    else if(e.signal==='EARLY ACCUMULATION'||e.signal==='ACCUMULATING/HOLD')counts.AC++;
+    else if(e.signal==='EARLY ACCUMULATION')counts.EA++;
+    else if(e.signal==='ACCUMULATING/HOLD')counts.AC++;
     else if(e.signal==='EXIT/DISTRIBUTION')counts.EX++;
     else counts.NT++;
     if(e.prev_signal)counts.CH++;
   });
   const se=id=>document.getElementById(id);
   if(se('sc-sb'))se('sc-sb').textContent=counts.SB;
+  if(se('sc-ea'))se('sc-ea').textContent=counts.EA;
   if(se('sc-ac'))se('sc-ac').textContent=counts.AC;
   if(se('sc-nt'))se('sc-nt').textContent=counts.NT;
   if(se('sc-ex'))se('sc-ex').textContent=counts.EX;
