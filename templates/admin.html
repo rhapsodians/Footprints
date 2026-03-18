@@ -311,11 +311,19 @@
         {% endif %}
       </div>
 
-      <div class="tile-actions">
+      <div class="tile-actions" id="actions-{{ e.ticker }}">
         <button class="btn btn-sm btn-danger"
-                onclick="confirmDelete('{{ e.ticker }}', '{{ e.name|replace("'","\\'") }}')">
+                onclick="showDeleteConfirm('{{ e.ticker }}')">
           Delete
         </button>
+      </div>
+      <div class="tile-actions" id="confirm-{{ e.ticker }}" style="display:none;gap:6px">
+        <span style="font-family:var(--mono);font-size:.67rem;color:var(--sig-ex)">Sure?</span>
+        <form method="post" action="/admin/delete-etf" style="margin:0">
+          <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <button type="submit" class="btn btn-sm btn-danger">Yes, delete</button>
+        </form>
+        <button class="btn btn-sm" onclick="hideDeleteConfirm('{{ e.ticker }}')">Cancel</button>
       </div>
 
     </div>
@@ -467,17 +475,13 @@
   initTileSort('pf-grid');
 })();
 
-function confirmDelete(ticker, name) {
-  if (confirm('Permanently delete ' + ticker + ' (' + name + ')?
-
-This will remove ALL price data, signals, and history for this ETF. This cannot be undone.')) {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/admin/delete-etf';
-    const input = document.createElement('input');
-    input.type = 'hidden'; input.name = 'ticker'; input.value = ticker;
-    form.appendChild(input); document.body.appendChild(form); form.submit();
-  }
+function showDeleteConfirm(ticker) {
+  document.getElementById('actions-' + ticker).style.display = 'none';
+  document.getElementById('confirm-' + ticker).style.display = 'flex';
+}
+function hideDeleteConfirm(ticker) {
+  document.getElementById('confirm-' + ticker).style.display = 'none';
+  document.getElementById('actions-' + ticker).style.display = 'flex';
 }
 </script>
 
