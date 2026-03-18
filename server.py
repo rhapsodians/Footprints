@@ -125,52 +125,11 @@ def index():
 # ── Entry ─────────────────────────────────────────────────────────────────────
 @app.route("/entry")
 def entry():
-    data      = db.get_weekly_entry_data()
-    latest_p  = db.get_latest_prices()
-    sigs_df   = db.get_signals_df()
-    signals   = {r["ticker"]: r for r in _dicts(sigs_df)}
-    prefill   = {}
-    ctx = _ctx("entry")
-    ctx.update(tickers=data["tickers"], default_date=_next_friday(),
-               latest_prices=latest_p, signals=signals, prefill=prefill)
+    data = db.get_weekly_entry_data()
+    ctx  = _ctx("entry")
+    ctx.update(tickers=data["tickers"])
     return render_template("entry.html", **ctx)
 
-@app.route("/entry", methods=["POST"])
-def entry_post():
-    entry_date = request.form.get("date","").strip()
-    if not entry_date:
-        flash("No date supplied.","err"); return redirect(url_for("entry"))
-    td: dict[str,dict] = {}
-    for key, val in request.form.items():
-        if "__" not in key or not val.strip(): continue
-        ticker, field = key.rsplit("__", 1)
-        if field not in ("open","high","low","close","volume"): continue
-        td.setdefault(ticker, {})[field] = val.strip()
-    saved = skipped = 0
-    for ticker, f in td.items():
-        if not f.get("close"):
-            skipped += 1; continue
-        db.upsert_price_row({"date":entry_date,"ticker":ticker,
-            "open":f.get("open") or f["close"],"high":f.get("high") or f["close"],
-            "low":f.get("low") or f["close"],"close":f["close"],
-            "volume":f.get("volume") or 0,"source":"LSEG"})
-        saved += 1
-    if saved:
-        flash(f"Saved {saved} row(s) for {entry_date}.","ok")
-        try:
-            s_rows, c_rows = engine.run_engine(
-                db.get_prices_df(), db.get_etf_meta(), db.get_signals_df(),
-                as_of_date=entry_date,
-            )
-            db.upsert_signals(s_rows); db.log_signal_changes(c_rows)
-            if c_rows:
-                parts = " | ".join(f"{c['ticker']}: {c['old_signal']} → {c['new_signal']}" for c in c_rows)
-                flash(f"Signal changes: {parts}","ok")
-        except Exception as e:
-            flash(f"Recompute failed: {e}","err")
-    else:
-        flash("No rows saved — fill at least one Close.","err")
-    return redirect(url_for("entry"))
 
 @app.route("/entry/import-lseg", methods=["POST"])
 def entry_import_lseg():
