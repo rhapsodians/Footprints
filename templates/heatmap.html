@@ -212,7 +212,7 @@
     <th class="hth" onclick="doSort('turnover',this)">TURN RATIO ⇅</th>
     <th class="hth" onclick="doSort('turnz',this)">TURN Z ⇅</th>
     <th class="hth" onclick="doSort('size',this)">AVG TURN /wk ⇅</th>
-    <th class="hth">LATEST TURN /wk</th>
+    <th class="hth" onclick="doSort('latest',this)">LATEST TURN /wk ⇅</th>
   </tr></thead>
   <tbody id="hb"></tbody>
 </table>
@@ -461,6 +461,7 @@ function getSorted(){
     else if(curSort==='turnover')v=(b.turnover_ratio_20_100||0)-(a.turnover_ratio_20_100||0);
     else if(curSort==='turnz')v=(b.turnover_z_20||0)-(a.turnover_z_20||0);
     else if(curSort==='size')v=(b.avg_turn_20w||0)-(a.avg_turn_20w||0);
+    else if(curSort==='latest')v=(b.turn_latest||0)-(a.turn_latest||0);
     else v=0;
     if(curSort!=='signal')v*=sortDir;
     return v;
