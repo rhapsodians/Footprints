@@ -317,24 +317,28 @@
 
       <div class="tile-actions">
         {% if e.suspended %}
-        <form method="post" action="/admin/unsuspend" style="margin:0">
+        <form method="post" action="/admin/toggle-etf" style="margin:0">
           <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <input type="hidden" name="action" value="resume">
           <button class="btn btn-sm" style="color:var(--yellow);border-color:var(--sig-ea-bd)">Reinstate</button>
         </form>
         {% else %}
-        <form method="post" action="/admin/suspend" style="margin:0">
+        <form method="post" action="/admin/toggle-etf" style="margin:0">
           <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <input type="hidden" name="action" value="suspend">
           <button class="btn btn-sm btn-danger">Suspend</button>
         </form>
         {% endif %}
         {% if e.active and not e.suspended %}
-        <form method="post" action="/admin/deactivate" style="margin:0">
+        <form method="post" action="/admin/toggle-etf" style="margin:0">
           <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <input type="hidden" name="action" value="exclude">
           <button class="btn btn-sm">Exclude</button>
         </form>
         {% elif not e.active %}
-        <form method="post" action="/admin/activate" style="margin:0">
+        <form method="post" action="/admin/toggle-etf" style="margin:0">
           <input type="hidden" name="ticker" value="{{ e.ticker }}">
+          <input type="hidden" name="action" value="include">
           <button class="btn btn-sm" style="color:var(--green);border-color:var(--sig-sb-bd)">Include</button>
         </form>
         {% endif %}
