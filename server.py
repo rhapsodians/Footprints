@@ -41,12 +41,12 @@ ETF_URLS = {
     'IASH.L':   'https://www.blackrock.com/uk/individual/products/282976/ishares-msci-china-a-ucits-etf',
     # COMM
     'SGLN.L':   'https://www.blackrock.com/uk/individual/products/253742/ishares-physical-gold-etc',
-    'SSLN.L':   'https://www.blackrock.com/uk/individual/products/253741/ishares-physical-silver-etc',
+    'SSLN.L':   'https://www.blackrock.com/uk/individual/products/258443/ishares-physical-silver-etc',
     # CONS
     'IUCS.L':   'https://www.blackrock.com/uk/individual/products/287111/ishares-s-p-500-consumer-staples-sector-ucits-etf',
     'WCOD.L':   'https://www.ssga.com/uk/en_gb/institutional/etfs/funds/spdr-msci-world-consumer-discretionary-ucits-etf-scy3-gy',
     # DEF
-    'DFND.L':   'https://www.blackrock.com/uk/individual/products/251800/ishares-global-aerospace-defence-ucits-etf',
+    'DFND.L':   'https://www.blackrock.com/uk/individual/products/334464/ishares-global-aerospace-defence-ucits-etf',
     'DFNG.L':   'https://www.vaneck.com/eu/en/investments/defense-etf-dfng/',
     'NATP.L':   'https://www.hanetf.com/products/future-of-defence-ucits-etf',
     # EM
@@ -66,7 +66,7 @@ ETF_URLS = {
     'IWFQ.L':   'https://www.blackrock.com/uk/individual/products/270051/ishares-msci-world-quality-factor-ucits-etf',
     'IWVL.L':   'https://www.blackrock.com/uk/individual/products/270048/ishares-edge-msci-world-value-factor-ucits-etf',
     # HEALTH
-    'BTEK.L':   'https://www.blackrock.com/uk/individual/products/251882/ishares-nasdaq-us-biotechnology-ucits-etf',
+    'BTEK.L':   'https://www.blackrock.com/uk/individual/products/291450/ishares-nasdaq-us-biotechnology-ucits-etf',
     'DRDR.L':   'https://www.blackrock.com/uk/individual/products/296459/ishares-healthcare-innovation-ucits-etf',
     'IUHC.L':   'https://www.blackrock.com/uk/individual/products/287113/ishares-s-p-500-health-care-sector-ucits-etf',
     # INDIA
@@ -83,7 +83,7 @@ ETF_URLS = {
     'VNRG.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9678/ftse-north-america-ucits-etf-usd-accumulating',
     # PROP
     'HPROP.L':  'https://www.etf.hsbc.com/en-gb/our-etfs/hsbc-ftse-epra-nareit-developed-ucits-etf',
-    'IDWP.L':   'https://www.blackrock.com/uk/individual/products/251800/ishares-developed-markets-property-yield-ucits-etf',
+    'IDWP.L':   'https://www.blackrock.com/uk/individual/products/251801/ishares-developed-markets-property-yield-ucits-etf',
     # TECH
     'AINF.L':   'https://www.blackrock.com/uk/individual/products/340955/ishares-ai-infrastructure-ucits-etf',
     'BOTZ.L':   'https://www.globalxetfs.eu/funds/botz/',
@@ -726,7 +726,28 @@ def api_prices(ticker):
 
 @app.route("/api/signals")
 def api_signals():
-    return jsonify(_dicts(db.get_signals_df()))
+    signals = _dicts(db.get_signals_df())
+    tickers = [r["ticker"] for r in signals]
+    price_map = db.get_price_series_bulk(tickers, limit_per=config.SPARKLINE_WEEKS)
+    for r in signals:
+        daily = price_map.get(r["ticker"], [])
+        week_buckets: dict = {}
+        for p in daily:
+            d   = date.fromisoformat(p["d"])
+            thu = d + timedelta(days=(3 - d.weekday()))
+            key = thu.isocalendar()[:2]
+            if key not in week_buckets or p["d"] > week_buckets[key]["d"]:
+                week_buckets[key] = p
+        weekly  = [week_buckets[k] for k in sorted(week_buckets)]
+        closes  = [p["c"] for p in weekly]
+        dates_w = [p["d"] for p in weekly]
+        ma20    = [round(sum(closes[i-19:i+1])/20,  4) if i >= 19 else None for i in range(len(closes))]
+        ma100   = [round(sum(closes[i-99:i+1])/100, 4) if i >= 99 else None for i in range(len(closes))]
+        r["weekly_dates"]  = dates_w
+        r["weekly_closes"] = closes
+        r["weekly_ma20"]   = ma20
+        r["weekly_ma100"]  = ma100
+    return jsonify(signals)
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":

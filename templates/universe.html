@@ -231,8 +231,12 @@ const ETFS = [
 
 // ── Signal data (fetched once) ─────────────────────────────────────────────
 let SIGNALS = {};
+let _signalsReady = false;
+let _pendingOpen = null;
 fetch('/api/signals').then(r=>r.json()).then(rows=>{
   rows.forEach(e=>{ SIGNALS[e.ticker]=e; });
+  _signalsReady = true;
+  if(_pendingOpen){ openD(_pendingOpen); _pendingOpen=null; }
 });
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -355,6 +359,7 @@ const BC={'STRONG BUY':'badge-sb','EARLY ACCUMULATION':'badge-ea','ACCUMULATING/
 const SIG_LABEL={'STRONG BUY':'STRONG BUY','EARLY ACCUMULATION':'EARLY ACC','ACCUMULATING/HOLD':'ACCUMULATING','NEUTRAL':'NEUTRAL','EXIT/DISTRIBUTION':'EXIT'};
 
 function openD(ticker){
+  if(!_signalsReady){ _pendingOpen=ticker; return; }
   curTicker=ticker;
   const e=SIGNALS[ticker]||{};
   const etf=ETFS.find(x=>x.ticker===ticker)||{};
