@@ -3,6 +3,7 @@
 
 {% block head %}
 <style>
+.page{max-width:none}
 /* ── Control band (fund filter + sort + legend) ── */
 .hm-controls{background:var(--surface2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:0 0 4px}
 .hm-ctrl-row{display:flex;align-items:center;gap:8px;padding:7px 0;flex-wrap:wrap}
@@ -31,8 +32,8 @@
 /* fund bar legacy — hidden, chips moved into control band */
 .hm-fund-bar{display:none!important}
 .fund-tag-hm{display:inline-block;font-family:var(--mono);font-size:.73rem;color:var(--accent);border:1px solid var(--accent);border-radius:2px;padding:1px 3px;margin:1px;opacity:.7}
-.hm-outer{padding:4px 0 60px}
-.hm-wrap{border:1px solid var(--border);border-radius:4px}
+.hm-outer{padding:4px 0 60px;overflow-x:auto}
+.hm-wrap{border:1px solid var(--border);border-radius:4px;min-width:fit-content}
 .hm-table{width:100%;border-collapse:collapse;min-width:1400px}
 .hm-table thead th{font-family:var(--mono);font-size:.73rem;color:var(--text3);letter-spacing:.05em;text-align:center;padding:6px 5px;white-space:nowrap;position:sticky;top:0;background:var(--bg);z-index:10;box-shadow:0 2px 0 var(--border)}
 .hm-table thead th.thl{text-align:left}
