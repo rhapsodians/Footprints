@@ -504,10 +504,10 @@ function render(){
   }
   if(activeScoreSig!=='ALL'){
     sorted=sorted.filter(e=>{
-      if(activeScoreSig==='EARLY ACCUMULATION') return e.signal==='EARLY ACCUMULATION';
-      if(activeScoreSig==='ACCUMULATING/HOLD') return e.signal==='ACCUMULATING/HOLD';
-      if(activeScoreSig==='CHANGE') return e.prev_signal;
-      return sk===activeScoreSig;
+      if(activeScoreSig==='CHANGE')          return !!e.prev_signal;
+      if(activeScoreSig==='EXIT')            return e.signal==='EXIT/DISTRIBUTION';
+      if(activeScoreSig==='NEUTRAL')         return e.signal==='NEUTRAL';
+      return e.signal===activeScoreSig;
     });
   }
   let html='';
