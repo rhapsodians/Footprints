@@ -17,7 +17,93 @@ import config, db, engine
 
 app = Flask(__name__)
 
-# ── ETF descriptions ──────────────────────────────────────────────────────────
+# ── ETF factsheet URLs ────────────────────────────────────────────────────────
+# iShares: blackrock.com/uk/individual/products/{id}/
+# Vanguard: vanguard.co.uk/professional/product/etf/equity/{id}/
+# Others: provider product/fund pages
+ETF_URLS = {
+    # BASE
+    'SWDA.L':   'https://www.blackrock.com/uk/individual/products/251882/ishares-core-msci-world-ucits-etf',
+    'VHVG.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9675/ftse-developed-world-ucits-etf-usd-accumulating',
+    'VWRP.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9679/ftse-all-world-ucits-etf-usd-accumulating',
+    # APAC
+    'LGAG.L':   'https://www.lgim.com/uk/en/capabilities/etfs/etf-range/l-g-asia-pacific-ex-japan-equity-ucits-etf/',
+    'VDPG.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9672/ftse-developed-asia-pacific-ex-japan-ucits-etf-usd-accumulating',
+    # BOND
+    'AGHG.L':   'https://www.blackrock.com/uk/individual/products/312196/ishares-core-global-aggregate-bond-ucits-etf',
+    'AMGAGG.L': 'https://www.amundietf.co.uk/en/professional/products/fixed-income/amundi-core-global-aggregate-bond-ucits-etf-acc/lu1437024729',
+    'IS15.L':   'https://www.blackrock.com/uk/individual/products/251832/ishares-corporate-bond-0-5yr-ucits-etf',
+    'ITPS.L':   'https://www.blackrock.com/uk/individual/products/251716/ishares-tips-ucits-etf',
+    'INXG.L':   'https://www.blackrock.com/uk/individual/products/251717/ishares-index-linked-gilts-ucits-etf',
+    # CASH
+    'LYCSH2.L': 'https://www.amundietf.co.uk/en/professional/products/fixed-income/amundi-smart-overnight-return-ucits-etf-cgbp/lu1230136894',
+    # CHINA
+    'IASH.L':   'https://www.blackrock.com/uk/individual/products/282976/ishares-msci-china-a-ucits-etf',
+    # COMM
+    'SGLN.L':   'https://www.blackrock.com/uk/individual/products/253742/ishares-physical-gold-etc',
+    'SSLN.L':   'https://www.blackrock.com/uk/individual/products/253741/ishares-physical-silver-etc',
+    # CONS
+    'IUCS.L':   'https://www.blackrock.com/uk/individual/products/287111/ishares-s-p-500-consumer-staples-sector-ucits-etf',
+    'WCOD.L':   'https://www.ssga.com/uk/en_gb/institutional/etfs/funds/spdr-msci-world-consumer-discretionary-ucits-etf-scy3-gy',
+    # DEF
+    'DFND.L':   'https://www.blackrock.com/uk/individual/products/251800/ishares-global-aerospace-defence-ucits-etf',
+    'DFNG.L':   'https://www.vaneck.com/eu/en/investments/defense-etf-dfng/',
+    'NATP.L':   'https://www.hanetf.com/products/future-of-defence-ucits-etf',
+    # EM
+    'EXCS.L':   'https://www.blackrock.com/uk/individual/products/317304/ishares-msci-em-ex-china-ucits-etf',
+    'VFEM.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9510/ftse-emerging-markets-ucits-etf-usd-distributing',
+    'VGVFEG.L': 'https://www.vanguard.co.uk/professional/product/etf/equity/9676/ftse-emerging-markets-ucits-etf-usd-accumulating',
+    # ENERGY
+    'IESU.L':   'https://www.blackrock.com/uk/individual/products/287112/ishares-s-p-500-energy-sector-ucits-etf',
+    'INRG.L':   'https://www.blackrock.com/uk/individual/products/251806/ishares-global-clean-energy-ucits-etf',
+    # EUR
+    'VEUA.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9504/ftse-developed-europe-ucits-etf-eur-accumulating',
+    # FIN
+    'XWFS.L':   'https://etf.dws.com/en-gb/IE00BM67HT60-msci-world-financials-ucits-etf-1c/',
+    # GLOBAL
+    'ISWD.L':   'https://www.blackrock.com/uk/individual/products/251990/ishares-msci-world-islamic-ucits-etf',
+    'ISWSML.L': 'https://www.blackrock.com/uk/individual/products/296576/ishares-msci-world-small-cap-ucits-etf',
+    'IWFQ.L':   'https://www.blackrock.com/uk/individual/products/270051/ishares-msci-world-quality-factor-ucits-etf',
+    'IWVL.L':   'https://www.blackrock.com/uk/individual/products/270048/ishares-edge-msci-world-value-factor-ucits-etf',
+    # HEALTH
+    'BTEK.L':   'https://www.blackrock.com/uk/individual/products/251882/ishares-nasdaq-us-biotechnology-ucits-etf',
+    'DRDR.L':   'https://www.blackrock.com/uk/individual/products/296459/ishares-healthcare-innovation-ucits-etf',
+    'IUHC.L':   'https://www.blackrock.com/uk/individual/products/287113/ishares-s-p-500-health-care-sector-ucits-etf',
+    # INDIA
+    'ISIIND.L': 'https://www.blackrock.com/uk/individual/products/251883/ishares-msci-india-ucits-etf',
+    # INDUS
+    'IUIS.L':   'https://www.blackrock.com/uk/individual/products/287109/ishares-s-p-500-industrials-sector-ucits-etf',
+    # JAP
+    'VJPB.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9674/ftse-japan-ucits-etf-usd-accumulating',
+    # MINING
+    'GIGB.L':   'https://www.vaneck.com/eu/en/investments/global-mining-etf-gigb/',
+    'IAUP.L':   'https://www.blackrock.com/uk/individual/products/251885/ishares-gold-producers-ucits-etf',
+    # NAM
+    'V3NB.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9677/esg-north-america-all-cap-ucits-etf-usd-accumulating',
+    'VNRG.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9678/ftse-north-america-ucits-etf-usd-accumulating',
+    # PROP
+    'HPROP.L':  'https://www.etf.hsbc.com/en-gb/our-etfs/hsbc-ftse-epra-nareit-developed-ucits-etf',
+    'IDWP.L':   'https://www.blackrock.com/uk/individual/products/251800/ishares-developed-markets-property-yield-ucits-etf',
+    # TECH
+    'AINF.L':   'https://www.blackrock.com/uk/individual/products/340955/ishares-ai-infrastructure-ucits-etf',
+    'BOTZ.L':   'https://www.globalxetfs.eu/funds/botz/',
+    'IITU.L':   'https://www.blackrock.com/uk/individual/products/287107/ishares-s-p-500-information-technology-sector-ucits-etf',
+    'RBOT.L':   'https://www.blackrock.com/uk/individual/products/316569/ishares-robotics-and-ai-multisector-ucits-etf',
+    'RBTX.L':   'https://www.blackrock.com/uk/individual/products/316569/ishares-robotics-and-ai-multisector-ucits-etf',
+    'SMGB.L':   'https://www.vaneck.com/eu/en/investments/semiconductor-etf-smgb/',
+    # UK
+    'CUKS.L':   'https://www.blackrock.com/uk/individual/products/251899/ishares-msci-uk-small-cap-ucits-etf',
+    'FTAL.L':   'https://www.ssga.com/uk/en_gb/institutional/etfs/funds/spdr-ftse-uk-all-share-ucits-etf-ftal-ln',
+    'VUKG.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9580/ftse-100-ucits-etf-gbp-accumulating',
+    # US
+    'CNX1.L':   'https://www.blackrock.com/uk/individual/products/253741/ishares-nasdaq-100-ucits-etf',
+    'EQGB.L':   'https://etf.invesco.com/gb/private/en/product/invesco-eqqq-nasdaq-100-ucits-etf/trading-information',
+    'RIUS.L':   'https://www.lgim.com/uk/en/capabilities/etfs/etf-range/l-g-us-esg-paris-aligned-ucits-etf/',
+    'VUSA.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9503/sp-500-ucits-etf-usd-distributing',
+    # UTILS
+    'IUUS.L':   'https://www.blackrock.com/uk/individual/products/287115/ishares-s-p-500-utilities-sector-ucits-etf',
+}
+
 ETF_DESC = {
     # BASE
     'VWRP.L':    'Vanguard FTSE All-World tracks ~4,000 companies across 50+ countries including both developed and emerging markets. Capitalisation-weighted with ~60% US exposure. Used as the RS benchmark throughout this model — every ETF\'s relative strength is measured against it.',
@@ -523,7 +609,7 @@ def guide():
 @app.route("/universe")
 def universe():
     etfs = db.get_etf_universe()
-    return render_template("universe.html", etfs=etfs, ETF_DESC=ETF_DESC, **_ctx("universe"))
+    return render_template("universe.html", etfs=etfs, ETF_DESC=ETF_DESC, ETF_URLS=ETF_URLS, **_ctx("universe"))
 
 # ── Admin ─────────────────────────────────────────────────────────────────────
 @app.route("/admin")
