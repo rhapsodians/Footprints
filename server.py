@@ -736,6 +736,7 @@ def api_signal_ticker(ticker):
     row = next((r for r in signals if r["ticker"] == ticker.upper()), None)
     if not row:
         return jsonify({}), 404
+    _enrich_signals([row])
     daily = db.get_price_series_bulk([ticker.upper()], limit_per=config.SPARKLINE_WEEKS).get(ticker.upper(), [])
     week_buckets: dict = {}
     for p in daily:

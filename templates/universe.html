@@ -384,7 +384,7 @@ async function openD(ticker){
   let e = SIGNALS[ticker] || {};
   try {
     const res = await fetch('/api/signals/' + encodeURIComponent(ticker));
-    if(res.ok) e = await res.json();
+    if(res.ok){ e = await res.json(); SIGNALS[ticker]=e; }
   } catch(err) { console.error('Per-ticker fetch failed:', err); }
 
   const etf=ETFS.find(x=>x.ticker===ticker)||{};
