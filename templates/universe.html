@@ -79,6 +79,19 @@
 .db{padding:16px 20px}
 .cw{position:relative;height:140px;margin-bottom:14px;background:var(--surface2);border-radius:3px}
 .cw canvas{display:block}
+.exp-btn{position:absolute;top:5px;right:5px;font-family:var(--mono);font-size:.73rem;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:2px 6px;cursor:pointer;z-index:2;transition:all .12s}
+.exp-btn:hover{border-color:var(--accent);color:var(--accent)}
+.fs-ov{position:fixed;inset:0;background:var(--bg);z-index:500;display:none;flex-direction:column}
+.fs-ov.open{display:flex}
+.fs-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.fs-title{font-family:var(--mono);font-size:.87rem;font-weight:600;color:var(--text)}
+.fs-meta{font-family:var(--mono);font-size:.73rem;color:var(--text2);margin-left:12px}
+.fs-close{font-family:var(--mono);font-size:.73rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:2px;padding:4px 12px;cursor:pointer;transition:all .15s}
+.fs-close:hover{border-color:var(--red);color:var(--red)}
+.fs-legend{display:flex;gap:16px;padding:7px 20px 0;flex-shrink:0}
+.fs-li{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.73rem;color:var(--text2)}
+.fs-sw{width:22px;height:2px;border-radius:1px}
+.fs-body{flex:1;padding:14px 20px;min-height:0}
 .dg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
 .dm{background:var(--surface2);border-radius:3px;padding:8px 10px}
 .dml{font-family:var(--mono);font-size:.62rem;color:var(--text3);margin-bottom:2px;display:flex;align-items:center;gap:4px}
@@ -157,6 +170,23 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- ── Full-screen chart overlay ── -->
+<div class="fs-ov" id="fs-ov">
+  <div class="fs-bar">
+    <div style="display:flex;align-items:baseline">
+      <span class="fs-title" id="fs-ticker"></span>
+      <span class="fs-meta" id="fs-name"></span>
+    </div>
+    <button class="fs-close" onclick="closeExpand()">✕ CLOSE (ESC)</button>
+  </div>
+  <div class="fs-legend">
+    <div class="fs-li"><div class="fs-sw" id="fs-sw-price"></div><span id="fs-lb-price"></span></div>
+    <div class="fs-li"><div class="fs-sw" style="background:#5b8cf5"></div><span>MA20</span></div>
+    <div class="fs-li"><div class="fs-sw" style="background:#f5c842"></div><span>MA100</span></div>
+  </div>
+  <div class="fs-body"><canvas id="fs-chart"></canvas></div>
+</div>
+
 <!-- ── Overlay ── -->
 <div class="ov" id="ov" onclick="closeD()"></div>
 
@@ -198,7 +228,7 @@
     <div style="margin-top:9px" id="dbadge"></div>
   </div>
   <div class="db">
-    <div class="cw"><canvas id="dc"></canvas></div>
+    <div class="cw"><canvas id="dc"></canvas><button class="exp-btn" onclick="expandChart()">⛶ EXPAND</button></div>
     <div class="dg" id="dmet"></div>
     <div class="dst">SIGNAL CONDITIONS</div><div id="dcond"></div>
     <div class="dst" style="margin-top:14px">PRICE LEVELS</div><div id="dlev"></div>
@@ -237,7 +267,7 @@ const _signalsPromise = fetch('/api/signals')
 
 // ── State ──────────────────────────────────────────────────────────────────
 let activeSec='ALL', activeProv='ALL', activeFund='ALL';
-let curTicker=null, dChart=null;
+let curTicker=null, dChart=null, fsChart=null;
 
 // ── Chip builder ───────────────────────────────────────────────────────────
 function chip(wrap, label, val, type, on){
@@ -445,17 +475,46 @@ function closeD(){
   if(dChart){dChart.destroy();dChart=null;}
 }
 
-function buildChart(ticker){
+function expandChart(){
+  if(!curTicker) return;
+  const e=SIGNALS[curTicker]||{};
+  const closes=e.weekly_closes||[];
+  const isUp=closes.length>1&&closes[closes.length-1]>=closes[0];
+  document.getElementById('fs-ticker').textContent=curTicker;
+  document.getElementById('fs-name').textContent='  '+(e.name||(ETFS.find(x=>x.ticker===curTicker)||{}).name||'');
+  document.getElementById('fs-sw-price').style.background=isUp?'#00d4a0':'#ff4060';
+  document.getElementById('fs-lb-price').textContent=curTicker;
+  if(fsChart){fsChart.destroy();fsChart=null;}
+  document.getElementById('fs-ov').classList.add('open');
+  requestAnimationFrame(()=>{
+    const fc=document.getElementById('fs-chart');
+    fc.width=fc.offsetWidth; fc.height=fc.offsetHeight;
+    if(fsChart){fsChart.destroy();fsChart=null;}
+    fsChart=buildChart(curTicker,'fs-chart',false);
+  });
+}
+function closeExpand(){
+  document.getElementById('fs-ov').classList.remove('open');
+  if(fsChart){fsChart.destroy();fsChart=null;}
+}
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Escape'){
+    if(document.getElementById('fs-ov').classList.contains('open')) closeExpand();
+    else closeD();
+  }
+});
+
+function buildChart(ticker, canvasId='dc', small=true){
   const e=SIGNALS[ticker]; if(!e) return null;
   const dates=e.weekly_dates||[], vals=e.weekly_closes||[], ma20=e.weekly_ma20||[], ma100=e.weekly_ma100||[];
   const isUp=vals.length>1&&vals[vals.length-1]>=vals[0];
-  const ctx=document.getElementById('dc').getContext('2d');
+  const ctx=document.getElementById(canvasId).getContext('2d');
   return new Chart(ctx,{type:'line',data:{labels:dates,datasets:[
-    {label:ticker,data:vals,borderColor:isUp?'#00d4a0':'#ff4060',borderWidth:1.5,pointRadius:0,tension:.1,fill:false},
-    {label:'MA20',data:ma20,borderColor:'#5b8cf5',borderWidth:1,borderDash:[3,3],pointRadius:0,tension:0},
-    {label:'MA100',data:ma100,borderColor:'#f5c842',borderWidth:1,borderDash:[5,4],pointRadius:0,tension:0}
+    {label:ticker,data:vals,borderColor:isUp?'#00d4a0':'#ff4060',borderWidth:small?1.5:2,pointRadius:0,tension:.1,fill:false},
+    {label:'MA20',data:ma20,borderColor:'#5b8cf5',borderWidth:small?1:1.5,borderDash:[3,3],pointRadius:0,tension:0},
+    {label:'MA100',data:ma100,borderColor:'#f5c842',borderWidth:small?1:1.5,borderDash:[5,4],pointRadius:0,tension:0}
   ]},options:{responsive:true,maintainAspectRatio:false,animation:false,
-    plugins:{legend:{display:false}},
+    plugins:{legend:{display:!small,labels:{color:'var(--text2)',font:{family:'IBM Plex Mono',size:9},boxWidth:18,padding:7}}},
     scales:{x:{display:false},y:{grid:{color:'var(--border)'},ticks:{color:'var(--text2)',font:{family:'IBM Plex Mono',size:9},maxTicksLimit:5}}}}});
 }
 
