@@ -230,12 +230,8 @@ const ETFS = [
 
 // ── Signal data (fetched once) ─────────────────────────────────────────────
 let SIGNALS = {};
-let _signalsLoaded = false;
-fetch('/api/signals').then(r=>r.json()).then(rows=>{
+const _signalsPromise = fetch('/api/signals').then(r=>r.json()).then(rows=>{
   rows.forEach(e=>{ SIGNALS[e.ticker]=e; });
-  _signalsLoaded = true;
-  // If panel is open, refresh its content
-  if(curTicker) openD(curTicker);
 });
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -357,8 +353,32 @@ const fC=v=>{if(v==null)return'—';const a=Math.abs(v);const s=v<0?'-':'';retur
 const BC={'STRONG BUY':'badge-sb','EARLY ACCUMULATION':'badge-ea','ACCUMULATING/HOLD':'badge-ah','NEUTRAL':'badge-nt','EXIT/DISTRIBUTION':'badge-ex'};
 const SIG_LABEL={'STRONG BUY':'STRONG BUY','EARLY ACCUMULATION':'EARLY ACC','ACCUMULATING/HOLD':'ACCUMULATING','NEUTRAL':'NEUTRAL','EXIT/DISTRIBUTION':'EXIT'};
 
-function openD(ticker){
+async function openD(ticker){
   curTicker=ticker;
+
+  // Open panel immediately so the slide-in animation starts
+  const dp=document.getElementById('dp');
+  const alreadyOpen=dp.classList.contains('open');
+  dp.classList.add('open');
+  document.getElementById('ov').classList.add('open');
+
+  // Show loading state
+  document.getElementById('dtk').textContent=ticker;
+  document.getElementById('dnm').textContent='Loading…';
+  document.getElementById('dbadge').innerHTML='';
+  document.getElementById('dmet').innerHTML='<div class="dm" style="grid-column:1/-1;color:var(--text3);font-family:var(--mono);font-size:.73rem;padding:8px 0">Loading signal data…</div>';
+  document.getElementById('dcond').innerHTML='';
+  document.getElementById('dlev').innerHTML='';
+  document.getElementById('dreason').textContent='';
+
+  // Highlight sidebar
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  const sb=document.querySelector(`.sb-item[data-ticker="${ticker}"]`);
+  if(sb) sb.classList.add('active');
+
+  // Wait for signals to load
+  await _signalsPromise;
+
   const e=SIGNALS[ticker]||{};
   const etf=ETFS.find(x=>x.ticker===ticker)||{};
 
@@ -399,25 +419,14 @@ function openD(ticker){
 
   document.getElementById('dreason').textContent=e.signal_reason||'—';
 
-  // Open panel
-  if(dChart){dChart.destroy();dChart=null;}
-  const dp=document.getElementById('dp');
-  const alreadyOpen=dp.classList.contains('open');
-  dp.classList.add('open');
-  document.getElementById('ov').classList.add('open');
-
   // Build chart
+  if(dChart){dChart.destroy();dChart=null;}
   if(alreadyOpen){
     requestAnimationFrame(()=>{ dChart=buildChart(ticker); });
   } else {
     function _te(ev){ if(ev.propertyName!=='transform') return; dp.removeEventListener('transitionend',_te); dChart=buildChart(ticker); }
     dp.addEventListener('transitionend',_te);
   }
-
-  // Highlight sidebar item
-  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
-  const sb=document.querySelector(`.sb-item[data-ticker="${ticker}"]`);
-  if(sb) sb.classList.add('active');
 }
 
 function closeD(){
