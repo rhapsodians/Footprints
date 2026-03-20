@@ -3,61 +3,142 @@
 
 {% block head %}
 <style>
-.page{max-width:none;padding-top:0}
+.page{max-width:none;padding-top:0;padding-left:0;padding-right:0}
 
-/* ── Layout ─────────────────────────────────────────────────────────────── */
+/* ── Layout: sidebar + main ──────────────────────────────────────────────── */
 .univ-layout{display:flex;gap:0;align-items:flex-start}
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
-.univ-sidebar{width:185px;flex-shrink:0;position:sticky;top:var(--nav-h);height:calc(100vh - var(--nav-h));overflow-y:auto;overflow-x:hidden;background:var(--surface);border-right:1px solid var(--border);padding:12px 0 40px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.univ-sidebar{
+  width:190px;flex-shrink:0;
+  position:sticky;top:var(--nav-h);
+  height:calc(100vh - var(--nav-h));
+  overflow-y:auto;overflow-x:hidden;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  padding:12px 0 40px;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+}
 .univ-sidebar::-webkit-scrollbar{width:3px}
 .univ-sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-.sb-search{font-family:var(--mono);font-size:.72rem;padding:5px 9px;margin:0 10px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;color:var(--text);outline:none;width:calc(100% - 20px);box-sizing:border-box;transition:border-color .15s}
+
+.sb-search{
+  font-family:var(--mono);font-size:.80rem;
+  padding:5px 10px;margin:0 10px 10px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:3px;color:var(--text);outline:none;
+  width:calc(100% - 20px);box-sizing:border-box;transition:border-color .15s
+}
 .sb-search:focus{border-color:var(--accent)}
 .sb-search::placeholder{color:var(--text3)}
-.sb-sec-hd{font-family:var(--mono);font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:8px 12px 3px;display:flex;justify-content:space-between}
+
+.sb-sec-hd{
+  font-family:var(--mono);font-size:.67rem;font-weight:600;
+  letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text3);padding:9px 12px 3px;
+  display:flex;justify-content:space-between;align-items:center;
+}
 .sb-sec-hd em{font-style:normal;opacity:.5;font-weight:400}
-.sb-item{display:block;padding:3px 12px;cursor:pointer;font-family:var(--mono);font-size:.72rem;font-weight:600;color:var(--text2);transition:all .1s;border-left:2px solid transparent;white-space:nowrap}
+
+.sb-item{
+  display:block;padding:4px 12px;cursor:pointer;
+  font-family:var(--mono);font-size:.80rem;font-weight:600;
+  color:var(--text2);transition:all .1s;
+  border-left:2px solid transparent;white-space:nowrap;
+}
 .sb-item:hover{color:var(--text);background:var(--surface2)}
 .sb-item.active{color:var(--accent);background:var(--blue-dim);border-left-color:var(--accent)}
 
-/* ── Main ────────────────────────────────────────────────────────────────── */
-.univ-main{flex:1;min-width:0;padding:24px 26px 60px}
-.univ-hd{margin-bottom:18px}
-.univ-title{font-family:var(--mono);font-size:1.15rem;font-weight:700;color:var(--text)}
-.univ-sub{font-size:.77rem;color:var(--text2);margin-top:3px}
+/* ── Main content ────────────────────────────────────────────────────────── */
+.univ-main{flex:1;min-width:0;padding-bottom:60px}
 
-/* ── Filter bar ──────────────────────────────────────────────────────────── */
-.univ-fb{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-.fb-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-.fb-label{font-family:var(--mono);font-size:.60rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-right:2px;white-space:nowrap}
-.fc{font-family:var(--mono);font-size:.65rem;font-weight:600;padding:3px 7px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap}
-.fc:hover{border-color:var(--accent);color:var(--text)}
-.fc.on{background:var(--blue-dim);border-color:var(--accent);color:var(--accent)}
-.univ-count{font-family:var(--mono);font-size:.68rem;color:var(--text3);margin-left:4px}
+/* ── Header (matches heatmap page-header style) ──────────────────────────── */
+.univ-page-hd{
+  padding:24px 28px 20px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:0;
+}
 
-/* ── Sector groups ───────────────────────────────────────────────────────── */
-.sec-group{margin-bottom:28px}
-.sec-group-hd{display:flex;align-items:center;gap:10px;margin-bottom:11px;padding-bottom:7px;border-bottom:1px solid var(--border)}
-.sec-group-label{font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text3)}
-.sec-group-n{font-family:var(--mono);font-size:.62rem;color:var(--text3);opacity:.5}
+/* ── Control band — identical structure to heatmap ───────────────────────── */
+.hm-controls{background:var(--surface2);border-bottom:1px solid var(--border);padding:0 0 4px}
+.hm-ctrl-row{display:flex;align-items:center;gap:8px;padding:7px 0;flex-wrap:wrap}
+.hm-ctrl-row+.hm-ctrl-row{border-top:1px solid var(--border)}
+.ctrl-lbl{font-family:var(--mono);font-size:.73rem;font-weight:600;letter-spacing:.08em;color:var(--text3);white-space:nowrap;width:110px;flex-shrink:0;text-transform:uppercase;padding:4px 0 0 28px}
+.ctrl-chips{display:flex;gap:4px;flex-wrap:wrap;flex:1;padding-right:16px}
+.chip{font-family:var(--mono);font-size:.80rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:4px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1.4}
+.chip:hover{border-color:var(--border2);color:var(--text)}
+.chip.on{border-color:var(--accent);color:var(--accent);background:var(--blue-dim)}
+.univ-count{font-family:var(--mono);font-size:.73rem;color:var(--text3);padding-left:8px}
+
+/* ── ETF body area ───────────────────────────────────────────────────────── */
+.univ-body{padding:24px 28px 0}
+
+/* ── Sector groups — matches heatmap section header ─────────────────────── */
+.sec-group{margin-bottom:32px}
+.sec-group-hd{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:14px;padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+.sec-group-label{
+  font-family:var(--mono);font-size:.80rem;font-weight:600;
+  letter-spacing:.10em;text-transform:uppercase;color:var(--text3);
+}
+.sec-group-n{font-family:var(--mono);font-size:.73rem;color:var(--text3);opacity:.5}
 
 /* ── ETF grid ────────────────────────────────────────────────────────────── */
-.etf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.etf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
 
 /* ── ETF card ────────────────────────────────────────────────────────────── */
-.etf-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 16px;transition:border-color .15s,box-shadow .15s;scroll-margin-top:calc(var(--nav-h) + 24px)}
-.etf-card:hover{border-color:var(--border2);box-shadow:0 2px 12px rgba(0,0,0,.25)}
-.etf-card.focused{border-color:var(--accent);box-shadow:0 0 0 2px rgba(74,158,255,.18),0 4px 20px rgba(0,0,0,.3)}
-.etf-card-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px}
-.etf-ticker{font-family:var(--mono);font-size:.90rem;font-weight:700;color:var(--text)}
-.etf-sector-pill{font-family:var(--mono);font-size:.59rem;font-weight:600;padding:2px 6px;border-radius:2px;background:var(--surface3);color:var(--text2);border:1px solid var(--border2);white-space:nowrap;flex-shrink:0}
-.etf-fullname{font-family:var(--mono);font-size:.71rem;color:var(--text2);margin-bottom:8px;line-height:1.4}
-.etf-desc{font-family:var(--sans);font-size:.78rem;color:var(--text);line-height:1.6;margin-bottom:10px}
+.etf-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:5px;padding:16px 18px;
+  transition:border-color .15s,box-shadow .15s;
+  scroll-margin-top:calc(var(--nav-h) + 24px);
+}
+.etf-card:hover{border-color:var(--border2);box-shadow:0 2px 14px rgba(0,0,0,.28)}
+.etf-card.focused{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px rgba(74,158,255,.18),0 4px 20px rgba(0,0,0,.3);
+}
+
+.etf-card-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:5px}
+
+/* Ticker — same size as .ct in heatmap */
+.etf-ticker{font-family:var(--mono);font-size:.87rem;font-weight:700;color:var(--text)}
+
+/* Sector pill — matches .cat */
+.etf-sector-pill{
+  font-family:var(--mono);font-size:.73rem;color:var(--text3);
+  background:var(--surface2);border-radius:3px;padding:3px 7px;
+  border:1px solid var(--border);white-space:nowrap;flex-shrink:0;
+}
+
+/* Full name — matches .cn */
+.etf-fullname{
+  font-family:var(--mono);font-size:.80rem;color:var(--text2);
+  margin-bottom:10px;line-height:1.45;
+}
+
+/* Description — readable body text */
+.etf-desc{
+  font-family:var(--sans);font-size:.87rem;color:var(--text);
+  line-height:1.65;margin-bottom:13px;
+}
+
+/* Meta row — provider / exchange / fund proxies */
 .etf-meta{display:flex;flex-wrap:wrap;gap:5px}
-.etf-badge{font-family:var(--mono);font-size:.62rem;color:var(--text3);background:var(--surface2);padding:2px 6px;border-radius:2px;border:1px solid var(--border);white-space:nowrap}
+.etf-badge{
+  font-family:var(--mono);font-size:.73rem;color:var(--text3);
+  background:var(--surface2);padding:3px 7px;border-radius:3px;
+  border:1px solid var(--border);white-space:nowrap;
+}
 .etf-badge span{color:var(--text2)}
-.etf-proxy{font-family:var(--mono);font-size:.62rem;padding:2px 6px;border-radius:2px;border:1px solid rgba(74,158,255,.25);background:rgba(74,158,255,.07);color:var(--sig-ah);white-space:nowrap}
+.etf-proxy{
+  font-family:var(--mono);font-size:.73rem;padding:3px 7px;border-radius:3px;
+  border:1px solid rgba(74,158,255,.25);background:rgba(74,158,255,.07);
+  color:var(--sig-ah);white-space:nowrap;
+}
 </style>
 {% endblock %}
 
@@ -72,30 +153,34 @@
 
   <!-- ── Main ── -->
   <div class="univ-main">
-    <div class="univ-hd">
-      <div class="univ-title">ETF <strong>Universe</strong></div>
-      <div class="univ-sub">{{ etfs|length }} ETFs tracked · click any ticker in the sidebar to focus</div>
+
+    <!-- Page header — matches heatmap style -->
+    <div class="univ-page-hd">
+      <div class="page-title">ETF <strong>Universe</strong></div>
+      <div class="page-subtitle">{{ etfs|length }} ETFs tracked · click any ticker in the sidebar to focus · colour = sector</div>
     </div>
 
-    <!-- Filter bar -->
-    <div class="univ-fb">
-      <div class="fb-row">
-        <span class="fb-label">Sector</span>
-        <div id="sec-chips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+    <!-- Control band — identical to heatmap -->
+    <div class="hm-controls">
+      <div class="hm-ctrl-row">
+        <span class="ctrl-lbl">Sector</span>
+        <div class="ctrl-chips" id="sec-chips"></div>
       </div>
-      <div class="fb-row">
-        <span class="fb-label">Provider</span>
-        <div id="prov-chips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+      <div class="hm-ctrl-row">
+        <span class="ctrl-lbl">Provider</span>
+        <div class="ctrl-chips" id="prov-chips"></div>
       </div>
-      <div class="fb-row">
-        <span class="fb-label">Fund</span>
-        <div id="fund-chips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+      <div class="hm-ctrl-row">
+        <span class="ctrl-lbl">Fund</span>
+        <div class="ctrl-chips" id="fund-chips">
+          <span class="univ-count" id="univ-count" style="align-self:center"></span>
+        </div>
       </div>
-      <span class="univ-count" id="univ-count"></span>
     </div>
 
     <!-- ETF body -->
-    <div id="univ-body"></div>
+    <div class="univ-body" id="univ-body"></div>
+
   </div>
 </div>
 
@@ -119,19 +204,18 @@ const ETFS = [
 {% endfor %}
 ];
 
-// ── State ──────────────────────────────────────────────────────────────────
 let activeSec='ALL', activeProv='ALL', activeFund='ALL';
 
-// ── Chip builder ───────────────────────────────────────────────────────────
+// ── Build filter chips ─────────────────────────────────────────────────────
 function chip(wrap, label, val, type, on){
   const b=document.createElement('button');
-  b.className='fc'+(on?' on':'');
+  b.className='chip'+(on?' on':'');
   b.textContent=label; b.dataset.val=val; b.dataset.type=type;
   b.onclick=()=>{
     if(type==='sec')  activeSec=val;
     if(type==='prov') activeProv=val;
     if(type==='fund') activeFund=val;
-    document.querySelectorAll(`.fc[data-type="${type}"]`).forEach(x=>x.classList.toggle('on',x.dataset.val===val));
+    document.querySelectorAll(`.chip[data-type="${type}"]`).forEach(x=>x.classList.toggle('on',x.dataset.val===val));
     render(); rebuildSidebar();
   };
   wrap.appendChild(b);
@@ -141,22 +225,27 @@ function buildChips(){
   const sw=document.getElementById('sec-chips');
   const pw=document.getElementById('prov-chips');
   const fw=document.getElementById('fund-chips');
+
   chip(sw,'ALL','ALL','sec',true);
   [...new Set(ETFS.map(e=>e.sector))].forEach(s=>chip(sw,SL[s]||s,s,'sec'));
+
   chip(pw,'ALL','ALL','prov',true);
   [...new Set(ETFS.map(e=>e.provider).filter(p=>p&&p!=='—'))].sort().forEach(p=>chip(pw,p,p,'prov'));
+
   chip(fw,'ALL','ALL','fund',true);
   const allFunds=[...new Set(ETFS.flatMap(e=>e.funds))].sort();
-  // IL funds first, then LG
   ['IL-','LG-'].forEach(pfx=>{
     allFunds.filter(f=>f.startsWith(pfx)).forEach(f=>{
       const short=f.replace('IL-','').replace('LG-','').replace(/_/g,' ');
-      chip(fw, short, f, 'fund');
+      chip(fw,short,f,'fund');
     });
   });
+  // Move count span to end of fund row
+  const countEl=document.getElementById('univ-count');
+  fw.appendChild(countEl);
 }
 
-// ── Visibility ─────────────────────────────────────────────────────────────
+// ── Filter ─────────────────────────────────────────────────────────────────
 function vis(e){
   if(activeSec!=='ALL'&&e.sector!==activeSec) return false;
   if(activeProv!=='ALL'&&e.provider!==activeProv) return false;
@@ -166,22 +255,44 @@ function vis(e){
   return true;
 }
 
-// ── Render main ────────────────────────────────────────────────────────────
+// ── Render ─────────────────────────────────────────────────────────────────
 function render(){
   const shown=ETFS.filter(vis);
   const groups={};
   shown.forEach(e=>{(groups[e.sector]=groups[e.sector]||[]).push(e);});
+
   let html='';
   Object.entries(groups).forEach(([sec,etfs])=>{
-    html+=`<div class="sec-group"><div class="sec-group-hd"><span class="sec-group-label">${SL[sec]||sec}</span><span class="sec-group-n">(${etfs.length})</span></div><div class="etf-grid">`;
+    html+=`<div class="sec-group">
+      <div class="sec-group-hd">
+        <span class="sec-group-label">${SL[sec]||sec}</span>
+        <span class="sec-group-n">(${etfs.length})</span>
+      </div>
+      <div class="etf-grid">`;
     etfs.forEach(e=>{
       const proxies=e.funds.map(f=>`<span class="etf-proxy">${f}</span>`).join('');
-      html+=`<div class="etf-card" id="card-${e.ticker.replace('.','_')}"><div class="etf-card-hd"><span class="etf-ticker">${e.ticker}</span><span class="etf-sector-pill">${SL[e.sector]||e.sector}</span></div><div class="etf-fullname">${e.name}</div><div class="etf-desc">${e.desc}</div><div class="etf-meta"><span class="etf-badge">Provider <span>${e.provider}</span></span><span class="etf-badge">Exchange <span>LSE</span></span>${proxies}</div></div>`;
+      html+=`<div class="etf-card" id="card-${e.ticker.replace('.','_')}">
+        <div class="etf-card-hd">
+          <span class="etf-ticker">${e.ticker}</span>
+          <span class="etf-sector-pill">${SL[e.sector]||e.sector}</span>
+        </div>
+        <div class="etf-fullname">${e.name}</div>
+        <div class="etf-desc">${e.desc}</div>
+        <div class="etf-meta">
+          <span class="etf-badge">Provider <span>${e.provider}</span></span>
+          <span class="etf-badge">Exchange <span>LSE</span></span>
+          ${proxies}
+        </div>
+      </div>`;
     });
     html+='</div></div>';
   });
-  document.getElementById('univ-body').innerHTML=html||'<div style="font-family:var(--mono);font-size:.8rem;color:var(--text3);padding:40px 0">No ETFs match current filters.</div>';
-  document.getElementById('univ-count').textContent=shown.length<ETFS.length?shown.length+' of '+ETFS.length+' ETFs':shown.length+' ETFs';
+
+  document.getElementById('univ-body').innerHTML=html||
+    '<div style="font-family:var(--mono);font-size:.80rem;color:var(--text3);padding:40px 0">No ETFs match current filters.</div>';
+
+  const n=shown.length;
+  document.getElementById('univ-count').textContent=n<ETFS.length?n+' of '+ETFS.length+' ETFs':n+' ETFs';
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────
@@ -189,12 +300,11 @@ function rebuildSidebar(){
   const secOrder=[...new Set(ETFS.map(e=>e.sector))];
   let html='';
   secOrder.forEach(sec=>{
-    const items=ETFS.filter(e=>e.sector===sec);
-    const visItems=items.filter(vis);
+    const visItems=ETFS.filter(e=>e.sector===sec&&vis(e));
     if(!visItems.length) return;
-    html+=`<div><div class="sb-sec-hd">${SL[sec]||sec} <em>${visItems.length}</em></div>`;
-    items.forEach(e=>{
-      if(!vis(e)) return;
+    html+=`<div>
+      <div class="sb-sec-hd">${SL[sec]||sec} <em>${visItems.length}</em></div>`;
+    visItems.forEach(e=>{
       html+=`<div class="sb-item" data-ticker="${e.ticker}" onclick="focusTicker('${e.ticker}')">${e.ticker}</div>`;
     });
     html+='</div>';
@@ -209,8 +319,7 @@ function focusTicker(ticker){
   document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
   const sb=document.querySelector(`.sb-item[data-ticker="${ticker}"]`);
   if(sb) sb.classList.add('active');
-  const id='card-'+ticker.replace('.','_');
-  const card=document.getElementById(id);
+  const card=document.getElementById('card-'+ticker.replace('.','_'));
   if(!card) return;
   card.classList.add('focused');
   card.scrollIntoView({behavior:'smooth',block:'center'});
