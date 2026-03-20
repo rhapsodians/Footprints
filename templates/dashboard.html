@@ -253,6 +253,7 @@
   <div class="hist-modal">
     <div class="hist-hdr">
       <span class="hist-title" id="hist-title"></span>
+      <button class="hist-close-btn" onclick="downloadHistoryCsv()" style="margin-left:auto;border-color:var(--border2);color:var(--accent)">⬇ CSV</button>
       <button class="hist-close-btn" onclick="closeHistory()">✕ CLOSE</button>
     </div>
     <div class="hist-info-bar">
@@ -746,6 +747,17 @@ function closeD() {
 
 // ── Price history modal ──────────────────────────────────────────────────────
 let _hData=[], _hSort={col:'date',asc:false};
+function downloadHistoryCsv(){
+  if(!_hData||!_hData.length) return;
+  const ticker=(document.getElementById('hist-title').textContent||'history').split(' ')[0];
+  const header='Date,Open,High,Low,Close,Volume,Turnover';
+  const rows=_hData.map(r=>[r.d,r.o??'',r.h??'',r.l??'',r.c??'',r.v??'',r.turnover??''].join(','));
+  const csv=[header,...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=ticker+'_history.csv';
+  a.click();
+}
 function closeHistory() { document.getElementById('hist-ov').classList.remove('open'); }
 function _fmtP(n){return n==null?'—':n.toLocaleString('en-GB',{minimumFractionDigits:4,maximumFractionDigits:4})}
 function _fmtV(n){return n==null?'—':Math.round(n).toLocaleString('en-GB')}
