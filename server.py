@@ -726,28 +726,32 @@ def api_prices(ticker):
 
 @app.route("/api/signals")
 def api_signals():
+    return jsonify(_dicts(db.get_signals_df()))
+
+
+@app.route("/api/signals/<ticker>")
+def api_signal_ticker(ticker):
+    """Single ticker signal with weekly chart arrays — used by Universe detail panel."""
     signals = _dicts(db.get_signals_df())
-    tickers = [r["ticker"] for r in signals]
-    price_map = db.get_price_series_bulk(tickers, limit_per=config.SPARKLINE_WEEKS)
-    for r in signals:
-        daily = price_map.get(r["ticker"], [])
-        week_buckets: dict = {}
-        for p in daily:
-            d   = date.fromisoformat(p["d"])
-            thu = d + timedelta(days=(3 - d.weekday()))
-            key = thu.isocalendar()[:2]
-            if key not in week_buckets or p["d"] > week_buckets[key]["d"]:
-                week_buckets[key] = p
-        weekly  = [week_buckets[k] for k in sorted(week_buckets)]
-        closes  = [p["c"] for p in weekly]
-        dates_w = [p["d"] for p in weekly]
-        ma20    = [round(sum(closes[i-19:i+1])/20,  4) if i >= 19 else None for i in range(len(closes))]
-        ma100   = [round(sum(closes[i-99:i+1])/100, 4) if i >= 99 else None for i in range(len(closes))]
-        r["weekly_dates"]  = dates_w
-        r["weekly_closes"] = closes
-        r["weekly_ma20"]   = ma20
-        r["weekly_ma100"]  = ma100
-    return jsonify(signals)
+    row = next((r for r in signals if r["ticker"] == ticker.upper()), None)
+    if not row:
+        return jsonify({}), 404
+    daily = db.get_price_series_bulk([ticker.upper()], limit_per=config.SPARKLINE_WEEKS).get(ticker.upper(), [])
+    week_buckets: dict = {}
+    for p in daily:
+        d   = date.fromisoformat(p["d"])
+        thu = d + timedelta(days=(3 - d.weekday()))
+        key = thu.isocalendar()[:2]
+        if key not in week_buckets or p["d"] > week_buckets[key]["d"]:
+            week_buckets[key] = p
+    weekly  = [week_buckets[k] for k in sorted(week_buckets)]
+    closes  = [p["c"] for p in weekly]
+    dates_w = [p["d"] for p in weekly]
+    row["weekly_dates"]  = dates_w
+    row["weekly_closes"] = closes
+    row["weekly_ma20"]   = [round(sum(closes[i-19:i+1])/20,  4) if i >= 19 else None for i in range(len(closes))]
+    row["weekly_ma100"]  = [round(sum(closes[i-99:i+1])/100, 4) if i >= 99 else None for i in range(len(closes))]
+    return jsonify(row)
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
