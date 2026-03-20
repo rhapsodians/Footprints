@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}ETF Universe{% endblock %}
+
+{% block head %}
+<style>
+.page{max-width:none}
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+.univ-header{margin-bottom:28px}
+.univ-title{font-family:var(--mono);font-size:1.35rem;font-weight:600;color:var(--text);letter-spacing:-.01em}
+.univ-title strong{font-weight:700}
+.univ-sub{font-size:.82rem;color:var(--text2);margin-top:4px}
+
+/* ── Controls ────────────────────────────────────────────────────────────── */
+.univ-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+.univ-search{font-family:var(--mono);font-size:.8rem;padding:7px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:var(--text);outline:none;width:220px;transition:border-color .15s}
+.univ-search:focus{border-color:var(--accent)}
+.univ-search::placeholder{color:var(--text3)}
+.univ-count{font-family:var(--mono);font-size:.73rem;color:var(--text3);margin-left:4px}
+.sec-filter-wrap{display:flex;gap:6px;flex-wrap:wrap}
+.sf{font-family:var(--mono);font-size:.67rem;font-weight:600;padding:3px 8px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.sf:hover{border-color:var(--accent);color:var(--text)}
+.sf.on{background:var(--blue-dim);border-color:var(--accent);color:var(--accent)}
+
+/* ── Sector group ─────────────────────────────────────────────────────────── */
+.sec-group{margin-bottom:32px}
+.sec-group-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sec-group-label{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+.sec-group-count{font-family:var(--mono);font-size:.67rem;color:var(--text3);opacity:.6}
+
+/* ── ETF cards grid ───────────────────────────────────────────────────────── */
+.etf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+
+/* ── ETF card ─────────────────────────────────────────────────────────────── */
+.etf-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px 18px;transition:border-color .15s,box-shadow .15s;position:relative}
+.etf-card:hover{border-color:var(--border2);box-shadow:0 2px 16px rgba(0,0,0,.3)}
+.etf-card-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.etf-ticker{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.etf-sector-pill{font-family:var(--mono);font-size:.62rem;font-weight:600;padding:2px 7px;border-radius:2px;background:var(--surface3);color:var(--text2);border:1px solid var(--border2);white-space:nowrap;flex-shrink:0}
+.etf-name{font-size:.78rem;color:var(--text2);margin-bottom:10px;line-height:1.4;font-family:var(--mono)}
+.etf-desc{font-size:.80rem;color:var(--text);line-height:1.6;margin-bottom:12px;font-family:var(--sans)}
+.etf-meta{display:flex;flex-wrap:wrap;gap:6px}
+.etf-meta-item{font-family:var(--mono);font-size:.67rem;color:var(--text3);background:var(--surface2);padding:2px 7px;border-radius:2px;border:1px solid var(--border);white-space:nowrap}
+.etf-meta-item span{color:var(--text2)}
+.etf-proxy{font-family:var(--mono);font-size:.67rem;padding:2px 7px;border-radius:2px;border:1px solid rgba(74,158,255,.25);background:rgba(74,158,255,.07);color:var(--sig-ah);white-space:nowrap}
+.etf-hidden{display:none!important}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">ETF <strong>Universe</strong></div>
+    <div class="page-subtitle">{{ etfs|length }} tracked ETFs · descriptions, sectors and pension fund proxies</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- Controls -->
+  <div class="univ-controls">
+    <input class="univ-search" id="univ-search" type="text" placeholder="Search ticker or name…" oninput="filterUniverse()">
+    <span class="univ-count" id="univ-count"></span>
+  </div>
+  <div class="sec-filter-wrap" id="sec-filters" style="margin-bottom:24px"></div>
+
+  <!-- ETF groups by sector -->
+  <div id="univ-body">
+  {% set ns = namespace(cur_sector='') %}
+  {% for e in etfs %}
+    {% if e.sector != ns.cur_sector %}
+      {% if ns.cur_sector != '' %}</div></div>{% endif %}
+      {% set ns.cur_sector = e.sector %}
+      <div class="sec-group" data-sector="{{ e.sector }}">
+        <div class="sec-group-hd">
+          <span class="sec-group-label">{{ sector_labels[e.sector] if e.sector in sector_labels else e.sector }}</span>
+          <span class="sec-group-count" id="sg-count-{{ e.sector }}"></span>
+        </div>
+        <div class="etf-grid" id="sg-grid-{{ e.sector }}">
+    {% endif %}
+
+    {# Build provider label #}
+    {% set provider = 'iShares' if e.ticker.startswith('I') and 'iShares' in e.name else
+                      'Vanguard' if 'Vanguard' in e.name else
+                      'VanEck' if 'VanEck' in e.name else
+                      'Amundi' if 'Amundi' in e.name or 'LYCS' in e.ticker else
+                      'SPDR' if 'SPDR' in e.name or 'StSt' in e.name else
+                      'HSBC' if 'HSBC' in e.name else
+                      'Xtrackers' if 'Xtrackers' in e.name else
+                      'Invesco' if 'Invesco' in e.name else
+                      'Global X' if 'Global X' in e.name else
+                      'L&G' if 'L&G' in e.name or e.ticker == 'LGAG.L' else
+                      'Future of Defence' if 'Future' in e.name else '—' %}
+
+    <div class="etf-card" data-ticker="{{ e.ticker }}" data-name="{{ e.name|lower }}" data-sector="{{ e.sector }}">
+      <div class="etf-card-hd">
+        <span class="etf-ticker">{{ e.ticker }}</span>
+        <span class="etf-sector-pill">{{ sector_labels[e.sector] if e.sector in sector_labels else e.sector }}</span>
+      </div>
+      <div class="etf-name">{{ e.name }}</div>
+      <div class="etf-desc">{{ ETF_DESC.get(e.ticker, '—') }}</div>
+      <div class="etf-meta">
+        <span class="etf-meta-item">Provider <span>{{ provider }}</span></span>
+        <span class="etf-meta-item">Exchange <span>LSE</span></span>
+        {% if e.fund_codes %}
+          {% for fc in e.fund_codes.split('||') %}
+            <span class="etf-proxy">{{ fc }}</span>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+
+  {% endfor %}
+  </div></div>{# close last group #}
+  </div>{# close univ-body #}
+
+</div>
+
+<script>
+const SL = {{ sector_labels|tojson }};
+
+// ── Build sector filter chips ─────────────────────────────────────────────
+(function(){
+  const sectors=[...new Set(Array.from(document.querySelectorAll('.etf-card')).map(c=>c.dataset.sector))];
+  const wrap=document.getElementById('sec-filters');
+  const all=document.createElement('button');
+  all.className='sf on'; all.textContent='ALL'; all.dataset.sec='ALL';
+  all.onclick=()=>setSector('ALL');
+  wrap.appendChild(all);
+  sectors.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='sf'; b.textContent=SL[s]||s; b.dataset.sec=s;
+    b.onclick=()=>setSector(s);
+    wrap.appendChild(b);
+  });
+  updateCounts();
+})();
+
+let activeSec='ALL';
+
+function setSector(s){
+  activeSec=s;
+  document.querySelectorAll('.sf').forEach(b=>b.classList.toggle('on',b.dataset.sec===s));
+  filterUniverse();
+}
+
+function filterUniverse(){
+  const q=document.getElementById('univ-search').value.toLowerCase().trim();
+  let shown=0;
+  document.querySelectorAll('.etf-card').forEach(c=>{
+    const secOk = activeSec==='ALL' || c.dataset.sector===activeSec;
+    const qOk   = !q || c.dataset.ticker.toLowerCase().includes(q) || c.dataset.name.includes(q);
+    c.classList.toggle('etf-hidden', !(secOk&&qOk));
+    if(secOk&&qOk) shown++;
+  });
+  // Show/hide sector groups
+  document.querySelectorAll('.sec-group').forEach(g=>{
+    const vis=g.querySelectorAll('.etf-card:not(.etf-hidden)').length;
+    g.style.display=vis?'':'none';
+  });
+  updateCounts(shown);
+}
+
+function updateCounts(total){
+  const cards=document.querySelectorAll('.etf-card');
+  const t=total!==undefined?total:cards.length;
+  document.getElementById('univ-count').textContent=t+' of '+cards.length+' ETFs';
+  document.querySelectorAll('.sec-group').forEach(g=>{
+    const s=g.dataset.sector;
+    const el=document.getElementById('sg-count-'+s);
+    if(el){const n=g.querySelectorAll('.etf-card:not(.etf-hidden)').length;el.textContent='('+n+')';}
+  });
+}
+</script>
+{% endblock %}

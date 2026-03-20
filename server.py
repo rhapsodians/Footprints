@@ -16,6 +16,91 @@ from config import SIG_STRONG_BUY, SIG_ACCUM, SIG_EXIT, SIG_EARLY_ACCUM
 import config, db, engine
 
 app = Flask(__name__)
+
+# ── ETF descriptions ──────────────────────────────────────────────────────────
+ETF_DESC = {
+    # BASE
+    'VWRP.L':    'Vanguard FTSE All-World tracks ~4,000 companies across 50+ countries including both developed and emerging markets. Capitalisation-weighted with ~60% US exposure. Used as the RS benchmark throughout this model — every ETF\'s relative strength is measured against it.',
+    'SWDA.L':    'iShares Core MSCI World tracks ~1,500 large and mid-cap companies across 23 developed markets, excluding emerging markets. Low-cost at 0.20% TER with over $50B AUM. Proxy for the L&G Multi-Asset Active Global Equity pension fund.',
+    'VHVG.L':    'Vanguard FTSE Developed World covers large and mid-cap companies across developed markets globally. Near-identical exposure to MSCI World but using the FTSE index methodology. Proxy for the L&G Global Developed Equity pension fund.',
+    # APAC
+    'LGAG.L':    'L&G Asia Pacific Ex Japan Equity ETF tracks large and mid-cap developed Asia-Pacific companies excluding Japan — primarily Australia, Hong Kong, Singapore and New Zealand. Direct proxy for the L&G Asia Pacific Ex Japan pension fund allocation.',
+    'VDPG.L':    'Vanguard Developed Asia-Pacific ex Japan covers the same developed APAC universe as LGAG.L using the FTSE index methodology. Provides an independent cross-check on Asia-Pacific ex Japan rotation signals.',
+    # BOND
+    'AGHG.L':    'Amundi Core Global Aggregate Bond GBP Hedged tracks the Bloomberg Global Aggregate index — the broadest investment-grade bond benchmark — with currency risk hedged back to GBP. Covers government, corporate and securitised bonds across 70+ countries. Proxy for Irish Life Global Bonds.',
+    'AMGAGG.L':  'Amundi Core Global Aggregate Bond (unhedged, accumulating) tracks the Bloomberg Global Aggregate index without currency hedging, giving full USD/EUR/JPY exposure alongside the bond returns. Useful for measuring bond rotation relative to currency-exposed global fixed income.',
+    'IS15.L':    'iShares £ Corporate Bond 0-5yr covers short-dated sterling investment grade corporate bonds. Low duration means lower interest rate sensitivity than longer-dated bond funds. Proxy for both L&G Short Dated Bond and L&G Corporate Bond pension fund allocations.',
+    'ITPS.L':    'iShares $ TIPS tracks US Treasury Inflation-Protected Securities — government bonds whose principal adjusts with US CPI inflation. A pure real-yield instrument; rises when inflation expectations increase or real rates fall. Key rotation signal for inflationary environments.',
+    'INXG.L':    'iShares £ Index-Linked Gilts tracks UK government inflation-linked bonds (index-linked gilts), whose coupons and principal adjust with UK RPI. The longest-duration asset in the BOND sector — highly sensitive to changes in UK real interest rates. Proxy for the Irish Life Indexed Inflation Linked Bond fund.',
+    # CASH
+    'LYCSH2.L':  'Amundi Smart Overnight Return GBP Hedged is a money market ETF targeting returns above the SONIA (Sterling Overnight Index Average) rate by investing in very short-term, high-quality debt and repurchase agreements. Essentially a cash equivalent with minimal price volatility.',
+    # CHINA
+    'IASH.L':    'iShares MSCI China A tracks domestic Chinese A-shares listed on the Shanghai and Shenzhen stock exchanges — companies unavailable to most international investors without quota access. Distinct from offshore China (H-shares/ADRs), giving a purer signal on onshore Chinese institutional flows.',
+    # COMM
+    'SGLN.L':    'iShares Physical Gold ETC holds physical gold bullion in allocated vaults. The most direct gold exposure available — price tracks the London gold spot price with no equity or manager risk. Proxy for the Irish Life Amundi Physical Gold pension fund.',
+    'SSLN.L':    'iShares Physical Silver ETC holds physical silver bullion in allocated vaults. Silver has higher industrial demand than gold (solar panels, electronics) giving it both monetary and cyclical characteristics. Often amplifies gold moves with greater volatility.',
+    # CONS
+    'IUCS.L':    'iShares S&P 500 Consumer Staples Sector covers food, beverage, tobacco, household products and drug retailers within the S&P 500. A classic defensive sector — demand is inelastic regardless of the economic cycle, making it a flight-to-safety destination in risk-off rotations.',
+    'WCOD.L':    'SPDR MSCI World Consumer Discretionary covers global retailers, automakers, hotels, restaurants and leisure companies — sectors where spending is driven by disposable income and consumer confidence. Moves inversely to Consumer Staples in risk-on/off rotation cycles.',
+    # DEF
+    'DFND.L':    'iShares Global Aerospace & Defence covers companies manufacturing aircraft, defence systems, space vehicles and related equipment globally. Structural demand driven by geopolitical tensions and multi-year government procurement cycles, largely immune to economic slowdowns.',
+    'DFNG.L':    'VanEck Defense ETF targets global companies deriving significant revenue from defence contracts, including pure-play defence primes and emerging NATO-aligned suppliers. Provides broader coverage than pure aerospace ETFs, including cybersecurity and logistics companies.',
+    'NATP.L':    'HANetf Future of Defence ETF focuses on companies aligned with NATO member countries\' defence budgets — particularly relevant given the NATO 2% GDP commitment driving European defence spending increases. Tilted toward European and smaller defence companies relative to DFND.',
+    # EM
+    'EXCS.L':    'iShares MSCI EM ex-China tracks emerging markets deliberately excluding China, covering India, Taiwan, South Korea, Brazil, South Africa and others. Allows clean comparison of EM rotation with and without China\'s influence — particularly useful when China is diverging from the broader EM trend.',
+    'VFEM.L':    'Vanguard FTSE Emerging Markets (distributing) tracks the full broad EM universe including China, using the FTSE methodology. The distributing share class pays income quarterly. Essentially the same underlying exposure as VGVFEG.L with a different income treatment.',
+    'VGVFEG.L':  'Vanguard FTSE Emerging Markets (accumulating) is the primary broad EM proxy in the model, tracking ~1,800 companies across 24 emerging markets with China as the largest weight (~30%). Proxy for the L&G Emerging Markets Index pension fund allocation.',
+    # ENERGY
+    'IESU.L':    'iShares S&P 500 Energy Sector covers US oil, gas exploration & production, refining and energy services companies within the S&P 500. Highly correlated to crude oil prices and a key cyclical rotation indicator — typically leads broad market recoveries from energy-led pullbacks.',
+    'INRG.L':    'iShares Global Clean Energy Transition covers ~300 companies across renewables, clean technology and energy transition infrastructure globally. Higher growth and volatility profile than traditional energy; sensitive to interest rate movements given capital-intensive business models.',
+    # EUR
+    'VEUA.L':    'Vanguard Developed Europe covers large and mid-cap companies across Western and Northern Europe including the UK, Germany, France, Switzerland and the Nordics. The broadest European developed market proxy in the universe. Proxy for the Irish Life Indexed European Equity fund.',
+    # FIN
+    'XWFS.L':    'Xtrackers MSCI World Financials tracks banks, insurance companies, asset managers, exchanges and diversified financial services firms across global developed markets. A key macro rotation signal — outperforms when yield curves steepen and credit conditions ease.',
+    # GLOBAL
+    'ISWD.L':    'iShares MSCI World Islamic tracks a Sharia-compliant version of MSCI World, screening out financial services, alcohol, tobacco, weapons and other prohibited sectors. Overweight technology and healthcare vs standard MSCI World. Proxy for the L&G HSBC Islamic Global Equity pension fund.',
+    'ISWSML.L':  'iShares MSCI World Small Cap covers ~3,400 small-cap companies across developed markets — companies typically more domestically focused with higher growth potential but lower liquidity than large caps. A risk-appetite indicator; small-cap outperformance signals broad market confidence. Proxy for L&G Smaller Companies Index.',
+    'IWFQ.L':    'iShares MSCI World Quality Factor targets companies with high return on equity, stable earnings and low leverage across global developed markets. Quality tends to outperform in late-cycle environments when investors seek earnings resilience over pure growth.',
+    'IWVL.L':    'iShares MSCI World Value Factor screens for globally cheap stocks on price-to-book, forward earnings and enterprise value metrics. Value rotation typically signals reflation expectations and rising rate environments. Proxy for the L&G Future World Multi-Asset pension fund.',
+    # HEALTH
+    'BTEK.L':    'iShares NASDAQ Biotechnology covers US biotech companies developing drugs, diagnostics and genomics technologies. High risk-reward with binary outcomes around FDA approvals and clinical trial data. Acts as a risk-on amplifier within the broader healthcare sector.',
+    'DRDR.L':    'iShares Healthcare Innovation tracks global companies pioneering medical devices, genomics, digital health and robotic surgery. Thematic rather than sector-pure — combines elements of healthcare and technology with a long-duration growth profile.',
+    'IUHC.L':    'iShares S&P 500 Health Care Sector covers the full US healthcare GICS sector — pharmaceuticals, managed care, medical devices, diagnostics and biotech within the S&P 500. A classic defensive sector that holds up well during economic downturns due to non-discretionary demand.',
+    # INDIA
+    'ISIIND.L':  'iShares MSCI India covers ~85% of Indian equity market capitalisation across large and mid-cap companies. India is now the world\'s fifth largest economy with secular growth drivers including demographics, infrastructure investment and manufacturing diversification away from China.',
+    # INDUS
+    'IUIS.L':    'iShares S&P 500 Industrials Sector covers aerospace & defence primes, capital goods manufacturers, transportation, construction and commercial services within the S&P 500. A highly cyclical sector that leads economic expansions — machinery orders and freight volumes are key leading indicators.',
+    # JAP
+    'VJPB.L':    'Vanguard FTSE Japan covers large and mid-cap Japanese equities. Japan is structurally interesting for institutional rotation: deflationary forces reversing, corporate governance reforms underway, and significant exposure to global manufacturing and automotive sectors.',
+    # MINING
+    'GIGB.L':    'VanEck S&P Global Mining covers global diversified and precious metals mining companies. Highly leveraged to commodity prices — particularly copper, iron ore and gold — with significant emerging market operational exposure. A key indicator for global industrial demand.',
+    'IAUP.L':    'iShares Gold Producers tracks the MSCI Global Gold Miners index — listed companies whose primary business is gold mining. Provides leveraged exposure to the gold price (miners\' profits expand faster than gold when prices rise) with additional equity risk from operational costs and geopolitics.',
+    # NAM
+    'V3NB.L':    'Vanguard ESG North America All Cap applies ESG screens to a broad US and Canadian equity universe. Proxy for the L&G Future World North America pension fund — the ESG tilt creates modest differences from plain VNRG.L, particularly underweighting energy and some financials.',
+    'VNRG.L':    'Vanguard North America tracks the broad US and Canadian equity market without any screening. Slightly broader than S&P 500 trackers as it includes mid and small-cap companies. Useful cross-check on NAM rotation alongside the ESG-screened V3NB.L.',
+    # PROP
+    'HPROP.L':   'HSBC FTSE EPRA NAREIT Developed tracks listed real estate investment trusts (REITs) and real estate operating companies across global developed markets. REITs are rate-sensitive — they typically underperform when rates rise and outperform in easing cycles as financing costs fall.',
+    'IDWP.L':    'iShares Developed Markets Property Yield tracks REITs and property companies in developed markets with a yield tilt, selecting higher-dividend-paying real estate. Proxy for the L&G Global Real Estate Equity pension fund allocation. Higher income orientation than HPROP.',
+    # TECH
+    'AINF.L':    'iShares AI Infrastructure covers companies building the physical and digital infrastructure enabling AI — data centres, semiconductor equipment, power systems, networking and cloud platforms. Distinct from AI application companies; captures the "picks and shovels" side of the AI investment cycle.',
+    'BOTZ.L':    'Global X Robotics & AI tracks companies developing or producing robots, automation systems, and AI applications across industrial and non-industrial contexts globally. One of the earliest thematic ETFs in this space with a long track record for trend analysis.',
+    'IITU.L':    'iShares S&P 500 Information Technology Sector covers all technology companies within the S&P 500 — semiconductors, software, hardware, IT services and tech hardware. The largest GICS sector by weight (~30% of S&P 500) and a primary driver of US equity momentum.',
+    'RBOT.L':    'iShares Robotics & AI Multisector ETF (GBP share class) tracks the same index as RBTX.L — global companies benefiting from robotics, automation and AI adoption. The GBP-denominated share class of the same underlying fund.',
+    'RBTX.L':    'iShares Robotics & AI Multisector ETF (USD share class) covers ~100 global companies spanning industrial robotics, autonomous vehicles, AI computing and unmanned systems. The primary USD listing; broader and more liquid than the purely industrial BOTZ.L.',
+    'SMGB.L':    'VanEck Semiconductor ETF tracks the 25 largest and most liquid global semiconductor companies — chip designers, equipment makers and memory manufacturers. Semiconductors are a leading indicator for the technology capex cycle and a key signal for risk appetite in the tech sector.',
+    # UK
+    'CUKS.L':    'iShares MSCI UK Small Cap covers smaller companies listed in the UK, capturing domestically-oriented businesses with higher growth potential than FTSE 100 large caps. More sensitive to UK economic conditions, currency and consumer confidence than the internationally-exposed large-cap index. Proxy for L&G UK Smaller Companies.',
+    'FTAL.L':    'SPDR FTSE UK All Share covers the entire UK equity market including FTSE 100, 250 and SmallCap indices — the broadest single UK equity exposure available. Proxy for the L&G UK Equity Index pension fund. The FTSE All Share is dominated by financials, energy and consumer staples.',
+    'VUKG.L':    'Vanguard FTSE 100 tracks only the 100 largest UK-listed companies — heavily weighted to global multinationals (HSBC, Shell, AstraZeneca, Unilever) that derive most revenues internationally. Less correlated to domestic UK economy than FTAL or CUKS despite being UK-listed.',
+    # US
+    'CNX1.L':    'iShares NASDAQ 100 covers the 100 largest non-financial companies listed on NASDAQ — overwhelmingly US mega-cap technology (Apple, Microsoft, NVIDIA, Amazon, Meta, Alphabet). The highest-beta major equity index; amplifies both bull and bear market moves relative to the S&P 500.',
+    'EQGB.L':    'Invesco EQQQ NASDAQ-100 GBP Hedged tracks the same NASDAQ-100 index as CNX1.L but with currency risk hedged back to GBP. Returns differ from CNX1.L purely by the USD/GBP hedging cost and outcome — useful when analysing currency-adjusted NASDAQ rotation.',
+    'RIUS.L':    'L&G US ESG Paris-Aligned ETF tracks a broad US equity universe screened for ESG criteria and aligned with EU Paris Agreement climate targets, resulting in lower carbon intensity than a plain S&P 500 tracker. Overweights clean tech; underweights traditional energy.',
+    'VUSA.L':    'Vanguard S&P 500 tracks the 500 largest US companies — the global equity benchmark for institutional investors. Broad, liquid and low-cost at 0.07% TER. The foundational US equity signal; all other US-sector ETFs in this model are subsets of its holdings.',
+    # UTILS
+    'IUUS.L':    'iShares S&P 500 Utilities Sector covers electric, gas and water utilities and independent power producers within the S&P 500. A classic defensive/bond-proxy sector — outperforms in risk-off environments and when interest rates fall. Increasingly relevant as a proxy for AI data centre power demand.',
+}
+
 app.secret_key = os.environ.get("FP2_SECRET_KEY", "fp2-dev-secret-change-in-production")
 
 # ── Jinja helpers ─────────────────────────────────────────────────────────────
@@ -433,6 +518,12 @@ def etf_history(ticker):
 @app.route("/guide")
 def guide():
     return render_template("guide.html", **_ctx("guide"))
+
+
+@app.route("/universe")
+def universe():
+    etfs = db.get_etf_universe()
+    return render_template("universe.html", etfs=etfs, ETF_DESC=ETF_DESC, **_ctx("universe"))
 
 # ── Admin ─────────────────────────────────────────────────────────────────────
 @app.route("/admin")

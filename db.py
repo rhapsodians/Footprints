@@ -678,3 +678,24 @@ def import_lseg_rows(ticker: str, rows: list[tuple]) -> tuple[int, int]:
     inserted = sum(1 for d in dates if d not in existing)
     replaced  = sum(1 for d in dates if d in existing)
     return inserted, replaced
+
+
+def get_etf_universe():
+    """Return full ETF list with sector, provider mapping for the ETF descriptions page."""
+    with db_conn() as conn:
+        rows = conn.execute('''
+            SELECT
+                e.ticker,
+                e.name,
+                e.sector,
+                e.benchmark_ticker,
+                GROUP_CONCAT(pf.code, '||') as fund_codes,
+                GROUP_CONCAT(pf.name, '||') as fund_names
+            FROM etf_meta e
+            LEFT JOIN pension_etf_map pem ON e.ticker = pem.ticker
+            LEFT JOIN pension_funds pf ON pem.fund_id = pf.id
+            WHERE e.active = 1
+            GROUP BY e.ticker
+            ORDER BY e.sector, e.ticker
+        ''').fetchall()
+        return [dict(r) for r in rows]
