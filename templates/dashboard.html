@@ -815,7 +815,7 @@ function openHistory(ticker) {
   if(!bar) return;
   // Collect sectors present in the data, preserving a logical display order
   const ORDER=['BASE','UK','US','NAM','EUR','JAP','APAC','EM','INDIA','CHINA','GLOBAL',
-                'TECH','HEALTH','DEF','FIN','INDUS','UTILS','ENERGY','CONS','PROP','COMM','MINING',
+                'TECH','HEALTH','DEF','FIN','INDUS','UTILS','ENERGY','CSTAP','CDISC','PROP','COMM','MINING',
                 'BOND','CASH','OTHER'];
   const present=[...new Set(Object.values(D).map(e=>e.sector).filter(Boolean))];
   const sectors=ORDER.filter(s=>present.includes(s))
