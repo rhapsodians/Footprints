@@ -115,14 +115,14 @@ Extracted from `footprints.db` for reference. Confirms the state of the database
 | Total ETFs in `etf_meta` | 43 |
 | Active ETFs | 43 (all active=1, suspended=0) |
 | Total price rows | 18,737 daily OHLCV rows |
-| Price date range | 2024-03-01 → 2026-03-13 |
+| Price date range | 2024-03-01 → 2026-03-20 |
 | Pension funds | 20 (15 LG, 5 IL) |
 | Pension ETF mappings | 20 |
 | Total signal rows | 1,828 |
-| Latest signal date | 2026-03-13 |
+| Latest signal date | 2026-03-20 |
 | Signal log entries | 77 |
 
-**Latest signal distribution (2026-03-13):**
+**Latest signal distribution (2026-03-20):**
 
 | Signal | Count |
 |--------|-------|

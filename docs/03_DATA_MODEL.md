@@ -74,13 +74,21 @@ Each ETF has:
 | `JAP` | Japan |
 | `APAC` | Asia-Pacific |
 | `EM` | Emerging Markets |
+| `INDIA` | India |
+| `CHINA` | China |
 | `TECH` | Technology |
 | `HEALTH` | Healthcare |
 | `DEF` | Defence |
+| `FIN` | Financials |
+| `INDUS` | Industrials |
+| `UTILS` | Utilities |
+| `ENERGY` | Energy |
+| `CONS` | Consumer |
 | `PROP` | Real Estate |
 | `COMM` | Commodities |
 | `MINING` | Mining |
 | `BOND` | Fixed Income |
+| `CASH` | Cash & Money Market |
 | `GLOBAL` | Global Thematic |
 | `OTHER` | Other |
 
@@ -225,8 +233,8 @@ These fields exist as NULL columns in the DB schema for legacy row compatibility
 
 ## Appendix A — ETF Universe Reference
 
-> **Source:** Extracted directly from `footprints.db` (`etf_meta` table), March 2026.  
-> **43 ETFs total; all active=1, suspended=0; all use `VWRP.L` as benchmark.**  
+> **Source:** Extracted directly from `footprints.db` (`etf_meta` table), March 2026. The universe has grown from the initial 43 ETFs to 55 following sector expansion into INDIA, CHINA, FIN, INDUS, UTILS, ENERGY, CONS, CASH sectors.
+> **55 ETFs total; all active=1, suspended=0; all use `VWRP.L` as benchmark.**  
 > Keep this table current whenever ETFs are added or removed via Admin. Re-extract with:
 > ```sql
 > SELECT display_order, ticker, name, sector, benchmark_ticker
@@ -241,25 +249,20 @@ These fields exist as NULL columns in the DB schema for legacy row compatibility
 | 4 | BTEK.L | iShares NASDAQ Biotech | HEALTH |
 | 5 | CNX1.L | iShares NASDAQ 100 | US |
 | 6 | CUKS.L | iShares MSCI UK Small Cap UCITS ETF GBP (Acc) | UK |
-| 7 | DBXWD1.L | Xtrackers MSCI World Swap UCITS ETF 1D | BASE |
 | 8 | DFND.L | iShares Global Aerospace & Def | DEF |
 | 9 | DFNG.L | VanEck Defense | DEF |
 | 10 | DRDR.L | iShares Healthcare Innovation | HEALTH |
-| 11 | EQGB.L | Invesco EQQQ NASDAQ-100 (GBP Hdg) | US |
 | 12 | FTAL.L | StSt SPDR FTSE UK All Share UCITS ETF Acc | UK |
 | 13 | GIGB.L | VanEck S&P Global Mining | MINING |
 | 14 | HPROP.L | HSBC FTSE EPRA NAREIT Dev | PROP |
-| 15 | IAUP.L | iShares Gold Producers UCITS ETF USD (Acc) | COMM |
+| 15 | IAUP.L | iShares Gold Producers UCITS ETF USD (Acc) | MINING |
 | 16 | IDWP.L | iShares Dvlp Mrkts Prop Yld UCITS ETF USD Dist | PROP |
-| 17 | IITU.L | iShares S&P500 Info Tech | US |
+| 17 | IITU.L | iShares S&P500 Info Tech | TECH |
 | 18 | IS15.L | iShares £ Corp Bond 0-5yr UCITS ETF GBP (Dist) | BOND |
 | 19 | ISWSML.L | iShares MSCI World Small Cap UCITS ETF USD (Acc) | GLOBAL |
-| 20 | IWDP.L | iShares Dev Mkts Real Estate | PROP |
 | 21 | IWFQ.L | iShares MSCI World Quality | GLOBAL |
 | 22 | LGAG.L | L&G Asia Pacific Ex Japan Equity UCITS ETF USD Acc | APAC |
-| 23 | MAGG.L | iShares Growth Portfolio UCITS ETF GBP Hedged Acc | GLOBAL |
 | 24 | NATP.L | Future of Defence ETF | DEF |
-| 25 | RBOT.L | iShares Robotics (GBP) | TECH |
 | 26 | RBTX.L | iShares Robotics (USD) | TECH |
 | 27 | RIUS.L | L&G US ESG Paris Aligned UCITS ETF USD Acc | US |
 | 28 | SGLN.L | iShares Physical Gold ETC | COMM |
@@ -277,11 +280,26 @@ These fields exist as NULL columns in the DB schema for legacy row compatibility
 | 40 | VUSA.L | Vanguard S&P 500 | US |
 | 41 | VWRP.L | Vanguard FTSE All-World | BASE |
 | 99 | AMGAGG.L | Amundi Core Global Aggregate Bond | BOND |
-| 99 | LYCSH2.L | Amundi Smart Overnight Rtn UCITS ETF GBP Hgd Acc | BOND |
+| 99 | EXCS.L | iShares MSCI EM ex-China UCITS ETF USD Acc | EM |
+| 99 | IASH.L | iShares MSCI China A UCITS ETF USD (Acc) | CHINA |
+| 99 | IESU.L | iShares S&P 500 Energy Sector UCITS ETF USD (Acc) | ENERGY |
+| 99 | IHYG.L | iShares € High Yield Corp Bond UCITS ETF EUR D | BOND |
+| 99 | INRG.L | iShares Global Clean Energy Trnstn UCITS ETF USD D | ENERGY |
+| 99 | INXG.L | iShares £ Index-Linked Gilts UCITS ETF GBP Dist | BOND |
+| 99 | ISIIND.L | iShares MSCI India UCITS USD (Acc) ETF | INDIA |
+| 99 | ISWD.L | iShares MSCI World Islamic UCITS ETF USD (Dist) | GLOBAL |
+| 99 | ITPS.L | iShares $ TIPS UCITS ETF USD (Acc) | BOND |
+| 99 | IUCS.L | iShares S&P 500 Consumer Staples Sector UCITS ETF | CONS |
+| 99 | IUHC.L | iShares S&P 500 Health Care Sctr UCITS ETF USD A | HEALTH |
+| 99 | IUIS.L | iShares S&P 500 Industrials Sector UCITS ETF USD (Acc) | INDUS |
+| 99 | IUUS.L | iShares S&P 500 Utilities Sector UCITS ETF USD (Acc) | UTILS |
+| 99 | IWVL.L | iShares Edge MSCI Wld Val Fctr UCITS ETF USD A | GLOBAL |
+| 99 | LYCSH2.L | Amundi Smart Overnight Rtn UCITS ETF GBP Hgd Acc | CASH |
+| 99 | VFEM.L | Vanguard FTSE Emerging Mkts UCITS ETF USD Dis | EM |
+| 99 | WCOD.L | StSt SPDR MSCI World Con Discretionary UCITS ETF | CONS |
+| 99 | XWFS.L | Xtrackers MSCI World Financials UCITS 1C ETF | FIN |
 
 **Notes:**
 - VWRP.L (order=41) is both the default RS benchmark AND a signal instrument. Must be present and have price data.
-- AINF.L (order=2) has only 271 daily rows (~13 weekly bars) — below `MIN_OBS_FULL=120` weekly bars; confidence will be LOW.
-- DFND.L (order=8) has only 224 daily rows — similar constraint.
-- DBXWD1.L, IDWP.L, IS15.L, LGAG.L, MAGG.L, RIUS.L, SWDA.L all have ~126 daily rows (~25 weekly bars) — above `MIN_OBS_RS=21` but well below `MIN_OBS_FULL=120`; expect LOW/MODERATE confidence for these.
-- AMGAGG.L and LYCSH2.L have display_order=99 (ungrouped / late additions).
+- ETFs with display_order=99 are later additions not yet assigned a sequential order.
+- Sector codes: BASE=Global Benchmark, BOND=Fixed Income, CASH=Cash & Money Market, COMM=Commodities, CONS=Consumer, DEF=Defence, EM=Emerging Markets, ENERGY=Energy, FIN=Financials, GLOBAL=Global Thematic, HEALTH=Healthcare, INDIA=India, CHINA=China, INDUS=Industrials, JAP=Japan, MINING=Mining, NAM=North America, PROP=Real Estate, TECH=Technology, UK=United Kingdom, UTILS=Utilities.

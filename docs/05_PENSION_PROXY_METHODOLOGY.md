@@ -184,7 +184,7 @@ Each week after updating prices and recomputing signals:
 ## Appendix B — Pension Fund & Proxy Mapping Reference
 
 > **Source:** Extracted directly from `footprints.db` (`pension_funds` + `pension_etf_map` tables), March 2026.  
-> **20 funds total: 15 L&G WorkSave (LG-), 5 Irish Life (IL-).**  
+> **19 funds total: 14 L&G WorkSave (LG-), 5 Irish Life (IL-). Note: LG-APAC-EXJP removed (duplicate of LG-ASIAPAC_EXJP).**  
 > Keep current whenever funds or proxies are added/removed via Admin. Re-extract with:
 > ```sql
 > SELECT pf.code, pf.name, pem.ticker
@@ -193,12 +193,11 @@ Each week after updating prices and recomputing signals:
 > ORDER BY pf.code, pem.ticker;
 > ```
 
-### L&G WorkSave Funds (15 funds, `LG-` prefix)
+### L&G WorkSave Funds (14 funds, `LG-` prefix)
 
 | Code | Fund Name | Proxy ETF | Proxy Description |
 |------|-----------|-----------|-------------------|
 | LG-ACTIVE_GLOBAL | L&G MT Active Global Equity | SWDA.L | iShares Core MSCI World |
-| LG-APAC-EXJP | PMC Future World AsiaPacific(ex Japan)Eq Ind 3 | LGAG.L | L&G Asia Pacific Ex Japan |
 | LG-ASIAPAC_EXJP | L&G PMC Future World AsiaPacific(ex Japan)Eq Ind 3 | LGAG.L | L&G Asia Pacific Ex Japan |
 | LG-CORPBONDS | L&G PMC AAA-AA-A Corp Bond All Stocks Index 3 | IS15.L | iShares £ Corp Bond 0-5yr |
 | LG-EMGMKTS | L&G MT Emerging Markets Index | VGVFEG.L | Vanguard FTSE Emerging Mkts |
@@ -221,11 +220,10 @@ Each week after updating prices and recomputing signals:
 | IL-AMUNDI_GOLD | Amundi Physical Gold ETC Series P | SGLN.L | iShares Physical Gold ETC |
 | IL-EUROPE | Irish Life Indexed European Equity P | VEUA.L | Vanguard Developed Europe |
 | IL-GLBL-BONDS | Irish Life Amundi Global Aggregate Bond Series P | AGHG.L | Amundi Core Gl Aggregate Bd GBP Hgd |
-| IL-INFLATIONBOND | Indexed Inflation Linked Bond | LYCSH2.L | Amundi Smart Overnight Rtn GBP Hgd |
+| IL-INFLATIONBOND | Indexed Inflation Linked Bond | INXG.L | iShares £ Index-Linked Gilts |
 
 **Proxy notes:**
-- **LG-APAC-EXJP and LG-ASIAPAC_EXJP** map to the same proxy (LGAG.L) — these appear to be two entries for the same underlying fund; the duplicate should be reviewed via Admin.
 - **LG-CORPBONDS and LG-SHRTBOND** both map to IS15.L — correct, as IS15.L (iShares £ Corp Bond 0-5yr) is the appropriate proxy for both short-dated and IG corp bond mandates.
 - **LG-GLOBAL_ISLAMIC** maps to DBXWD1.L (Xtrackers MSCI World Swap) — this is a conventional fund, not a Shariah-screened ETF. This proxy has index alignment (MSCI World) but does not replicate the Islamic screening of the underlying fund. Interpret signals with caution for this fund.
 - **LG-WRLD-EXUK** maps to VWRP.L (All-World including UK) — minor mismatch vs an ex-UK mandate; acceptable as directional proxy.
-- **IL-INFLATIONBOND** maps to LYCSH2.L (Amundi Smart Overnight Return — a cash/overnight rate ETF) — this is a poor proxy for an inflation-linked bond fund. Signals should be treated as indicative only.
+- **IL-INFLATIONBOND** maps to INXG.L (iShares £ Index-Linked Gilts) — a direct proxy for a UK inflation-linked bond fund. Note: formerly mapped to LYCSH2.L (Amundi Smart Overnight Return, now reclassified as CASH sector).

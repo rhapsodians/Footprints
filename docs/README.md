@@ -40,7 +40,9 @@
 | Signal labels | STRONG BUY / ACCUMULATING/HOLD / EARLY ACCUMULATION / NEUTRAL / EXIT/DISTRIBUTION |
 | Pension providers | LG (L&G WorkSave) and IL (Irish Life) |
 | Key dependency | `openpyxl` (LSEG import/export) — not documented in prior versions |
-| Pages | Home, Entry, Dashboard, Heatmap, Summary, History, ETF History, Guide, Admin |
+| ETF universe | 55 active ETFs across 25 sector codes |
+| Pension funds | 19 (14 L&G WorkSave + 5 Irish Life) |
+| Pages | Home, Entry, Dashboard, Heatmap, History, ETF History, Guide, Admin, Universe |
 | Secret key | `FP2_SECRET_KEY` env var; fallback for dev only |
 
 ---
@@ -79,10 +81,10 @@ The following were **wrong** in the pre-audit documentation and are now correcte
 
 | Priority | Action | Where |
 |----------|--------|-------|
-| ✅ Done | ETF universe (43 ETFs) from live DB | `03_DATA_MODEL.md` Appendix A |
+| ✅ Done | ETF universe (55 ETFs) from live DB | `03_DATA_MODEL.md` Appendix A |
 | ✅ Done | Pension fund + proxy mappings (20 funds) from live DB | `05_PENSION_PROXY_METHODOLOGY.md` Appendix B |
 | ✅ Done | All templates fully documented | `06_DASHBOARD_PAGES.md` |
-| ✅ Done | Signal priority order corrected (EA is priority 1) | `04_SIGNAL_LOGIC.md` |
+| ✅ Done | Signal priority order confirmed: SB(1)→AH(2)→EA(3)→EXIT(4)→NEUTRAL(5) | `04_SIGNAL_LOGIC.md` |
 | ✅ Done | Admin route bug fixed (toggle-etf) | `08_DECISIONS_LOG.md` |
 | ✅ Done | Git tag `v2.0.0` created | `09_BASELINES.md` |
 | ✅ Done | Inline sector editor on Admin tiles | `06_DASHBOARD_PAGES.md`, `08_DECISIONS_LOG.md` |
@@ -92,6 +94,17 @@ The following were **wrong** in the pre-audit documentation and are now correcte
 | ✅ Done | Entry page redesign — upload-only, manual OHLCV table removed | `06_DASHBOARD_PAGES.md` |
 | ✅ Done | Engine as_of_date param for targeted Friday recompute | `02_ARCHITECTURE.md`, `08_DECISIONS_LOG.md` |
 | ✅ Done | Admin Delete ETF replaces Suspend/Exclude; toggle-etf route removed | `06_DASHBOARD_PAGES.md`, `08_DECISIONS_LOG.md` |
+| ✅ Done | ETF universe expanded 43→55; 8 new sector codes (INDIA, CHINA, FIN, INDUS, UTILS, ENERGY, CONS, CASH) | `03_DATA_MODEL.md`, `08_DECISIONS_LOG.md` |
+| ✅ Done | Universe page added (/universe) with ETF descriptions and factsheet links | `06_DASHBOARD_PAGES.md` |
+| ✅ Done | admin/set-sector removed; sector changes via scripts/update_sectors.py | `08_DECISIONS_LOG.md` |
+| ✅ Done | Pension fund count corrected 20→19; IL-INFLATIONBOND proxy changed to INXG.L | `05_PENSION_PROXY_METHODOLOGY.md` |
+| ✅ Done | Utility scripts documented (backfill_signals, update_sectors, purge_v1_signals) | `10_REPRODUCTION_GUIDE.md` |
+| ✅ Done | ETF universe expanded to 55 ETFs; 8 new sectors (INDIA, CHINA, FIN, INDUS, UTILS, ENERGY, CONS, CASH) | `03_DATA_MODEL.md`, `08_DECISIONS_LOG.md` |
+| ✅ Done | Universe page added (/universe) with ETF descriptions and factsheet links | `06_DASHBOARD_PAGES.md` |
+| ✅ Done | admin/set-sector removed; sector updates via update_sectors.py script | `08_DECISIONS_LOG.md` |
+| ✅ Done | Scripts: backfill_signals.py, update_sectors.py, purge_v1_signals.py | `10_REPRODUCTION_GUIDE.md` |
+| ✅ Done | Pension funds: 20→19 (LG-APAC-EXJP removed); IL-INFLATIONBOND proxy → INXG.L | `05_PENSION_PROXY_METHODOLOGY.md` |
+| ✅ Done | Seed scripts updated for 55 ETFs + 19 pension funds | `10_REPRODUCTION_GUIDE.md` |
 | 🟢 Low | Run `pip freeze > requirements_locked.txt` on PythonAnywhere and commit | repo root |
 | 🔴 High | `pension_funds` + `pension_etf_map` not in `init_schema()` — fresh deploy will 500 | Add to `db.init_schema()`; workaround in `10_REPRODUCTION_GUIDE.md` |
 | 🟢 Low | `footprints.db` backup strategy — gitignored so not version controlled | Consider periodic manual backup |

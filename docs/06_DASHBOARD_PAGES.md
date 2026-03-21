@@ -1,6 +1,6 @@
 # 06 — Dashboard Pages & Routes
 
-> **Audit status:** Fully verified against all 8 committed templates (zip upload) and the live PythonAnywhere `server.py` (uploaded directly). Key finding: the live `server.py` (627 lines) differs from GitHub (752 lines) — the `/summary` route was removed and merged into `/heatmap`.
+> **Audit status:** Verified against actual codebase (Archive.zip, March 2026). server.py = 762 lines, 9 templates including new `universe.html`. 55 ETFs, 8 new sector codes.
 
 ---
 
@@ -76,11 +76,10 @@ Sticky top nav (44px height). Contains:
 | `/admin/remove-fund` POST | `admin_remove_fund()` | redirect | — |
 | `/admin/add-proxy` POST | `admin_add_proxy()` | redirect | — |
 | `/admin/remove-proxy` POST | `admin_remove_proxy()` | redirect | — |
-| `/admin/set-sector` POST | `admin_set_sector()` | redirect | — |
 | `/api/prices/<ticker>` | `api_prices()` | JSON | — |
 | `/api/signals` | `api_signals()` | JSON | — |
 
-> **Live vs GitHub divergence:** The live `server.py` has no `/summary` route. The pension summary functionality was merged into `/heatmap`. The GitHub repo `server.py` is 125 lines longer and still has the old `/summary` route — it should be updated with the live version.
+> **Note:** The `/summary` route no longer exists. Pension summary is merged into `/heatmap`. GitHub is now the source of truth.
 
 ---
 
@@ -472,15 +471,15 @@ Two-column: Add ETF form (left) + ETF tile grid (right).
 
 **Add ETF form** (POST `/admin/add_etf`): Ticker, Name, Sector (dropdown from `config.SECTOR_LABEL`), Display Order, Benchmark Ticker (defaults to VWRP.L), optional LSEG file upload for immediate history import.
 
-**ETF tile grid**: One tile per ETF showing ticker, name, benchmark, price row count, and an inline sector editor (dropdown + ✓ save button → POST `/admin/set-sector`).
+**ETF tile grid**: One tile per ETF showing ticker, name, sector, benchmark, price row count.
 
 **Action button per tile:**
 
 | Button | Route | Effect |
 |--------|-------|--------|
-| Delete | POST `/admin/delete-etf` | Permanently deletes ETF and ALL its prices and signals from the DB |
+| Delete | POST `/admin/delete-etf` | Permanently deletes ETF and ALL its prices, signals, signal_log and pension_map rows |
 
-> ⚠️ **Delete is irreversible.** Suspend/exclude functionality has been removed. Deletion removes all `prices`, `signals`, and `etf_meta` rows for that ticker permanently. Re-importing from LSEG is required to restore.
+> ⚠️ **Delete is irreversible.** No soft-suspend or exclude. Deletion is permanent — re-import from LSEG to restore an ETF.
 
 **DB stats panel**: Shows price_rows, date_min, date_max, signal_rows, model_version.
 
@@ -516,6 +515,36 @@ Returns all current signals as JSON array. No date filtering — always returns 
 
 ---
 
+
+## Page: ETF Universe (`/universe`) — `universe.html`
+
+Read-only reference page showing all active ETFs with descriptions, factsheet links, and pension fund mappings. 569 lines.
+
+### Content
+
+For each active ETF (sorted by sector then ticker):
+- **Ticker** and **Name**
+- **Sector** badge
+- **Description** — sourced from `ETF_DESC` dict in `server.py`; rich institutional text covering index methodology, use case, and pension proxy relationships
+- **Factsheet URL** — sourced from `ETF_URLS` dict in `server.py`; links to official provider pages (iShares/BlackRock, Vanguard, VanEck, etc.)
+- **Pension fund links** — which pension funds use this ETF as a proxy
+
+### Server context
+
+```python
+# /universe route passes:
+etfs     = db.get_etf_universe()   # active ETFs with fund code/name from pension_etf_map JOIN
+ETF_DESC = {...}   # dict in server.py — rich descriptions per ticker
+ETF_URLS = {...}   # dict in server.py — official factsheet URLs per ticker
+```
+
+`get_etf_universe()` is a new `db.py` function (line 683) that JOINs `etf_meta` with `pension_etf_map` and `pension_funds` to attach fund codes and names in a single query.
+
+### Also uses new `/api/signals/<ticker>` endpoint
+
+The universe page uses `GET /api/signals/<ticker>` to load individual ETF signal data (including weekly chart arrays) into a detail panel without a page reload.
+
+---
 ## Template Commit Status
 
 | Template | In GitHub repo | Notes |
@@ -524,7 +553,8 @@ Returns all current signals as JSON array. No date filtering — always returns 
 | `home.html` | ✅ | Fully documented — nav cards, signal summary |
 | `heatmap.html` | ✅ | Fully documented — 18-col table, sector grid, tooltips |
 | `dashboard.html` | ✅ | Fully documented — card grid, detail panel, Chart.js |
-| `entry.html` | ✅ | Documented — upload-only redesign (Single ETF + Bulk + Recompute band); manual OHLCV table removed |
+| `entry.html` | ✅ | Upload-only redesign (Single ETF + Bulk + Recompute band); manual OHLCV table removed |
+| `universe.html` | ✅ | Documented — ETF descriptions, factsheet links, pension proxy listings |
 | `history.html` | ✅ | Fully documented — simple server-rendered table |
 | `guide.html` | ✅ | Documented — KPI guide with signal logic table |
 | `admin.html` | ✅ | Documented — ETF tiles, fund tiles, route discrepancy noted |

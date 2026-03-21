@@ -7,10 +7,10 @@
 ```
 Footprints/                      # Repository root
 │
-├── server.py                    # Flask app: all routes, helpers, LSEG parser (583 lines)
-├── engine.py                    # Signal computation pipeline — no Flask imports (733 lines)
-├── db.py                        # All SQLite I/O — no Flask, no business logic (688 lines)
-├── config.py                    # All constants, weights, thresholds, sector labels (180 lines)
+├── server.py                    # Flask app: all routes, helpers, LSEG parser (762 lines)
+├── engine.py                    # Signal computation pipeline — no Flask imports (732 lines)
+├── db.py                        # All SQLite I/O — no Flask, no business logic (701 lines)
+├── config.py                    # All constants, weights, thresholds, sector labels (188 lines)
 ├── wsgi.py                      # PythonAnywhere WSGI entry point
 ├── start_footprints.sh          # Shell script: local dev startup
 ├── requirements.txt             # Pinned dependencies (4 packages)
@@ -21,11 +21,11 @@ Footprints/                      # Repository root
 │   ├── entry.html               # Route: /entry
 │   ├── dashboard.html           # Route: /dashboard
 │   ├── heatmap.html             # Route: /heatmap
-│   ├── summary.html             # Route: /summary
 │   ├── history.html             # Route: /history
 │   ├── etf_history.html         # Route: /history/etf/<ticker>
 │   ├── guide.html               # Route: /guide
-│   └── admin.html               # Route: /admin
+│   ├── admin.html               # Route: /admin
+│   └── universe.html            # Route: /universe
 │
 ├── scripts/                     # Utility / maintenance scripts
 │
@@ -44,17 +44,16 @@ Footprints/                      # Repository root
 
 ### `server.py` — Flask Application (Routes + Helpers)
 
-> **Version note:** The live PythonAnywhere `server.py` is **583 lines** (latest: bulk LSEG import added, template import/export removed). GitHub is now the authority — all changes are committed and in sync. The GitHub version is stale. Key differences documented below. The live version is the authority.
+> **Version note:** The live server.py is **762 lines** (post-expansion: 55 ETFs, 8 new sectors, universe page, ETF_URLS/ETF_DESC dicts, backfill script). GitHub is the authority.
 
 The sole Flask file. Contains:
 
 - Flask app instantiation and `secret_key` setup
-- All route handlers (`@app.route`) — **21 routes** in the live version (`/admin/toggle-etf` removed; `/admin/delete-etf` added; `POST /entry` manual submit removed)
+- All route handlers (`@app.route`) — **22 routes** in the live version (added `/universe`, `/api/signals/<ticker>`; `/admin/set-sector` removed)
 - Jinja2 helper functions registered via `app.jinja_env.globals`
 - LSEG Excel parser (`_parse_lseg()`)
 - Dashboard data enrichment (`_enrich_signals()`)
 - Pension fund row builder (`_build_fund_rows()`) and stance calculator (`_stance()`) — used by `/heatmap` route
-- Excel template generator (`export_template()`)
 - Context builder helper (`_ctx()`)
 
 **What was removed from the GitHub version in the live version:**
@@ -104,7 +103,8 @@ All SQLite interaction. No analytics, no Flask imports. Uses `contextlib.context
 | `get_price_series(ticker)` | list[dict] | Recent OHLCV for one ticker ascending; used for charts |
 | `get_price_series_bulk()` | dict[str,list] | Price series for multiple tickers in one query; used for sparklines |
 | `import_lseg_rows(ticker, rows)` | (int, int) | Bulk upsert LSEG rows; returns (inserted, replaced) |
-| `set_etf_sector(ticker, sector)` | None | Update sector code for an ETF; propagates to all views |
+| `delete_etf(ticker)` | None | Permanently delete ETF + all its prices, signals, signal_log and pension_map rows |
+| `get_etf_universe()` | list[dict] | All active ETFs with sector, pension fund mappings — used by `/universe` page |
 
 ### `config.py` — Central Configuration
 
@@ -127,6 +127,7 @@ Key constants (confirmed values from code):
 | `LIQUIDITY_FULL` | £5,000,000 | Weekly turnover at which liquidity confidence component = 1.0 |
 | `WINSOR_LOWER` | 0.02 | 2nd percentile winsorisation floor |
 | `WINSOR_UPPER` | 0.98 | 98th percentile winsorisation ceiling |
+| `SECTOR_LABEL` | 25 entries | Sector code → display label map; 8 new codes added (INDIA, CHINA, FIN, INDUS, UTILS, ENERGY, CONS, CASH) |
 
 ---
 

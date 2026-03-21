@@ -124,12 +124,12 @@ scp footprints.db username@ssh.pythonanywhere.com:~/Footprints/
 
 **Option B — Build from scratch via Admin UI:**
 1. Navigate to `/admin`
-2. Use "Add ETF" form for each ETF: Ticker, Name, Sector (dropdown), Display Order
+2. Use "Add ETF" form for each ETF (or use SQL seed below — 55 ETFs)
 3. Add `VWRP.L` first — it is both the RS benchmark and a signal instrument
 
 **Option C — Direct SQL seed (fastest from-scratch approach):**
 
-Use the SQL below to seed all 43 ETFs directly into `footprints.db`. Run in a SQLite client or via Python on PythonAnywhere:
+Use the SQL below to seed all 55 ETFs directly into `footprints.db`. Run in a SQLite client or via Python on PythonAnywhere:
 
 ```bash
 # On PythonAnywhere:
@@ -137,50 +137,78 @@ cd ~/footprints2
 python3 -c "
 import sqlite3
 conn = sqlite3.connect('footprints.db')
+
+# Create pension tables (not created by init_schema)
+conn.execute('''CREATE TABLE IF NOT EXISTS pension_funds (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    code          TEXT UNIQUE,
+    name          TEXT,
+    display_order INTEGER DEFAULT 99
+)''')
+conn.execute('''CREATE TABLE IF NOT EXISTS pension_etf_map (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    fund_id INTEGER REFERENCES pension_funds(id),
+    ticker  TEXT
+)''')
+conn.commit()
+
+# 55 ETFs — (display_order, ticker, name, sector, benchmark_ticker)
 etfs = [
-    (1,  'AGHG.L',   'Amundi Core Gl Aggregate Bd UCITS ETF GBP Hgd Dist', 'BOND',   'VWRP.L'),
-    (2,  'AINF.L',   'iShares AI Infrastructure',                           'TECH',   'VWRP.L'),
-    (3,  'BOTZ.L',   'Global X Robotics & AI',                              'TECH',   'VWRP.L'),
-    (4,  'BTEK.L',   'iShares NASDAQ Biotech',                              'HEALTH', 'VWRP.L'),
-    (5,  'CNX1.L',   'iShares NASDAQ 100',                                  'US',     'VWRP.L'),
-    (6,  'CUKS.L',   'iShares MSCI UK Small Cap UCITS ETF GBP (Acc)',       'UK',     'VWRP.L'),
-    (7,  'DBXWD1.L', 'Xtrackers MSCI World Swap UCITS ETF 1D',             'BASE',   'VWRP.L'),
-    (8,  'DFND.L',   'iShares Global Aerospace & Def',                      'DEF',    'VWRP.L'),
-    (9,  'DFNG.L',   'VanEck Defense',                                      'DEF',    'VWRP.L'),
-    (10, 'DRDR.L',   'iShares Healthcare Innovation',                       'HEALTH', 'VWRP.L'),
-    (11, 'EQGB.L',   'Invesco EQQQ NASDAQ-100 (GBP Hdg)',                   'US',     'VWRP.L'),
-    (12, 'FTAL.L',   'StSt SPDR FTSE UK All Share UCITS ETF Acc',           'UK',     'VWRP.L'),
-    (13, 'GIGB.L',   'VanEck S&P Global Mining',                            'MINING', 'VWRP.L'),
-    (14, 'HPROP.L',  'HSBC FTSE EPRA NAREIT Dev',                           'PROP',   'VWRP.L'),
-    (15, 'IAUP.L',   'iShares Gold Producers UCITS ETF USD (Acc)',           'COMM',   'VWRP.L'),
-    (16, 'IDWP.L',   'iShares Dvlp Mrkts Prop Yld UCITS ETF USD Dist',     'PROP',   'VWRP.L'),
-    (17, 'IITU.L',   'iShares S&P500 Info Tech',                            'US',     'VWRP.L'),
-    (18, 'IS15.L',   'iShares £ Corp Bond 0-5yr UCITS ETF GBP (Dist)',      'BOND',   'VWRP.L'),
-    (19, 'ISWSML.L', 'iShares MSCI World Small Cap UCITS ETF USD (Acc)',    'GLOBAL', 'VWRP.L'),
-    (20, 'IWDP.L',   'iShares Dev Mkts Real Estate',                           'PROP',   'VWRP.L'),
-    (21, 'IWFQ.L',   'iShares MSCI World Quality',                          'GLOBAL', 'VWRP.L'),
-    (22, 'LGAG.L',   'L&G Asia Pacific Ex Japan Equity UCITS ETF USD Acc',  'APAC',   'VWRP.L'),
-    (23, 'MAGG.L',   'iShares Growth Portfolio UCITS ETF GBP Hedged Acc',   'GLOBAL', 'VWRP.L'),
-    (24, 'NATP.L',   'Future of Defence ETF',                               'DEF',    'VWRP.L'),
-    (25, 'RBOT.L',   'iShares Robotics (GBP)',                              'TECH',   'VWRP.L'),
-    (26, 'RBTX.L',   'iShares Robotics (USD)',                              'TECH',   'VWRP.L'),
-    (27, 'RIUS.L',   'L&G US ESG Paris Aligned UCITS ETF USD Acc',          'US',     'VWRP.L'),
-    (28, 'SGLN.L',   'iShares Physical Gold ETC',                           'COMM',   'VWRP.L'),
-    (29, 'SMGB.L',   'VanEck Semiconductors',                               'TECH',   'VWRP.L'),
-    (30, 'SSLN.L',   'iShares Physical Silver ETC',                         'COMM',   'VWRP.L'),
-    (31, 'SWDA.L',   'iShares Core MSCI World UCITS ETF USD (Acc)',         'BASE',   'VWRP.L'),
-    (32, 'V3NB.L',   'Vanguard ESG N America All Cap UCITS ETF USD Acc',    'NAM',    'VWRP.L'),
-    (33, 'VDPG.L',   'Vanguard Dev Asia-Pac ex-Jpn',                        'APAC',   'VWRP.L'),
-    (34, 'VEUA.L',   'Vanguard Developed Europe',                           'EUR',    'VWRP.L'),
-    (35, 'VGVFEG.L', 'Vanguard FTSE Emerging Mkts UCITS ETF USD Acc',       'EM',     'VWRP.L'),
-    (36, 'VHVG.L',   'Vanguard FTSE Developed World UCITS ETF USD A',       'BASE',   'VWRP.L'),
-    (37, 'VJPB.L',   'Vanguard FTSE Japan',                                 'JAP',    'VWRP.L'),
-    (38, 'VNRG.L',   'Vanguard North America',                              'NAM',    'VWRP.L'),
-    (39, 'VUKG.L',   'Vanguard FTSE 100',                                   'UK',     'VWRP.L'),
-    (40, 'VUSA.L',   'Vanguard S&P 500',                                    'US',     'VWRP.L'),
-    (41, 'VWRP.L',   'Vanguard FTSE All-World',                             'BASE',   'VWRP.L'),
-    (99, 'AMGAGG.L', 'Amundi Core Global Aggregate Bond',                   'BOND',   'VWRP.L'),
-    (99, 'LYCSH2.L', 'Amundi Smart Overnight Rtn UCITS ETF GBP Hgd Acc',    'BOND',   'VWRP.L'),
+    (  1, 'AGHG.L', 'Amundi Core Gl Aggregate Bd UCITS ETF GBP Hgd Dist', 'BOND', 'VWRP.L'),
+    (  2, 'AINF.L', 'iShares AI Infrastructure', 'TECH', 'VWRP.L'),
+    (  3, 'BOTZ.L', 'Global X Robotics & AI', 'TECH', 'VWRP.L'),
+    (  4, 'BTEK.L', 'iShares NASDAQ Biotech', 'HEALTH', 'VWRP.L'),
+    (  5, 'CNX1.L', 'iShares NASDAQ 100', 'US', 'VWRP.L'),
+    (  6, 'CUKS.L', 'iShares MSCI UK Small Cap UCITS ETF GBP (Acc)', 'UK', 'VWRP.L'),
+    (  8, 'DFND.L', 'iShares Global Aerospace & Def', 'DEF', 'VWRP.L'),
+    (  9, 'DFNG.L', 'VanEck Defense', 'DEF', 'VWRP.L'),
+    ( 10, 'DRDR.L', 'iShares Healthcare Innovation', 'HEALTH', 'VWRP.L'),
+    ( 12, 'FTAL.L', 'StSt SPDR FTSE UK All Share UCITS ETF Acc', 'UK', 'VWRP.L'),
+    ( 13, 'GIGB.L', 'VanEck S&P Global Mining', 'MINING', 'VWRP.L'),
+    ( 14, 'HPROP.L', 'HSBC FTSE EPRA NAREIT Dev', 'PROP', 'VWRP.L'),
+    ( 15, 'IAUP.L', 'iShares Gold Producers UCITS ETF USD (Acc)', 'MINING', 'VWRP.L'),
+    ( 16, 'IDWP.L', 'iShares Dvlp Mrkts Prop Yld UCITS ETF USD Dist', 'PROP', 'VWRP.L'),
+    ( 17, 'IITU.L', 'iShares S&P500 Info Tech', 'TECH', 'VWRP.L'),
+    ( 18, 'IS15.L', 'iShares £ Corp Bond 0-5yr UCITS ETF GBP (Dist)', 'BOND', 'VWRP.L'),
+    ( 19, 'ISWSML.L', 'iShares MSCI World Small Cap UCITS ETF USD (Acc)', 'GLOBAL', 'VWRP.L'),
+    ( 21, 'IWFQ.L', 'iShares MSCI World Quality', 'GLOBAL', 'VWRP.L'),
+    ( 22, 'LGAG.L', 'L&G Asia Pacific Ex Japan Equity UCITS ETF USD Acc', 'APAC', 'VWRP.L'),
+    ( 24, 'NATP.L', 'Future of Defence ETF', 'DEF', 'VWRP.L'),
+    ( 26, 'RBTX.L', 'iShares Robotics (USD)', 'TECH', 'VWRP.L'),
+    ( 27, 'RIUS.L', 'L&G US ESG Paris Aligned UCITS ETF USD Acc', 'US', 'VWRP.L'),
+    ( 28, 'SGLN.L', 'iShares Physical Gold ETC', 'COMM', 'VWRP.L'),
+    ( 29, 'SMGB.L', 'VanEck Semiconductors', 'TECH', 'VWRP.L'),
+    ( 30, 'SSLN.L', 'iShares Physical Silver ETC', 'COMM', 'VWRP.L'),
+    ( 31, 'SWDA.L', 'iShares Core MSCI World UCITS ETF USD (Acc)', 'BASE', 'VWRP.L'),
+    ( 32, 'V3NB.L', 'Vanguard ESG N America All Cap UCITS ETF USD Acc', 'NAM', 'VWRP.L'),
+    ( 33, 'VDPG.L', 'Vanguard Dev Asia-Pac ex-Jpn', 'APAC', 'VWRP.L'),
+    ( 34, 'VEUA.L', 'Vanguard Developed Europe', 'EUR', 'VWRP.L'),
+    ( 35, 'VGVFEG.L', 'Vanguard FTSE Emerging Mkts UCITS ETF USD Acc', 'EM', 'VWRP.L'),
+    ( 36, 'VHVG.L', 'Vanguard FTSE Developed World UCITS ETF USD A', 'BASE', 'VWRP.L'),
+    ( 37, 'VJPB.L', 'Vanguard FTSE Japan', 'JAP', 'VWRP.L'),
+    ( 38, 'VNRG.L', 'Vanguard North America', 'NAM', 'VWRP.L'),
+    ( 39, 'VUKG.L', 'Vanguard FTSE 100', 'UK', 'VWRP.L'),
+    ( 40, 'VUSA.L', 'Vanguard S&P 500', 'US', 'VWRP.L'),
+    ( 41, 'VWRP.L', 'Vanguard FTSE All-World', 'BASE', 'VWRP.L'),
+    ( 99, 'AMGAGG.L', 'Amundi Core Global Aggregate Bond', 'BOND', 'VWRP.L'),
+    ( 99, 'EXCS.L', 'iShares MSCI EM ex-China UCITS ETF USD Acc', 'EM', 'VWRP.L'),
+    ( 99, 'IASH.L', 'iShares MSCI China A UCITS ETF USD (Acc)', 'CHINA', 'VWRP.L'),
+    ( 99, 'IESU.L', 'iShares S&P 500 Energy Sector UCITS ETF USD (Acc)', 'ENERGY', 'VWRP.L'),
+    ( 99, 'IHYG.L', 'iShares € High Yield Corp Bond UCITS ETF EUR D', 'BOND', 'VWRP.L'),
+    ( 99, 'INRG.L', 'iShares Global Clean Energy Trnstn UCITS ETF USD D', 'ENERGY', 'VWRP.L'),
+    ( 99, 'INXG.L', 'iShares £ Index-Linked Gilts UCITS ETF GBP Dist', 'BOND', 'VWRP.L'),
+    ( 99, 'ISIIND.L', 'iShares MSCI India UCITS USD (Acc) ETF', 'INDIA', 'VWRP.L'),
+    ( 99, 'ISWD.L', 'iShares MSCI World Islamic UCITS ETF USD (Dist)', 'GLOBAL', 'VWRP.L'),
+    ( 99, 'ITPS.L', 'iShares $ TIPS UCITS ETF USD (Acc)', 'BOND', 'VWRP.L'),
+    ( 99, 'IUCS.L', 'iShares S&P 500 Consumer Staples Sector UCITS ETF', 'CONS', 'VWRP.L'),
+    ( 99, 'IUHC.L', 'iShares S&P 500 Health Care Sctr UCITS ETF USD A', 'HEALTH', 'VWRP.L'),
+    ( 99, 'IUIS.L', 'iShares S&P 500 Industrials Sector UCITS ETF USD (Acc)', 'INDUS', 'VWRP.L'),
+    ( 99, 'IUUS.L', 'iShares S&P 500 Utilities Sector UCITS ETF USD (Acc)', 'UTILS', 'VWRP.L'),
+    ( 99, 'IWVL.L', 'iShares Edge MSCI Wld Val Fctr UCITS ETF USD A', 'GLOBAL', 'VWRP.L'),
+    ( 99, 'LYCSH2.L', 'Amundi Smart Overnight Rtn UCITS ETF GBP Hgd Acc', 'CASH', 'VWRP.L'),
+    ( 99, 'VFEM.L', 'Vanguard FTSE Emerging Mkts UCITS ETF USD Dis', 'EM', 'VWRP.L'),
+    ( 99, 'WCOD.L', 'StSt SPDR MSCI World Con Discretionary UCITS ETF', 'CONS', 'VWRP.L'),
+    ( 99, 'XWFS.L', 'Xtrackers MSCI World Financials UCITS 1C ETF', 'FIN', 'VWRP.L'),
 ]
 conn.executemany(
     'INSERT OR IGNORE INTO etf_meta (display_order,ticker,name,sector,benchmark_ticker,active,suspended) VALUES (?,?,?,?,?,1,0)',
@@ -199,74 +227,59 @@ python3 -c "
 import sqlite3
 conn = sqlite3.connect('footprints.db')
 
-# Create pension tables if they don't exist (not created by init_schema)
-conn.execute('''CREATE TABLE IF NOT EXISTS pension_funds (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    code          TEXT UNIQUE,
-    name          TEXT,
-    display_order INTEGER DEFAULT 99
-)''')
-conn.execute('''CREATE TABLE IF NOT EXISTS pension_etf_map (
-    id      INTEGER PRIMARY KEY AUTOINCREMENT,
-    fund_id INTEGER REFERENCES pension_funds(id),
-    ticker  TEXT
-)''')
-conn.commit()
-
+# 19 pension funds (14 L&G WorkSave LG-, 5 Irish Life IL-)
 funds = [
-    ('LG-ACTIVE_GLOBAL',   'L&G MT Active Global Equity'),
-    ('LG-APAC-EXJP',       'PMC Future World AsiaPacific(ex Japan)Eq Ind 3'),
-    ('LG-ASIAPAC_EXJP',    'L&G PMC Future World AsiaPacific(ex Japan)Eq Ind 3'),
-    ('LG-CORPBONDS',       'L&G PMC AAA-AA-A Corp Bond All Stocks Index 3'),
-    ('LG-EMGMKTS',         'L&G MT Emerging Markets Index'),
-    ('LG-FUTURE_WLD_ASSET','L&G Future World Global Assets'),
-    ('LG-GLOB-DEV',        'L&G PMC Future World Global Equity Index 3'),
-    ('LG-GLOBAL_ISLAMIC',  'L&G PMC Global Equity (Islamic) Index 3'),
-    ('LG-GLBREALEST',      'L&G PMC Global Real Estate Index 3'),
-    ('LG-NORTHAMERICA',    'L&G PMC North America Index 3'),
-    ('LG-SHRTBOND',        'L&G PMC Short Dated Sterling Corp Bond Index 3'),
-    ('LG-SMALLCOMP',       'L&G PMC World (Ex-UK) Smaller Companies Index 3'),
-    ('LG-UKEQUITY',        'L&G PMC UK Equity Index 3'),
-    ('LG-UKSMLCAPS',       'L&G PMC UK Smaller Companies Index 3'),
-    ('LG-WRLD-EXUK',       'L&G PMC Future World Global Equity (Ex-UK) Index 3'),
-    ('IL-AMUNDI_GOLD',     'Irish Life Amundi Physical Gold ETC'),
-    ('IL-AMUNDIABSLRETURN','Irish Life Amundi Absolute Return'),
-    ('IL-EUROPE',          'Irish Life MSCI Europe ETF'),
-    ('IL-GLBL-BONDS',      'Irish Life Global Aggregate Bond'),
-    ('IL-INFLATIONBOND',   'Irish Life Inflation Linked Bond'),
+    ('IL-AMUNDIABSLRETURN', 'Amundi Absolute Return Multi-Strategy'),
+    ('IL-AMUNDI_GOLD', 'Amundi Physical Gold ETC Series P'),
+    ('IL-EUROPE', 'Irish Life Indexed European Equity P'),
+    ('IL-GLBL-BONDS', 'Irish Life Amundi Global Aggregate Bond Series P'),
+    ('IL-INFLATIONBOND', 'Indexed Inflation Linked Bond'),
+    ('LG-ACTIVE_GLOBAL', 'L&G MT Active Global Equity'),
+    ('LG-ASIAPAC_EXJP', 'L&G PMC Future World AsiaPacific(ex Japan)Eq Ind 3'),
+    ('LG-CORPBONDS', 'L&G PMC AAA-AA-A Corp Bond All Stocks Index 3'),
+    ('LG-EMGMKTS', 'L&G MT Emerging Markets Index'),
+    ('LG-FUTURE_WLD_ASSET', 'L&G MT Future World Multi-Asset'),
+    ('LG-GLBREALEST', 'L&G MT Global Real Estate Equity'),
+    ('LG-GLOB-DEV', 'L&G MT Global Developed Equity'),
+    ('LG-GLOBAL_ISLAMIC', 'L&G PMC HSBC Islamic Global Equity Index Fund 3'),
+    ('LG-NORTHAMERICA', 'L&G PMC Future World North America Eq Index Fund 3'),
+    ('LG-SHRTBOND', 'L&G MT Short Dated Bond Index Fund'),
+    ('LG-SMALLCOMP', 'L&G MT Smaller Companies Index'),
+    ('LG-UKEQUITY', 'L&G PMC UK Equity Index 3'),
+    ('LG-UKSMLCAPS', 'L&G MT UK Smaller Companies'),
+    ('LG-WRLD-EXUK', 'L&G PMC Future World Europe(ex UK) Eq Index Fund 3'),
 ]
 conn.executemany('INSERT OR IGNORE INTO pension_funds (code,name) VALUES (?,?)', funds)
 conn.commit()
 
+# Proxy mappings (code, etf_ticker)
 proxies = [
-    ('LG-ACTIVE_GLOBAL',    'SWDA.L'),
-    ('LG-APAC-EXJP',        'LGAG.L'),
-    ('LG-ASIAPAC_EXJP',     'LGAG.L'),
-    ('LG-CORPBONDS',        'IS15.L'),
-    ('LG-EMGMKTS',          'VGVFEG.L'),
-    ('LG-FUTURE_WLD_ASSET', 'MAGG.L'),
-    ('LG-GLOB-DEV',         'VHVG.L'),
-    ('LG-GLOBAL_ISLAMIC',   'DBXWD1.L'),
-    ('LG-GLBREALEST',       'IDWP.L'),
-    ('LG-NORTHAMERICA',     'V3NB.L'),
-    ('LG-SHRTBOND',         'IS15.L'),
-    ('LG-SMALLCOMP',        'ISWSML.L'),
-    ('LG-UKEQUITY',         'FTAL.L'),
-    ('LG-UKSMLCAPS',        'CUKS.L'),
-    ('LG-WRLD-EXUK',        'VWRP.L'),
-    ('IL-AMUNDI_GOLD',      'SGLN.L'),
     ('IL-AMUNDIABSLRETURN', 'AMGAGG.L'),
-    ('IL-EUROPE',           'VEUA.L'),
-    ('IL-GLBL-BONDS',       'AGHG.L'),
-    ('IL-INFLATIONBOND',    'LYCSH2.L'),
+    ('IL-AMUNDI_GOLD', 'SGLN.L'),
+    ('IL-EUROPE', 'VEUA.L'),
+    ('IL-GLBL-BONDS', 'AGHG.L'),
+    ('IL-INFLATIONBOND', 'INXG.L'),
+    ('LG-ACTIVE_GLOBAL', 'SWDA.L'),
+    ('LG-ASIAPAC_EXJP', 'LGAG.L'),
+    ('LG-CORPBONDS', 'IS15.L'),
+    ('LG-EMGMKTS', 'VGVFEG.L'),
+    ('LG-FUTURE_WLD_ASSET', 'IWVL.L'),
+    ('LG-GLBREALEST', 'IDWP.L'),
+    ('LG-GLOB-DEV', 'VHVG.L'),
+    ('LG-GLOBAL_ISLAMIC', 'ISWD.L'),
+    ('LG-NORTHAMERICA', 'V3NB.L'),
+    ('LG-SHRTBOND', 'IS15.L'),
+    ('LG-SMALLCOMP', 'ISWSML.L'),
+    ('LG-UKEQUITY', 'FTAL.L'),
+    ('LG-UKSMLCAPS', 'CUKS.L'),
+    ('LG-WRLD-EXUK', 'VWRP.L'),
 ]
-# Get fund ids then insert mappings
 for code, ticker in proxies:
     row = conn.execute('SELECT id FROM pension_funds WHERE code=?', (code,)).fetchone()
     if row:
         conn.execute('INSERT OR IGNORE INTO pension_etf_map (fund_id,etf_ticker) VALUES (?,?)', (row[0], ticker))
 conn.commit()
-print(f'Seeded {len(funds)} funds, {len(proxies)} mappings')
+print(f'Seeded {len(funds)} funds, {len(proxies)} proxy mappings')
 conn.close()
 "
 ```
@@ -361,12 +374,12 @@ I'm working on Footprints v2.0 — a Python Flask ETF signal dashboard deployed 
 GitHub: https://github.com/rhapsodians/Footprints
 
 Architecture (confirmed from code):
-- server.py: Flask app, all routes, LSEG parser (583 lines)
-- engine.py: 10-step cross-sectional signal pipeline (722 lines)
-- db.py: SQLite layer, footprints.db (678 lines)
+- server.py: Flask app, all routes, LSEG parser (762 lines)
+- engine.py: 10-step cross-sectional signal pipeline (732 lines)
+- db.py: SQLite layer, footprints.db (701 lines)
 - config.py: all constants and weights (180 lines)
 - wsgi.py: PythonAnywhere WSGI entry
-- templates/: 9 Jinja2 HTML templates
+- templates/: 9 Jinja2 HTML templates (incl. universe.html) (including universe.html)
 
 Key facts:
 - Data: daily OHLCV in SQLite; resampled to weekly in engine
@@ -376,8 +389,10 @@ Key facts:
 - Rotation score: weighted percentile rank composite (0–100)
 - Pension: two providers (LG = L&G WorkSave, IL = Irish Life) in same DB
 - No RSI in v2; CLV-based Pressure replaces it
-- Admin: inline sector editor on ETF tiles → POST /admin/set-sector → db.set_etf_sector()
-- Entry: bulk LSEG import → POST /entry/import-lseg-bulk (files named TICKER.xlsx); template import/export removed
+- Admin: delete-etf (irreversible) — use scripts/update_sectors.py for bulk sector changes
+- Entry: bulk LSEG import → POST /entry/import-lseg-bulk (files named TICKER.xlsx)
+- Universe: /universe read-only ETF reference page with descriptions and factsheet links
+- Scripts: backfill_signals.py, update_sectors.py, purge_v1_signals.py in scripts/
 - No macro regime filter; all signals are cross-sectional/quantitative
 - Requirements: flask>=3.0, numpy>=1.26, pandas>=2.1, openpyxl>=3.1
 
@@ -389,6 +404,33 @@ Current task: [describe what you're working on]
 
 ---
 
+
+---
+
+## Utility Scripts (`scripts/` folder)
+
+Three maintenance scripts are included in the repo:
+
+### `backfill_signals.py`
+Back-populates v2 signals for all historical Fridays that have price data but no v2 signal row. Uses `engine.run_engine()` with `as_of_date` truncation per Friday. Run from the app directory:
+```bash
+python3 scripts/backfill_signals.py           # live run
+python3 scripts/backfill_signals.py --dry-run  # preview only
+```
+
+### `update_sectors.py`
+Bulk sector taxonomy update — updates `config.py` and `etf_meta` DB rows. Includes dry-run preview. Use when adding new sector codes or reassigning ETFs:
+```bash
+python3 scripts/update_sectors.py
+```
+
+### `purge_v1_signals.py`
+Removes pre-v2 signal rows (`signal_model_version IS NULL`). Run once after migration from v1:
+```bash
+python3 scripts/purge_v1_signals.py
+```
+
+---
 ## Troubleshooting
 
 ### App starts but `/dashboard` shows no signals
@@ -435,8 +477,8 @@ The following items were not fully resolvable during the audit and represent the
 
 | Gap | Impact | Status |
 |-----|--------|--------|
-| **ETF universe list** | HIGH | ✅ Resolved — `03_DATA_MODEL.md` Appendix A + SQL seed script in this doc |
-| **Pension fund + proxy list** | HIGH | ✅ Resolved — `05_PENSION_PROXY_METHODOLOGY.md` Appendix B + SQL seed script in this doc |
+| **ETF universe list** | HIGH | ✅ Resolved — 55 ETFs, SQL seed script in this doc |
+| **Pension fund + proxy list** | HIGH | ✅ Resolved — 19 funds, SQL seed scripts in this doc |
 | **HTML templates** | MEDIUM | ✅ Resolved — all 8 committed templates documented in `06_DASHBOARD_PAGES.md` |
 | **Admin route bug** | HIGH | ✅ Resolved — toggle-etf fix deployed |
 | **Git tag** | LOW | ✅ Resolved — `v2.0.0` tagged and pushed |

@@ -263,9 +263,9 @@ Option A is simpler.
 **Rationale:** Sorting by latest week's turnover is useful for spotting unusual volume spikes — previously the only unsortable data column in the table.
 **Status:** Active.
 
-### [v2.0] — Admin ETF tiles: inline sector editor
+### [v2.0 → REMOVED] — Admin ETF tiles: inline sector editor
 
-**Decision:** The static sector tag on each ETF tile in Admin was replaced with an inline `<select>` dropdown pre-set to the current sector, with a `✓` submit button. Saves via POST `/admin/set-sector`.
+**Decision:** The static sector tag was replaced with an inline sector editor (POST `/admin/set-sector`), but this was subsequently removed. Sector changes are now handled via `scripts/update_sectors.py` or by deleting and re-adding the ETF.
 **Rationale:** Previously there was no way to change an ETF's sector after it was added. The sector drives heatmap grouping, sector filter chips, and sector breadth calculations — incorrect sectors silently corrupt the signal model.
 **Implementation:** `admin.html` — `sector-form` / `sector-sel` CSS + form markup. `server.py` — `/admin/set-sector` route with validation against `config.SECTOR_LABEL`. `db.py` — `set_etf_sector(ticker, sector)` function.
 **Status:** Active.
@@ -342,6 +342,41 @@ Option A is simpler.
 
 **Decision:** The home route now filters `db.get_available_dates()` to dates `<= today` before selecting the most recent as `as_of`. Similarly for dashboard and heatmap routes.
 **Rationale:** Prevents showing signals for a future Friday if data was accidentally imported ahead of time.
+**Status:** Active.
+
+
+### [v2.0] — ETF universe expanded from 43 to 55 ETFs; 8 new sector codes added
+
+**Decision:** 12 new ETFs added across 8 new sector codes: `INDIA`, `CHINA`, `FIN`, `INDUS`, `UTILS`, `ENERGY`, `CONS`, `CASH`.
+**New ETFs:** IASH.L (China A), EXCS.L (EM ex-China), ISIIND.L (India), XWFS.L (Financials), IUIS.L (Industrials), IUUS.L (Utilities), IESU.L (Energy), INRG.L (Clean Energy), IUCS.L (Consumer Staples), WCOD.L (Consumer Discretionary), INXG.L (UK Index-Linked Gilts), IHYG.L (EUR High Yield), IUHC.L (Healthcare), ITPS.L (US TIPS), IWVL.L (World Value), VFEM.L (EM distributing), ISWD.L (Islamic).
+**Also:** `LYCSH2.L` sector reclassified from `BOND` to `CASH`. `RBOT.L` and `EQGB.L` removed.
+**Rationale:** Broader sector coverage allows institutional rotation signals across the full equity and fixed income spectrum, including thematic and country-specific allocations that UK pension funds use.
+**Status:** Active.
+
+### [v2.0] — ETF Universe page added (/universe)
+
+**Decision:** New read-only page at `/universe` using `universe.html` (569 lines). Shows all 55 active ETFs with rich descriptions, provider factsheet links, and pension fund proxy relationships.
+**Implementation:** `server.py` — `ETF_URLS` and `ETF_DESC` dicts (~100 lines each); `/universe` route; `/api/signals/<ticker>` endpoint for detail panel. `db.py` — `get_etf_universe()` function (JOIN across etf_meta, pension_etf_map, pension_funds).
+**Rationale:** Provides institutional-quality documentation of each ETF's role in the model, accessible within the app itself.
+**Status:** Active.
+
+### [v2.0] — admin/set-sector route removed
+
+**Decision:** The inline sector editor (`/admin/set-sector`, `db.set_etf_sector()`) was removed from the codebase. Sector changes are now made by deleting and re-adding the ETF, or directly in the DB via the `update_sectors.py` script.
+**Rationale:** The sector editor was superseded by a dedicated migration script (`scripts/update_sectors.py`) that handles bulk sector taxonomy updates more safely.
+**Status:** Active.
+
+### [v2.0] — Scripts directory added: backfill_signals.py, update_sectors.py, purge_v1_signals.py
+
+**Decision:** Three utility scripts added to `scripts/` folder:
+- `backfill_signals.py` — back-populate v2 signals for all historical Fridays; runs `run_engine()` per Friday with `as_of_date` truncation
+- `update_sectors.py` — bulk sector taxonomy update with dry-run preview; patches `config.py` and `etf_meta` DB rows
+- `purge_v1_signals.py` — removes pre-v2 signal rows from the DB
+**Status:** Active.
+
+### [v2.0] — Pension funds: count 20→19 (LG-APAC-EXJP removed); IL-INFLATIONBOND proxy changed
+
+**Decision:** `LG-APAC-EXJP` removed (was a duplicate of `LG-ASIAPAC_EXJP`). `IL-INFLATIONBOND` proxy changed from `LYCSH2.L` (Amundi Smart Overnight) to `INXG.L` (iShares £ Index-Linked Gilts) — a more appropriate proxy for an inflation-linked bond fund.
 **Status:** Active.
 
 ### [OPEN] — `footprints.db` not in the repo (correctly gitignored)
