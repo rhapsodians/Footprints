@@ -255,7 +255,7 @@ const ETFS = [
                   'Global X' if 'Global X' in e.name else
                   'L&G' if 'L&G' in e.name or e.ticker == 'LGAG.L' else
                   'HANetf' if 'NATP' in e.ticker else '—' %}
-  {ticker:{{ e.ticker|tojson }},name:{{ e.name|tojson }},sector:{{ e.sector|tojson }},provider:{{ provider|tojson }},funds:{{ (e.fund_codes.split('||') if e.fund_codes else [])|tojson }},desc:{{ ETF_DESC.get(e.ticker,'—')|tojson }},url:{{ ETF_URLS.get(e.ticker,'')|tojson }}},
+  {ticker:{{ e.ticker|tojson }},name:{{ e.name|tojson }},sector:{{ e.sector|tojson }},provider:{{ provider|tojson }},funds:{{ (e.fund_codes.split('||') if e.fund_codes else [])|tojson }},desc:{{ (e.description or '—')|tojson }},url:{{ ETF_URLS.get(e.ticker,'')|tojson }}},
 {% endfor %}
 ];
 

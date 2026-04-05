@@ -132,6 +132,7 @@ _SIGNALS_COLUMNS: list[tuple[str, str]] = [
 
 _ETF_META_V2_COLUMNS: list[tuple[str, str]] = [
     ("benchmark_ticker", "TEXT"),   # defaults to BASE_TICKER if NULL
+    ("description",      "TEXT"),   # free-text description shown in Universe page
 ]
 
 _PRICES_V2_COLUMNS: list[tuple[str, str]] = []  # no additions needed yet
@@ -381,21 +382,6 @@ def upsert_signals(rows: list[dict]) -> int:
     return len(rows)
 
 
-def delete_signals_for_date(signal_date: str) -> int:
-    """
-    Remove all signals stored for a specific date.
-    Used to purge stale signals written under an incorrect date
-    (e.g. a public holiday Friday label from a previous recompute).
-    Returns the number of rows deleted.
-    """
-    with db_conn() as conn:
-        cur = conn.execute(
-            "DELETE FROM signals WHERE date = ? AND signal_model_version = 'weekly_v2_0'",
-            (signal_date,),
-        )
-    return cur.rowcount
-
-
 def log_signal_changes(changes: list[dict]) -> None:
     """
     Append rows to signal_log where the signal has changed.
@@ -431,20 +417,39 @@ def upsert_price_row(row: dict) -> None:
 def add_etf(meta: dict) -> None:
     """
     Insert a new ETF into etf_meta.
-    meta keys: ticker, name, sector, active, display_order, benchmark_ticker
+    meta keys: ticker, name, sector, active, display_order, benchmark_ticker, description
     """
     meta.setdefault("active", 1)
     meta.setdefault("suspended", 0)
     meta.setdefault("display_order", 99)
     meta.setdefault("benchmark_ticker", BASE_TICKER)
+    meta.setdefault("description", None)
     with db_conn() as conn:
         conn.execute(
             "INSERT OR IGNORE INTO etf_meta "
-            "(ticker, name, sector, active, display_order, suspended, benchmark_ticker) "
+            "(ticker, name, sector, active, display_order, suspended, benchmark_ticker, description) "
             "VALUES (:ticker, :name, :sector, :active, :display_order, "
-            ":suspended, :benchmark_ticker)",
+            ":suspended, :benchmark_ticker, :description)",
             meta,
         )
+
+
+def update_etf_descriptions(desc_map: dict[str, str]) -> int:
+    """
+    Bulk-update the description column in etf_meta.
+    desc_map: {ticker -> description_text}
+    Only updates rows where description IS NULL (won't overwrite user-set values).
+    Returns number of rows updated.
+    """
+    count = 0
+    with db_conn() as conn:
+        for ticker, desc in desc_map.items():
+            cur = conn.execute(
+                "UPDATE etf_meta SET description = ? WHERE ticker = ? AND description IS NULL",
+                (desc, ticker),
+            )
+            count += cur.rowcount
+    return count
 
 
 def set_etf_active(ticker: str, active: bool) -> None:
@@ -704,6 +709,7 @@ def get_etf_universe():
                 e.name,
                 e.sector,
                 e.benchmark_ticker,
+                e.description,
                 GROUP_CONCAT(pf.code, '||') as fund_codes,
                 GROUP_CONCAT(pf.name, '||') as fund_names
             FROM etf_meta e

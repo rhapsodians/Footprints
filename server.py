@@ -659,6 +659,10 @@ def guide():
 @app.route("/universe")
 def universe():
     etfs = db.get_etf_universe()
+    # Merge DB description with ETF_DESC fallback so the page always shows something
+    for e in etfs:
+        if not e.get("description"):
+            e["description"] = ETF_DESC.get(e["ticker"], "")
     return render_template("universe.html", etfs=etfs, ETF_DESC=ETF_DESC, ETF_URLS=ETF_URLS, **_ctx("universe"))
 
 # ── Admin ─────────────────────────────────────────────────────────────────────
@@ -692,6 +696,7 @@ def admin_add_etf():
                 sector=request.form.get("sector","OTHER"),
                 benchmark_ticker=request.form.get("benchmark_ticker",config.BASE_TICKER).strip(),
                 display_order=int(request.form.get("display_order",99) or 99),
+                description=request.form.get("description","").strip() or None,
                 active=1, suspended=0)
     if not meta["ticker"]:
         flash("Ticker required.","err"); return redirect(url_for("admin"))
@@ -807,6 +812,8 @@ def api_signal_ticker(ticker):
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     db.init_schema()
+    # Backfill ETF_DESC into the description column for any ETF that has none yet
+    db.update_etf_descriptions(ETF_DESC)
     debug = os.environ.get("FP2_DEBUG", "0").lower() in ("1", "true", "yes")
     print(f"Footprints v{config.APP_VERSION} — http://localhost:5000")
     app.run(debug=debug, port=5000)
