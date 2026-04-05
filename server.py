@@ -115,6 +115,7 @@ ETF_DESC = {
     # BOND
     'AGHG.L':    'Amundi Core Global Aggregate Bond GBP Hedged tracks the Bloomberg Global Aggregate index — the broadest investment-grade bond benchmark — with currency risk hedged back to GBP. Covers government, corporate and securitised bonds across 70+ countries. Proxy for Irish Life Global Bonds.',
     'AMGAGG.L':  'Amundi Core Global Aggregate Bond (unhedged, accumulating) tracks the Bloomberg Global Aggregate index without currency hedging, giving full USD/EUR/JPY exposure alongside the bond returns. Useful for measuring bond rotation relative to currency-exposed global fixed income.',
+    'IHYG.L':    'iShares € High Yield Corp Bond tracks sub-investment-grade corporate bonds denominated in euros, converted to GBP. High yield bonds sit between equities and investment-grade fixed income in the risk spectrum — they tighten in risk-on environments and widen sharply during credit stress. A useful cross-asset rotation signal alongside equity momentum.',
     'IS15.L':    'iShares £ Corporate Bond 0-5yr covers short-dated sterling investment grade corporate bonds. Low duration means lower interest rate sensitivity than longer-dated bond funds. Proxy for both L&G Short Dated Bond and L&G Corporate Bond pension fund allocations.',
     'ITPS.L':    'iShares $ TIPS tracks US Treasury Inflation-Protected Securities — government bonds whose principal adjusts with US CPI inflation. A pure real-yield instrument; rises when inflation expectations increase or real rates fall. Key rotation signal for inflationary environments.',
     'INXG.L':    'iShares £ Index-Linked Gilts tracks UK government inflation-linked bonds (index-linked gilts), whose coupons and principal adjust with UK RPI. The longest-duration asset in the BOND sector — highly sensitive to changes in UK real interest rates. Proxy for the Irish Life Indexed Inflation Linked Bond fund.',
@@ -188,6 +189,78 @@ ETF_DESC = {
 }
 
 app.secret_key = os.environ.get("FP2_SECRET_KEY", "fp2-dev-secret-change-in-production")
+
+# Run schema migrations and backfill descriptions on every startup (WSGI + dev server)
+db.init_schema()
+db.update_etf_descriptions(ETF_DESC)   # fill known tickers from hardcoded dict
+
+# ── ETF description auto-generation ──────────────────────────────────────────
+def _generate_etf_description(ticker: str, name: str, sector: str) -> str | None:
+    """
+    Call the Anthropic API to generate a concise ETF description for the Universe page.
+    Returns the generated string, or None if the call fails.
+    """
+    try:
+        import urllib.request
+        sector_label = config.SECTOR_LABEL.get(sector, sector)
+        prompt = (
+            f"Write a concise 2-3 sentence description of the ETF '{name}' (ticker: {ticker}, "
+            f"sector: {sector_label}) suitable for an institutional investor's reference page. "
+            f"Cover: what index or strategy it tracks, key exposures or characteristics, and "
+            f"any relevance as a pension fund proxy or rotation signal. "
+            f"Be factual and precise. Do not use marketing language. Plain text only, no bullet points."
+        )
+        payload = json.dumps({
+            "model": "claude-sonnet-4-20250514",
+            "max_tokens": 300,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode()
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=payload,
+            headers={"Content-Type": "application/json", "anthropic-version": "2023-06-01"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read())
+        text = data.get("content", [{}])[0].get("text", "").strip()
+        return text or None
+    except Exception as e:
+        print(f"[desc-gen] {ticker}: API call failed — {e}")
+        return None
+
+
+def _backfill_missing_descriptions() -> None:
+    """
+    For any active ETF still missing a description after the ETF_DESC fill,
+    auto-generate one via the API and write it to the DB.
+    Safe to call on every startup — skips tickers that already have a description.
+    """
+    with db.db_conn() as conn:
+        rows = conn.execute(
+            "SELECT ticker, name, sector FROM etf_meta "
+            "WHERE active=1 AND (description IS NULL OR description='')"
+        ).fetchall()
+
+    if not rows:
+        return
+
+    print(f"[desc-gen] Auto-generating descriptions for {len(rows)} ETF(s)...")
+    for row in rows:
+        ticker, name, sector = row["ticker"], row["name"], row["sector"]
+        desc = _generate_etf_description(ticker, name, sector)
+        if desc:
+            with db.db_conn() as conn:
+                conn.execute(
+                    "UPDATE etf_meta SET description=? WHERE ticker=? AND (description IS NULL OR description='')",
+                    (desc, ticker),
+                )
+            print(f"[desc-gen] {ticker}: generated OK")
+        else:
+            print(f"[desc-gen] {ticker}: skipped (API unavailable)")
+
+
+_backfill_missing_descriptions()
 
 # ── Jinja helpers ─────────────────────────────────────────────────────────────
 def _heat_class(v):
@@ -701,6 +774,18 @@ def admin_add_etf():
     if not meta["ticker"]:
         flash("Ticker required.","err"); return redirect(url_for("admin"))
     db.add_etf(meta)
+
+    # Auto-generate description if none was provided and not in ETF_DESC
+    if not meta["description"] and meta["ticker"] not in ETF_DESC:
+        desc = _generate_etf_description(meta["ticker"], meta["name"], meta["sector"])
+        if desc:
+            with db.db_conn() as conn:
+                conn.execute(
+                    "UPDATE etf_meta SET description=? WHERE ticker=? AND (description IS NULL OR description='')",
+                    (desc, meta["ticker"]),
+                )
+            flash(f"Description auto-generated for {meta['ticker']}.", "ok")
+
     if f and f.filename:
         try:
             rows = _parse_lseg(f.read())
@@ -709,7 +794,7 @@ def admin_add_etf():
         except Exception as e:
             flash(f"Added {meta['ticker']} but history import failed: {e}","err")
     else:
-        flash(f"Added {meta['ticker']}.","ok")
+        flash(f"Added {meta['ticker']}.", "ok")
     return redirect(url_for("admin"))
 
 @app.route("/admin/delete-etf", methods=["POST"])
@@ -811,9 +896,6 @@ def api_signal_ticker(ticker):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    db.init_schema()
-    # Backfill ETF_DESC into the description column for any ETF that has none yet
-    db.update_etf_descriptions(ETF_DESC)
     debug = os.environ.get("FP2_DEBUG", "0").lower() in ("1", "true", "yes")
     print(f"Footprints v{config.APP_VERSION} — http://localhost:5000")
     app.run(debug=debug, port=5000)
