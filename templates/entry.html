@@ -26,7 +26,7 @@
 <div class="page-header">
   <div>
     <div class="page-title">Weekly <strong>Data Entry</strong></div>
-    <div class="page-subtitle">Upload LSEG exports · then recompute signals for the target Friday</div>
+    <div class="page-subtitle">Upload LSEG exports · then recompute signals for the target date</div>
   </div>
 </div>
 
@@ -61,7 +61,7 @@
                class="file-native" id="bulk-file" onchange="onBulkChange(this)">
         <span id="bulk-txt">📂 Choose files…</span>
       </label>
-      <span class="hint">Files must be named TICKER.xlsx</span>
+      <span class="hint">Ticker read from inside each file (row 4) — any filename accepted</span>
       <button type="submit" class="act-btn" id="bulk-sub" disabled>IMPORT ALL</button>
     </form>
   </div>
@@ -76,7 +76,7 @@
 
 <div class="entry-band" style="margin-top:0">
   <div class="entry-row">
-    <span class="entry-lbl">As of Friday</span>
+    <span class="entry-lbl">As of date</span>
     <form method="post" action="/recompute"
           style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <input type="date" name="as_of_date"

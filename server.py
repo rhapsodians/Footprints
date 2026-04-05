@@ -212,11 +212,29 @@ def _dicts(rows):
     if hasattr(rows, "to_dict"): return rows.to_dict(orient="records")
     return [dict(r) for r in rows]
 
-def _next_friday():
-    """Return the coming Friday's date, or today if today is Friday."""
-    d = date.today()
-    days = (4 - d.weekday()) % 7   # 0 on Friday → return today
-    return (d + timedelta(days=days)).isoformat()
+def _next_signal_date():
+    """
+    Return the most appropriate signal date to pre-fill the recompute picker.
+    Normally this is the coming Friday (or today if today is Friday).
+    On weeks with a public holiday on Friday, the last available price date
+    (e.g. Thursday) is used instead, so the picker pre-fills correctly.
+    """
+    today = date.today()
+    # Standard: next Friday (or today if Friday)
+    days_to_fri = (4 - today.weekday()) % 7
+    friday = today + timedelta(days=days_to_fri)
+
+    # If Friday is in the future but we already have price data up to Thursday
+    # (public holiday), use the latest price date if it's >= this Monday
+    latest_price = db.get_latest_prices_date()
+    if latest_price:
+        lp = date.fromisoformat(latest_price)
+        monday = today - timedelta(days=today.weekday())
+        # Latest price is this week but not a Friday → likely a short week
+        if monday <= lp < friday and lp.weekday() != 4:
+            return lp.isoformat()
+
+    return friday.isoformat()
 
 # ── LSEG Excel parser (same as v1) ────────────────────────────────────────────
 def _parse_lseg(file_bytes):
@@ -252,6 +270,25 @@ def _parse_lseg(file_bytes):
         out.append((str(row[0].date()), _g(row,"open",c), _g(row,"high",c),
                     _g(row,"low",c), c, _g(row,"volume",0.0)))
     return sorted(out, key=lambda x: x[0])
+
+# ── LSEG ticker extractor ─────────────────────────────────────────────────────
+def _extract_ticker_from_lseg(file_bytes: bytes) -> str | None:
+    """
+    Read the ticker from row 4 (cell A4, 1-indexed) of an LSEG price history
+    export — e.g. 'IHYG.L'.  Returns None if the cell is missing or blank.
+    Falls back gracefully so callers can decide whether to use the filename.
+    """
+    try:
+        wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
+        ws = wb.active
+        val = ws.cell(row=4, column=1).value
+        wb.close()
+        if val:
+            return str(val).strip().upper() or None
+    except Exception:
+        pass
+    return None
+
 
 # ── Dashboard data helpers ────────────────────────────────────────────────────
 def _enrich_signals(signals):
@@ -320,7 +357,6 @@ def entry_import_lseg():
 
 @app.route("/entry/import-lseg-bulk", methods=["POST"])
 def entry_import_lseg_bulk():
-    import os as _os
     files = request.files.getlist("bulk_files")
     if not files or all(f.filename == "" for f in files):
         flash("No files selected.", "err"); return redirect(url_for("entry"))
@@ -329,13 +365,14 @@ def entry_import_lseg_bulk():
     results, errors = [], []
 
     for f in files:
-        fname = f.filename or ""
-        # Strip extension(s): AGHG.L.xlsx -> AGHG.L, BOTZ.L.xls -> BOTZ.L
-        base = _os.path.splitext(fname)[0]
-        ticker = base.upper().strip()
+        fname = f.filename or "unnamed"
+        raw = f.read()
+
+        # Extract ticker from inside the file (row 4, cell A4)
+        ticker = _extract_ticker_from_lseg(raw)
 
         if not ticker:
-            errors.append(f"Unnamed file skipped")
+            errors.append(f"{fname} — could not read ticker from file (is row 4 a ticker?)")
             continue
 
         if ticker not in known:
@@ -343,20 +380,20 @@ def entry_import_lseg_bulk():
             continue
 
         try:
-            rows = _parse_lseg(f.read())
+            rows = _parse_lseg(raw)
         except Exception as e:
-            errors.append(f"{ticker} — parse error: {e}")
+            errors.append(f"{ticker} ({fname}) — parse error: {e}")
             continue
 
         if not rows:
-            errors.append(f"{ticker} — no valid rows in file")
+            errors.append(f"{ticker} ({fname}) — no valid rows in file")
             continue
 
         try:
             ins, rep = db.import_lseg_rows(ticker, rows)
             results.append(f"{ticker}: +{ins} new, {rep} updated")
         except Exception as e:
-            errors.append(f"{ticker} — DB error: {e}")
+            errors.append(f"{ticker} ({fname}) — DB error: {e}")
 
     if results:
         flash(f"Bulk import: {len(results)} ETF(s) — " + " · ".join(results), "ok")
