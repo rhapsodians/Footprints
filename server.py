@@ -408,24 +408,37 @@ def entry_import_lseg_bulk():
 # ── Recompute ─────────────────────────────────────────────────────────────────
 @app.route("/recompute", methods=["POST"])
 def recompute():
-    selected_date = request.form.get("date", "").strip()
-    as_of_date    = request.form.get("as_of_date", "").strip() or None
+    as_of_date = request.form.get("as_of_date", "").strip() or None
     try:
         s_rows, c_rows = engine.run_engine(
             db.get_prices_df(), db.get_etf_meta(), db.get_signals_df(),
             as_of_date=as_of_date,
         )
         db.upsert_signals(s_rows); db.log_signal_changes(c_rows)
-        date_label = f" for {as_of_date}" if as_of_date else ""
+
+        # The engine relabels short-week bars to the actual last price date,
+        # so actual_date may differ from as_of_date (e.g. Thu 2-Apr vs Fri 3-Apr).
+        actual_date = s_rows[0]["date"] if s_rows else as_of_date
+
+        # If the user entered a date that differs from the actual signal date
+        # (e.g. entered Good Friday 2026-04-03 but signals stored as 2026-04-02),
+        # delete any stale signals that may have been stored under the entered date
+        # from a previous botched recompute.
+        if as_of_date and actual_date and as_of_date != actual_date:
+            purged = db.delete_signals_for_date(as_of_date)
+            if purged:
+                flash(f"Purged {purged} stale signal(s) for {as_of_date}.", "ok")
+
+        date_label = f" for {actual_date}" if actual_date else ""
         msg = f"Recomputed {len(s_rows)} signals{date_label}."
         if c_rows: msg += f" {len(c_rows)} change(s) logged."
-        flash(msg,"ok")
+        flash(msg, "ok")
     except Exception as e:
-        flash(f"Recompute failed: {e}","err"); raise
-    # Redirect to the recomputed date (never a future date)
+        flash(f"Recompute failed: {e}", "err"); raise
+
     today_str = date.today().isoformat()
-    target = as_of_date or selected_date or ""
-    if target > today_str:
+    target = actual_date if s_rows else ""
+    if target and target > today_str:
         target = ""
     dest = url_for("dashboard")
     if target:

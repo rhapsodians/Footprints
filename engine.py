@@ -37,10 +37,18 @@ def _resample_weekly(prices_df: pd.DataFrame) -> pd.DataFrame:
     """
     Resample per-ticker daily OHLCV to weekly bars (week ending Friday).
     Aggregation: open=first, high=max, low=min, close=last, volume=sum.
+
+    Short-week correction: if the last weekly bar's Friday label falls after
+    the actual last price date (e.g. Good Friday is a public holiday so data
+    ends Thursday), the bar is relabelled to the actual last price date.
+    This ensures signal dates match trading days, not calendar Fridays.
     """
     prices_df = prices_df.copy()
     prices_df["date"] = pd.to_datetime(prices_df["date"])
     prices_df = prices_df.sort_values(["ticker", "date"])
+
+    # Actual last price date across all tickers (used for short-week relabelling)
+    last_price_date = prices_df["date"].max()
 
     parts = []
     for tkr, grp in prices_df.groupby("ticker"):
@@ -54,6 +62,15 @@ def _resample_weekly(prices_df: pd.DataFrame) -> pd.DataFrame:
         ).dropna(subset=["close"])
         w.index.name = "date"
         w = w.reset_index()
+
+        # If the last bar's Friday label is beyond the last actual price date,
+        # relabel it to the actual last price date for this ticker.
+        if len(w) > 0:
+            last_bar_date = w["date"].iloc[-1]
+            ticker_last_price = grp["date"].max()
+            if last_bar_date > ticker_last_price:
+                w.loc[w.index[-1], "date"] = ticker_last_price
+
         w["ticker"] = tkr
         parts.append(w)
 

@@ -381,6 +381,21 @@ def upsert_signals(rows: list[dict]) -> int:
     return len(rows)
 
 
+def delete_signals_for_date(signal_date: str) -> int:
+    """
+    Remove all signals stored for a specific date.
+    Used to purge stale signals written under an incorrect date
+    (e.g. a public holiday Friday label from a previous recompute).
+    Returns the number of rows deleted.
+    """
+    with db_conn() as conn:
+        cur = conn.execute(
+            "DELETE FROM signals WHERE date = ? AND signal_model_version = 'weekly_v2_0'",
+            (signal_date,),
+        )
+    return cur.rowcount
+
+
 def log_signal_changes(changes: list[dict]) -> None:
     """
     Append rows to signal_log where the signal has changed.
