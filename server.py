@@ -78,6 +78,10 @@ ETF_URLS = {
     # MINING
     'GIGB.L':   'https://www.vaneck.com/eu/en/investments/global-mining-etf-gigb/',
     'IAUP.L':   'https://www.blackrock.com/uk/individual/products/251885/ishares-gold-producers-ucits-etf',
+    'GDGB.L':   'VanEck Gold Miners UCITS ETF tracks the NYSE Arca Gold Miners Index — the benchmark index for major listed gold mining companies globally, including names such as Newmont, Barrick and Anglo American. Gold miners provide leveraged exposure to the gold price since their profit margins expand faster than the spot price when gold rises, but carry additional operational and geopolitical risk. Complements physical gold holdings (SGLN.L) by adding an equity layer to the precious metals rotation signal.',
+    'MINE.L':    'iShares Copper Miners UCITS ETF tracks the STOXX Global Copper Miners Index — a portfolio of global companies primarily engaged in copper exploration, mining and refining. Copper is a critical input for construction, electronics, EVs and renewable energy infrastructure, giving this ETF a strong structural demand profile alongside the traditional commodity cycle. A focused play on the industrial metals rotation signal within the MINING sector.',
+    'SILG.L':   'Global X Silver Miners UCITS ETF tracks the Solactive Global Silver Miners Total Return v2 Index — approximately 40 companies whose primary revenues derive from silver mining, including Wheaton Precious Metals, Pan American Silver and Fresnillo. Silver sits at the intersection of precious metals and industrial commodities, with significant demand from solar panels, electronics and EVs alongside its monetary characteristics. Typically amplifies silver spot price moves with higher volatility than physical silver ETFs.',
+    'WREE.L':   'WisdomTree Strategic Metals and Rare Earths Miners UCITS ETF tracks companies involved in the mining and production of strategic and rare earth metals — materials critical to EV batteries, wind turbines, semiconductors and defence systems. The fund launched in April 2024 and targets a concentrated set of miners exposed to the energy transition supply chain, including lithium, cobalt, nickel and rare earth element producers. A high-conviction thematic play on structural demand for critical minerals.',
     # NAM
     'V3NB.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9677/esg-north-america-all-cap-ucits-etf-usd-accumulating',
     'VNRG.L':   'https://www.vanguard.co.uk/professional/product/etf/equity/9678/ftse-north-america-ucits-etf-usd-accumulating',
@@ -162,6 +166,10 @@ ETF_DESC = {
     # MINING
     'GIGB.L':    'VanEck S&P Global Mining covers global diversified and precious metals mining companies. Highly leveraged to commodity prices — particularly copper, iron ore and gold — with significant emerging market operational exposure. A key indicator for global industrial demand.',
     'IAUP.L':    'iShares Gold Producers tracks the MSCI Global Gold Miners index — listed companies whose primary business is gold mining. Provides leveraged exposure to the gold price (miners\' profits expand faster than gold when prices rise) with additional equity risk from operational costs and geopolitics.',
+    'GDGB.L':   'VanEck Gold Miners UCITS ETF tracks the NYSE Arca Gold Miners Index — the benchmark index for major listed gold mining companies globally, including names such as Newmont, Barrick and Anglo American. Gold miners provide leveraged exposure to the gold price since their profit margins expand faster than the spot price when gold rises, but carry additional operational and geopolitical risk. Complements physical gold holdings (SGLN.L) by adding an equity layer to the precious metals rotation signal.',
+    'MINE.L':    'iShares Copper Miners UCITS ETF tracks the STOXX Global Copper Miners Index — a portfolio of global companies primarily engaged in copper exploration, mining and refining. Copper is a critical input for construction, electronics, EVs and renewable energy infrastructure, giving this ETF a strong structural demand profile alongside the traditional commodity cycle. A focused play on the industrial metals rotation signal within the MINING sector.',
+    'SILG.L':   'Global X Silver Miners UCITS ETF tracks the Solactive Global Silver Miners Total Return v2 Index — approximately 40 companies whose primary revenues derive from silver mining, including Wheaton Precious Metals, Pan American Silver and Fresnillo. Silver sits at the intersection of precious metals and industrial commodities, with significant demand from solar panels, electronics and EVs alongside its monetary characteristics. Typically amplifies silver spot price moves with higher volatility than physical silver ETFs.',
+    'WREE.L':   'WisdomTree Strategic Metals and Rare Earths Miners UCITS ETF tracks companies involved in the mining and production of strategic and rare earth metals — materials critical to EV batteries, wind turbines, semiconductors and defence systems. The fund launched in April 2024 and targets a concentrated set of miners exposed to the energy transition supply chain, including lithium, cobalt, nickel and rare earth element producers. A high-conviction thematic play on structural demand for critical minerals.',
     # NAM
     'V3NB.L':    'Vanguard ESG North America All Cap applies ESG screens to a broad US and Canadian equity universe. Proxy for the L&G Future World North America pension fund — the ESG tilt creates modest differences from plain VNRG.L, particularly underweighting energy and some financials.',
     'VNRG.L':    'Vanguard North America tracks the broad US and Canadian equity market without any screening. Slightly broader than S&P 500 trackers as it includes mid and small-cap companies. Useful cross-check on NAM rotation alongside the ESG-screened V3NB.L.',
@@ -201,7 +209,12 @@ def _generate_etf_description(ticker: str, name: str, sector: str) -> str | None
     Returns the generated string, or None if the call fails.
     """
     try:
-        import urllib.request
+        import urllib.request, urllib.error
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            print(f"[desc-gen] {ticker}: skipped — ANTHROPIC_API_KEY not set")
+            return None
+        print(f"[desc-gen] {ticker}: using key ...{api_key[-6:]}")
         sector_label = config.SECTOR_LABEL.get(sector, sector)
         prompt = (
             f"Write a concise 2-3 sentence description of the ETF '{name}' (ticker: {ticker}, "
@@ -218,15 +231,23 @@ def _generate_etf_description(ticker: str, name: str, sector: str) -> str | None
         req = urllib.request.Request(
             "https://api.anthropic.com/v1/messages",
             data=payload,
-            headers={"Content-Type": "application/json", "anthropic-version": "2023-06-01"},
+            headers={
+                "Content-Type": "application/json",
+                "anthropic-version": "2023-06-01",
+                "x-api-key": api_key,
+            },
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read())
         text = data.get("content", [{}])[0].get("text", "").strip()
         return text or None
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        print(f"[desc-gen] {ticker}: HTTP {e.code} — {body[:300]}")
+        return None
     except Exception as e:
-        print(f"[desc-gen] {ticker}: API call failed — {e}")
+        print(f"[desc-gen] {ticker}: failed — {type(e).__name__}: {e}")
         return None
 
 
