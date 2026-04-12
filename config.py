@@ -48,6 +48,7 @@ SECTOR_LABEL: dict[str, str] = {
     "MINING": "Mining",
     "BOND":   "Fixed Income",
     "CASH":   "Cash & Money Market",
+    "MAST":   "Multi-Asset",
     "GLOBAL": "Global Thematic",
     "OTHER":  "Other",
 }
